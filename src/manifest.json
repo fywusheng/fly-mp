@@ -83,11 +83,13 @@
   },
   "quickapp": {},
   "mp-weixin": {
-    "appid": "wxa2abb91f64032a2b",
+    "appid": "wxfd6d1a32cce64511",
     "setting": {
       "urlCheck": false,
       "es6": true,
-      "minified": true
+      "minified": true,
+      "ignoreDevUnusedFiles": false,
+      "ignoreUploadUnusedFiles": false
     },
     "usingComponents": true
   },

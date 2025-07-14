@@ -12,10 +12,42 @@
 
 <script lang="ts" setup>
 import PLATFORM from '@/utils/platform'
+import Data from './components/Data.vue'
+import Find from './components/Find.vue'
+import Home from './components/Home.vue'
+import Mine from './components/Mine.vue'
 
 defineOptions({
   name: 'Home',
 })
+
+const tabbar = ref('home')
+const tabbarItems = [
+  {
+    name: 'home',
+    title: '骑行',
+    icon: '/static/tabbar/home.png',
+    activeIcon: '/static/tabbar/home-active.png',
+  },
+  {
+    name: 'find',
+    title: '发现',
+    icon: '/static/tabbar/find.png',
+    activeIcon: '/static/tabbar/find-active.png',
+  },
+  {
+    name: 'data',
+    title: '数据',
+    icon: '/static/tabbar/data.png',
+    activeIcon: '/static/tabbar/data-active.png',
+  },
+  {
+    name: 'mine',
+    title: '我的',
+    icon: '/static/tabbar/mine.png',
+    activeIcon: '/static/tabbar/mine-active.png',
+  },
+]
 
 // 获取屏幕边界到安全区域距离
 let safeAreaInsets
@@ -40,56 +72,38 @@ systemInfo = uni.getSystemInfoSync()
 safeAreaInsets = systemInfo.safeAreaInsets
 // #endif
 const author = ref('菲鸽')
-const description = ref(
-  'unibest 是一个集成了多种工具和技术的 uniapp 开发模板，由 uniapp + Vue3 + Ts + Vite5 + UnoCss + VSCode 构建，模板具有代码提示、自动格式化、统一配置、代码片段等功能，并内置了许多常用的基本组件和基本功能，让你编写 uniapp 拥有 best 体验。',
-)
+
 // 测试 uni API 自动引入
 onLoad(() => {
   console.log('项目作者:', author.value)
 })
-
-console.log('index')
+console.log('当前平台:', systemInfo)
 </script>
 
 <template>
-  <view class="bg-white px-4 pt-2" :style="{ marginTop: `${safeAreaInsets?.top}px` }">
-    <view class="mt-10">
-      <image src="/static/logo.svg" alt="" class="mx-auto block h-28 w-28" />
-    </view>
-    <view class="mt-4 text-center text-4xl text-[#d14328]">
-      unibest
-    </view>
-    <view class="mb-8 mt-2 text-center text-2xl">
-      最好用的 uniapp 开发模板
-    </view>
+  <view class="bg-white">
+    <Home v-show="tabbar === 'home'" />
+    <Find v-show="tabbar === 'find'" />
+    <Data v-show="tabbar === 'data'" />
+    <Mine v-show="tabbar === 'mine'" />
 
-    <view class="m-auto mb-2 max-w-100 text-justify indent text-4">
-      {{ description }}
-    </view>
-    <view class="mt-4 text-center">
-      作者：
-      <text class="text-green-500">
-        菲鸽
-      </text>
-    </view>
-    <view class="mt-4 text-center">
-      官网地址：
-      <text class="text-green-500">
-        https://unibest.tech
-      </text>
-    </view>
-    <view class="mt-6 h-1px bg-#eee" />
-    <view class="mt-8 text-center">
-      当前平台是：
-      <text class="text-green-500">
-        {{ PLATFORM.platform }}
-      </text>
-    </view>
-    <view class="mt-4 text-center">
-      模板分支是：
-      <text class="text-green-500">
-        base
-      </text>
-    </view>
+    <wd-tabbar v-model="tabbar" placeholder safeareainsetbottom fixed>
+      <wd-tabbar-item
+        v-for="item in tabbarItems"
+        :key="item.name"
+        :name="item.name"
+        :title="item.title"
+        :icon="item.icon"
+        :active-icon="item.activeIcon"
+      >
+        <template #icon>
+          <wd-img
+            height="40rpx"
+            width="40rpx"
+            :src="tabbar === item.name ? item.activeIcon : item.icon"
+          />
+        </template>
+      </wd-tabbar-item>
+    </wd-tabbar>
   </view>
 </template>

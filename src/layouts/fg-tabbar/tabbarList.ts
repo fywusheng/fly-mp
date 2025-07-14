@@ -9,7 +9,7 @@
  */
 
 // TODO：通过这里切换使用tabbar的策略
-export const selectedTabbarStrategy = 0
+export const selectedTabbarStrategy = 3
 
 // selectedTabbarStrategy==0 时，需要填 iconPath 和 selectedIconPath
 // selectedTabbarStrategy==1 or 2 时，需要填 icon 和 iconType
