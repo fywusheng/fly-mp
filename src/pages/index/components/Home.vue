@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { color } from 'echarts'
 import ArrowIcon from '@/static/home/arrow.png'
 import BatteryIcon from '@/static/home/battery.png'
 import BlueConnect from '@/static/home/blue-connect.png'
@@ -17,6 +16,7 @@ import WarningIcon from '@/static/home/warning.png'
 defineOptions({
   name: 'Home',
 })
+
 // 获取胶囊位置信息
 const menuButtonInfo = uni.getMenuButtonBoundingClientRect()
 const startX = ref(0)
@@ -24,12 +24,28 @@ const sliderX = ref(0)
 const maxRight = ref(0)
 const sliderStyle = ref({})
 const isUnlocked = ref(false) // 是否解锁成功
+const list = ref([{
+  name: '一键静音',
+  icon: 'https://img12.360buyimg.com/babel/jfs/t20270715/38278/23/22574/7960/6694edb4F07db03e3/d663cd498321eadc.png',
+}, {
+  name: '车辆解防',
+  icon: 'https://img12.360buyimg.com/babel/jfs/t20270715/38278/23/22574/7960/6694edb4F07db03e3/d663cd498321eadc.png',
+}, {
+  name: '电子围栏',
+  icon: 'https://img12.360buyimg.com/babel/jfs/t20270715/38278/23/22574/7960/6694edb4F07db03e3/d663cd498321eadc.png',
+}, {
+  name: '感应启动',
+  icon: 'https://img12.360buyimg.com/babel/jfs/t20270715/38278/23/22574/7960/6694edb4F07db03e3/d663cd498321eadc.png',
+}])
 
 onMounted(() => {
-  uni.createSelectorQuery().in(getCurrentInstance().proxy).select('.slider').boundingClientRect((res) => {
-    console.log('slider-bg boundingClientRect:', res)
-    maxRight.value = res.width - 70 // 50为滑块的宽度
-  }).exec()
+  uni.createSelectorQuery()
+    .in(getCurrentInstance().proxy)
+    .select('.slider')
+    .boundingClientRect((res: UniApp.NodeInfo) => {
+      maxRight.value = res.width - 70 // 70为滑块的宽度
+    })
+    .exec()
 })
 
 function onTouchStart(event) {
@@ -37,33 +53,39 @@ function onTouchStart(event) {
 }
 function onTouchMove(event) {
   let moveX = event.touches[0].pageX - startX.value
-  if (moveX < 0)
-    moveX = 0
-  if (moveX > maxRight.value)
-    moveX = maxRight.value
+  moveX = Math.max(0, Math.min(moveX, maxRight.value))
   sliderX.value = moveX
-  console.log('sliderX:', sliderX.value)
-  sliderStyle.value = `transform: translateX(${sliderX.value}px)`
+  sliderStyle.value = `transform: translateX(${moveX}px)`
 }
-
 function onTouchEnd(event) {
-  if (sliderX.value === maxRight.value) {
-    isUnlocked.value = true // 解锁
-    // 解锁成功
+  const success = () => {
     uni.showToast({
-      title: '开启成功',
+      title: '操作成功',
       icon: 'success',
     })
   }
-  else {
-    // 解锁失败
+  const fail = () => {
     uni.showToast({
-      title: '开启失败',
+      title: '操作失败',
       icon: 'none',
     })
-    isUnlocked.value = false // 解锁
-    sliderX.value = 0
-    sliderStyle.value = ''
+    // 回弹到对应位置
+    sliderX.value = isUnlocked.value ? maxRight.value : 0
+    sliderStyle.value = isUnlocked.value
+      ? `transform: translateX(${maxRight.value}px)`
+      : `transform: translateX(0px)`
+  }
+
+  if (!isUnlocked.value && sliderX.value === maxRight.value) {
+    isUnlocked.value = true
+    success()
+  }
+  else if (isUnlocked.value && sliderX.value === 0) {
+    isUnlocked.value = false
+    success()
+  }
+  else {
+    fail()
   }
 }
 </script>
@@ -122,7 +144,7 @@ function onTouchEnd(event) {
 
       <view class="relative z-10 mb-19rpx ml-20rpx mt-[-75rpx] box-border w-710rpx rounded-[10rpx] bg-white px-80rpx py-33rpx">
         <view
-          class="slider relative z-11 h-136rpx w-550rpx rounded-[136rpx]"
+          class="slider relative z-11 mb-63rpx h-136rpx w-550rpx rounded-[136rpx]"
           :style="{ background: isUnlocked ? '#2CBC7B' : '#E6E6E6' }"
           @touchstart="onTouchStart"
           @touchmove="onTouchMove"
@@ -156,6 +178,23 @@ function onTouchEnd(event) {
             {{ isUnlocked ? '滑动锁车' : '滑动开启' }}
           </view>
         </view>
+        <l-scroll-x
+          track-width="164rpx"
+          track-height="10rpx"
+          track-color="#EEEEEE"
+          bar-color="#10AE66"
+          bar-width="86rpx"
+          :indicator="list.length > 4"
+        >
+          <view class="grid">
+            <view v-for="item in list" :key="item.name" class="item">
+              <image mode="widthFix" class="item-img" :src="item.icon" />
+              <text class="item-text">
+                {{ item.name }}
+              </text>
+            </view>
+          </view>
+        </l-scroll-x>
       </view>
       <!-- bottom -->
       <view class="flex items-center justify-between px-20rpx">
@@ -240,6 +279,35 @@ function onTouchEnd(event) {
     display: flex;
     justify-content: center;
     align-items: center;
+  }
+}
+.grid {
+  display: flex;
+  flex-wrap: nowrap;
+  position: relative;
+  overflow: visible;
+  flex-direction: row;
+  padding-bottom: 39rpx;
+}
+.item {
+  width: 104rpx;
+  height: 120rpx;
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: space-between;
+  margin-right: 49rpx;
+  &:last-child {
+    margin-right: 0;
+  }
+  &-img {
+    width: 72rpx;
+  }
+  &-text {
+    // padding: 5rpx;
+    font-size: 26rpx;
+    white-space: nowrap;
   }
 }
 </style>

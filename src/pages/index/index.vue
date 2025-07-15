@@ -21,7 +21,7 @@ defineOptions({
   name: 'Home',
 })
 
-const tabbar = ref('home')
+const tabbar = ref('')
 const tabbarItems = [
   {
     name: 'home',
@@ -71,13 +71,11 @@ safeAreaInsets = systemInfo.safeArea
 systemInfo = uni.getSystemInfoSync()
 safeAreaInsets = systemInfo.safeAreaInsets
 // #endif
-const author = ref('菲鸽')
 
 // 测试 uni API 自动引入
-onLoad(() => {
-  console.log('项目作者:', author.value)
+onLoad((option) => {
+  tabbar.value = option.name || 'home'
 })
-console.log('当前平台:', systemInfo)
 </script>
 
 <template>
