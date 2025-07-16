@@ -12,9 +12,9 @@
 
 <script lang="ts" setup>
 import PLATFORM from '@/utils/platform'
-import Data from './components/Data.vue'
 import Find from './components/Find.vue'
 import Home from './components/Home.vue'
+import Infor from './components/Infor.vue'
 import Mine from './components/Mine.vue'
 
 defineOptions({
@@ -36,7 +36,7 @@ const tabbarItems = [
     activeIcon: '/static/tabbar/find-active.png',
   },
   {
-    name: 'data',
+    name: 'infor',
     title: '数据',
     icon: '/static/tabbar/data.png',
     activeIcon: '/static/tabbar/data-active.png',
@@ -82,10 +82,10 @@ onLoad((option) => {
   <view class="bg-white">
     <Home v-show="tabbar === 'home'" />
     <Find v-show="tabbar === 'find'" />
-    <Data v-show="tabbar === 'data'" />
+    <Infor v-show="tabbar === 'infor'" />
     <Mine v-show="tabbar === 'mine'" />
 
-    <wd-tabbar v-model="tabbar" placeholder safeareainsetbottom fixed>
+    <wd-tabbar v-model="tabbar" placeholder safe-area-inset-bottom fixed>
       <wd-tabbar-item
         v-for="item in tabbarItems"
         :key="item.name"

@@ -16,7 +16,7 @@ navHeight.value = menuButtonInfo?.top + menuButtonInfo.height
 </script>
 
 <template>
-  <div class="find">
+  <view class="find">
     <image
       class="h-1522rpx w-750rpx"
       :src="BgIcon"
@@ -57,7 +57,7 @@ navHeight.value = menuButtonInfo?.top + menuButtonInfo.height
         mode="widthFix"
       />
     </view>
-  </div>
+  </view>
 </template>
 
 <style lang="scss" scoped>

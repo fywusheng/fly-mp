@@ -1,11 +1,18 @@
-<template>
-  <div class="Home">Mine</div>
-</template>
-
 <script setup lang="ts">
-  defineOptions({
-    name: 'Mine',
-  })
+import BgIcon from '@/static/find/bg.png'
+
+defineOptions({
+  name: 'Mine',
+})
 </script>
+
+<template>
+  <view class="Home">
+    <image
+      class="h-1522rpx w-750rpx"
+      :src="BgIcon"
+    />
+  </view>
+</template>
 
 <style scoped></style>
