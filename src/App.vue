@@ -7,6 +7,18 @@ usePageAuth()
 
 onLaunch(() => {
   console.log('App Launch')
+  // 处理隐私协议
+  wx.getPrivacySetting({
+    success(res) {
+      if (res.needAuthorization) {
+        getApp().globalData.privacyContractName = res.privacyContractName
+        getApp().globalData.showPrivacy = true
+      }
+      else {
+        getApp().globalData.showPrivacy = false
+      }
+    },
+  })
 })
 onShow(() => {
   console.log('App Show')

@@ -102,6 +102,7 @@
     "alova": "^3.3.3",
     "dayjs": "1.11.10",
     "element-plus": "^2.10.2",
+    "miniprogram-api-typings": "^4.1.0",
     "pinia": "2.0.36",
     "pinia-plugin-persistedstate": "3.2.1",
     "vue": "^3.4.21",

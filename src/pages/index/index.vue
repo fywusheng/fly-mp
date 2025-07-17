@@ -80,11 +80,16 @@ onLoad((option) => {
 
 <template>
   <view class="bg-white">
+    <!-- 协议弹窗 -->
+    <privacyPopup />
+
+    <!-- 内容区 -->
     <Home v-show="tabbar === 'home'" />
     <Find v-show="tabbar === 'find'" />
     <Infor v-show="tabbar === 'infor'" />
     <Mine v-show="tabbar === 'mine'" />
 
+    <!-- 底部导航栏 -->
     <wd-tabbar v-model="tabbar" placeholder safe-area-inset-bottom fixed>
       <wd-tabbar-item
         v-for="item in tabbarItems"

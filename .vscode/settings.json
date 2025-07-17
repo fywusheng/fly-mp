@@ -50,7 +50,7 @@
     "Weixin"
   ],
   "typescript.tsdk": "node_modules\\typescript\\lib",
-  "explorer.fileNesting.enabled": true,
+  "explorer.fileNesting.enabled": false,
   "explorer.fileNesting.expand": false,
   "explorer.fileNesting.patterns": {
     "README.md": "index.html,favicon.ico,robots.txt,CHANGELOG.md",

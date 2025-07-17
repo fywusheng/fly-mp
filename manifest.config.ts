@@ -118,10 +118,15 @@ export default defineManifestConfig({
       es6: true,
       minified: true,
       ignoreDevUnusedFiles: false,
-      ignoreUploadUnusedFiles: false
+      ignoreUploadUnusedFiles: false,
     },
     usingComponents: true,
-    // __usePrivacyCheck__: true,
+    __usePrivacyCheck__: true,
+    permission: {
+      'scope.userLocation': {
+        desc: '以便为您提供更好的服务',
+      },
+    },
   },
   'mp-alipay': {
     usingComponents: true,

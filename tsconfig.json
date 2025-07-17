@@ -11,6 +11,7 @@
     },
     "resolveJsonModule": true,
     "types": [
+      "miniprogram-api-typings",
       "@dcloudio/types",
       "@uni-helper/uni-types",
       "wot-design-uni/global.d.ts",
