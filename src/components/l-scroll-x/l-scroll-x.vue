@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { computed, getCurrentInstance, ref } from 'vue'
-
 defineOptions({
   name: 'LScrollX',
 })
@@ -149,44 +147,33 @@ function scroll(e: any) {
 </template>
 
 <style lang="scss">
-  $prefix: l !default;
-  $scrollx: #{$prefix}-scroll-x;
-  $scrollx-track-width: 24px;
-  $scrollx-track-height: 4px;
-  $scrollx-track-color: rgba(0, 0, 0, 0.06);
-  $scrollx-bar-color: #fa2c19;
-  $scrollx-bar-width: 12px;
-
-.#{$scrollx} {
-  // #ifndef APP-IOS || APP-ANDROID || APP-HARMONY
+.l-scroll-x {
   display: flex;
   flex-direction: column;
   transition: height 50ms linear;
-  ::-webkit-scrollbar {
+  &::-webkit-scrollbar {
     display: none;
     width: 0;
     height: 0;
     color: transparent;
   }
-  // #endif
   &__view {
     flex-direction: row;
-  white-space: nowrap;
+    white-space: nowrap;
   }
   &__track {
     position: relative;
-    // margin-top: 10px;
-    height: $scrollx-track-height;
-    width: $scrollx-track-width;
-    background-color: $scrollx-track-color;
+    height: 4px;
+    width: 24px;
+    background-color: rgba(0, 0, 0, 0.06);
     border-radius: 99px;
     align-self: center;
   }
   &__bar {
     position: absolute;
     height: 100%;
-    width: $scrollx-bar-width;
-    background-color: $scrollx-bar-color;
+    width: 12px;
+    background-color: #fa2c19;
     border-radius: 99px;
   }
 }
