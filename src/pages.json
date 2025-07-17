@@ -21,7 +21,8 @@
       "layout": "tabbar",
       "style": {
         "navigationStyle": "custom",
-        "navigationBarTitleText": "首页"
+        "navigationBarTitleText": "首页",
+        "backgroundColor": "#6EA6F6"
       }
     },
     {
