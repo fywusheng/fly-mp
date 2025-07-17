@@ -11,18 +11,28 @@
 </route>
 
 <script lang="ts" setup>
-// import PLATFORM from '@/utils/platform'
 import Find from './components/Find.vue'
 import Home from './components/Home.vue'
 import Infor from './components/Infor.vue'
 import Mine from './components/Mine.vue'
 
+// 类型定义
+interface TabbarItem {
+  name: string
+  title: string
+  icon: string
+  activeIcon: string
+}
+
 defineOptions({
   name: 'Home',
 })
 
-const tabbar = ref('')
-const tabbarItems = [
+// 页面状态
+const tabbar = ref<string>('home')
+
+// 标签栏配置
+const tabbarItems: TabbarItem[] = [
   {
     name: 'home',
     title: '骑行',
@@ -49,8 +59,11 @@ const tabbarItems = [
   },
 ]
 
-onLoad((option) => {
-  tabbar.value = option.name || 'home'
+// 处理页面加载参数
+onLoad((option: Record<string, string>) => {
+  // 验证选项卡是否有效
+  const validTab = option?.name && tabbarItems.some(item => item.name === option.name)
+  tabbar.value = validTab ? option.name : 'home'
 })
 </script>
 
@@ -80,6 +93,7 @@ onLoad((option) => {
             height="40rpx"
             width="40rpx"
             :src="tabbar === item.name ? item.activeIcon : item.icon"
+            mode="aspectFit"
           />
         </template>
       </wd-tabbar-item>

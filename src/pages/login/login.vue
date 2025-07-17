@@ -30,6 +30,10 @@ function onGetPhoneNumber(e: any) {
   }
   loading.value = false
 }
+
+function onCancel() {
+  uni.navigateBack()
+}
 </script>
 
 <template>
@@ -39,12 +43,15 @@ function onGetPhoneNumber(e: any) {
       :src="LogoIcon"
       mode="widthFix"
     />
-    <view class="mb-24rpx mt-131rpx text-24rpx text-white">
+    <view class="mb-24rpx mt-131rpx text-28rpx text-white">
       请登录后使用
     </view>
     <wd-button :loading="loading" open-type="getPhoneNumber" custom-class="custom-btn" size="large" @getphonenumber="onGetPhoneNumber">
-      登 录
+      立即登录
     </wd-button>
+    <view class="mt-24rpx text-28rpx text-white" @click="onCancel">
+      取消
+    </view>
     <image
       class="absolute bottom-37rpx right-0 w-750rpx"
       :src="ParticleIcon"
@@ -84,6 +91,7 @@ function onGetPhoneNumber(e: any) {
       background: rgba(75,127,251,0.8);
       border-radius: 50rpx;
       border: 2rpx solid #FFFFFF;
+      font-size: 48rpx;
     }
   }
 }
