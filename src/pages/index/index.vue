@@ -11,7 +11,7 @@
 </route>
 
 <script lang="ts" setup>
-import PLATFORM from '@/utils/platform'
+// import PLATFORM from '@/utils/platform'
 import Find from './components/Find.vue'
 import Home from './components/Home.vue'
 import Infor from './components/Infor.vue'

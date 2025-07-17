@@ -1,13 +1,7 @@
 <script lang="ts">
 // @ts-nocheck
-interface ScrollXProps {
-  trackWidth?: string
-  trackHeight?: string
-  trackColor?: string
-  barColor?: string
-  barWidth?: string
-  indicator: boolean
-}
+import type { ComponentInternalInstance } from 'vue'
+
 /**
  * 获取节点信息
  * @param selector 选择器字符串
@@ -18,14 +12,11 @@ interface ScrollXProps {
 function getRect(selector: string, context: ComponentInternalInstance | ComponentPublicInstance, node: boolean = false) {
   // 之前是个对象，现在改成实例，防止旧版会报错
   if (context == null) {
-    return Promise.reject('context is null')
-  }
-  if (context.context) {
-    context = context.context
+    return Promise.reject(new Error('context is null'))
   }
   // #ifdef MP || VUE2
-  if (context.proxy)
-    context = context.proxy
+  if ((context as any).proxy)
+    context = (context as any).proxy
   // #endif
   return new Promise<UniNamespace.NodeInfo>((resolve, reject) => {
     // #ifndef APP-NVUE
@@ -35,7 +26,7 @@ function getRect(selector: string, context: ComponentInternalInstance | Componen
         resolve(rect)
       }
       else {
-        reject('no rect')
+        reject(new Error('no rect'))
       }
     }
 
@@ -51,7 +42,7 @@ function getRect(selector: string, context: ComponentInternalInstance | Componen
     }
     // #endif
     // #ifdef APP-NVUE
-    const refs = context.refs || context.$refs
+    const refs = (context as any).$refs
     if (/#|\./.test(selector) && refs) {
       selector = selector.replace(/#|\./, '')
       if (refs[selector]) {
@@ -61,12 +52,13 @@ function getRect(selector: string, context: ComponentInternalInstance | Componen
         }
       }
     }
+
     dom.getComponentRect(selector, (res) => {
       if (res.size) {
         resolve(res.size)
       }
       else {
-        reject('no rect')
+        reject(new Error('no rect'))
       }
     })
     // #endif
@@ -130,7 +122,7 @@ export default defineComponent({
       return style
     })
 
-    const scroll = (e: UniScrollEvent) => {
+    const scroll = (e: any) => {
       Promise.all([
         getRect('.l-scroll-x__view', instance),
         getRect('.l-scroll-x__track', instance),
