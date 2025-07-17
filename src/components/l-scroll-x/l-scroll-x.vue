@@ -1,33 +1,51 @@
-<script lang="ts">
-// @ts-nocheck
-import type { ComponentInternalInstance } from 'vue'
+<script setup lang="ts">
+import { computed, getCurrentInstance, ref } from 'vue'
+
+defineOptions({
+  name: 'LScrollX',
+})
+
+const props = withDefaults(defineProps<ScrollXProps>(), {
+  trackWidth: null,
+  trackHeight: null,
+  trackColor: null,
+  barColor: null,
+  barWidth: null,
+  indicator: true,
+})
+
+// 定义组件 Props
+interface ScrollXProps {
+  trackWidth?: string | null
+  trackHeight?: string | null
+  trackColor?: string | null
+  barColor?: string | null
+  barWidth?: string | null
+  indicator?: boolean
+}
 
 /**
  * 获取节点信息
  * @param selector 选择器字符串
- * @param context ComponentInternalInstance 对象
+ * @param context 组件实例对象
  * @param node 是否获取node
  * @returns 包含节点信息的 Promise 对象
  */
-function getRect(selector: string, context: ComponentInternalInstance | ComponentPublicInstance, node: boolean = false) {
-  // 之前是个对象，现在改成实例，防止旧版会报错
-  if (context == null) {
+function getRect(selector: string, context: any, node = false): Promise<UniNamespace.NodeInfo> {
+  if (!context) {
     return Promise.reject(new Error('context is null'))
   }
-  // #ifdef MP || VUE2
-  if ((context as any).proxy)
-    context = (context as any).proxy
-  // #endif
+
+  // 兼容处理不同平台的上下文
+  if (context.proxy) {
+    context = context.proxy
+  }
+
   return new Promise<UniNamespace.NodeInfo>((resolve, reject) => {
     // #ifndef APP-NVUE
     const dom = uni.createSelectorQuery().in(context).select(selector)
     const result = (rect: UniNamespace.NodeInfo) => {
-      if (rect) {
-        resolve(rect)
-      }
-      else {
-        reject(new Error('no rect'))
-      }
+      rect ? resolve(rect) : reject(new Error('no rect'))
     }
 
     if (!node) {
@@ -41,8 +59,9 @@ function getRect(selector: string, context: ComponentInternalInstance | Componen
       }, result).exec()
     }
     // #endif
+
     // #ifdef APP-NVUE
-    const refs = (context as any).$refs
+    const refs = context.$refs
     if (/#|\./.test(selector) && refs) {
       selector = selector.replace(/#|\./, '')
       if (refs[selector]) {
@@ -53,92 +72,60 @@ function getRect(selector: string, context: ComponentInternalInstance | Componen
       }
     }
 
-    dom.getComponentRect(selector, (res) => {
-      if (res.size) {
-        resolve(res.size)
-      }
-      else {
-        reject(new Error('no rect'))
-      }
+    // 使用NVUE专用API
+    uni.requireNativePlugin('dom').getComponentRect(selector, (res: any) => {
+      res.size ? resolve(res.size) : reject(new Error('no rect'))
     })
     // #endif
   })
-};
+}
 
-export default defineComponent({
-  name: 'LScrollX',
-  props: {
-    trackWidth: {
-      type: String,
-      default: null,
-    },
-    trackHeight: {
-      type: String,
-      default: null,
-    },
-    trackColor: {
-      type: String,
-      default: null,
-    },
-    barColor: {
-      type: String,
-      default: null,
-    },
-    barWidth: {
-      type: String,
-      default: null,
-    },
-    indicator: {
-      type: Boolean,
-      default: true,
-    },
-  },
-  setup(props) {
-    const instance = getCurrentInstance().proxy!
-    const trackStyle = computed(() => {
-      const style: Record<string, any> = {}
-      if (props.trackColor != null) {
-        style.background = props.trackColor!
-      }
-      if (props.trackHeight != null) {
-        style.height = props.trackHeight!
-      }
-      if (props.trackWidth != null) {
-        style.width = props.trackWidth!
-      }
-      return style
-    })
+// 组件内部状态
+const instance = getCurrentInstance()?.proxy
+const x = ref(0)
+const showIndicator = ref(props.indicator)
 
-    const x = ref(0)
-    const barStyle = computed(() => {
-      const style: Record<string, any> = {}
-      if (props.barColor != null) {
-        style.background = props.barColor!
-      }
-      if (props.barWidth != null) {
-        style.width = props.barWidth!
-      }
-      style.transform = `translateX(${x.value}px)`
-      return style
-    })
+// 计算滚动条轨道样式
+const trackStyle = computed(() => ({
+  ...(props.trackColor && { background: props.trackColor }),
+  ...(props.trackHeight && { height: props.trackHeight }),
+  ...(props.trackWidth && { width: props.trackWidth }),
+}))
 
-    const scroll = (e: any) => {
-      Promise.all([
-        getRect('.l-scroll-x__view', instance),
-        getRect('.l-scroll-x__track', instance),
-        getRect('.l-scroll-x__bar', instance),
-      ]).then(([scroll, track, bar]) => {
-        x.value = e.detail.scrollLeft / (e.detail.scrollWidth - scroll.width) * (track.width - bar.width)
-      })
+// 计算滚动条样式
+const barStyle = computed(() => ({
+  ...(props.barColor && { background: props.barColor }),
+  ...(props.barWidth && { width: props.barWidth }),
+  transform: `translateX(${x.value}px)`,
+}))
+
+// 处理滚动事件
+function scroll(e: any) {
+  if (!instance)
+    return
+
+  Promise.all([
+    getRect('.l-scroll-x__view', instance),
+    getRect('.l-scroll-x__track', instance),
+    getRect('.l-scroll-x__bar', instance),
+  ]).then(([scroll, track, bar]) => {
+    // 计算可滚动区域
+    const scrollable = e.detail.scrollWidth - scroll.width
+
+    // 根据可滚动内容和轨道宽度计算滑块位置
+    if (scrollable > 0) {
+      x.value = e.detail.scrollLeft / scrollable * (track.width - bar.width)
+      // 自动隐藏/显示指示器
+      showIndicator.value = scrollable > 0
     }
-
-    return {
-      trackStyle,
-      barStyle,
-      scroll,
+    else {
+      x.value = 0
+      showIndicator.value = false
     }
-  },
-})
+  }).catch((err) => {
+    console.error('滚动条计算错误:', err)
+  })
+}
 </script>
 
 <template>
@@ -155,19 +142,18 @@ export default defineComponent({
     >
       <slot />
     </scroll-view>
-    <view v-if="indicator" ref="trackRef" class="l-scroll-x__track" :style="[trackStyle]">
-      <view ref="barRef" class="l-scroll-x__bar" :style="[barStyle]" />
+    <view v-if="showIndicator" ref="trackRef" class="l-scroll-x__track" :style="trackStyle">
+      <view ref="barRef" class="l-scroll-x__bar" :style="barStyle" />
     </view>
   </view>
 </template>
 
 <style lang="scss">
   $prefix: l !default;
-  $pre: '--';
   $scrollx: #{$prefix}-scroll-x;
   $scrollx-track-width: 24px;
   $scrollx-track-height: 4px;
-  $scrollx-track-color:rgba(0,0,0,.06);
+  $scrollx-track-color: rgba(0, 0, 0, 0.06);
   $scrollx-bar-color: #fa2c19;
   $scrollx-bar-width: 12px;
 
