@@ -51,5 +51,29 @@
       }
     }
   ],
-  "subPackages": []
+  "subPackages": [
+    {
+      "root": "pages-car",
+      "pages": [
+        {
+          "path": "bind/index",
+          "type": "page",
+          "style": {
+            "navigationStyle": "default",
+            "navigationBarTitleText": "绑定设备",
+            "navigationBarBackgroundColor": "#ffffff"
+          }
+        },
+        {
+          "path": "interaction/index",
+          "type": "page",
+          "style": {
+            "navigationStyle": "default",
+            "navigationBarTitleText": "感应控车",
+            "navigationBarBackgroundColor": "#ffffff"
+          }
+        }
+      ]
+    }
+  ]
 }
