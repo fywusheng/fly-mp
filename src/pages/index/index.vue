@@ -12,14 +12,14 @@
 </route>
 
 <script lang="ts" setup>
-//4G+蓝牙
+// 4G+蓝牙
 import Find from './components/Find.vue'
 import Home from './components/Home.vue'
-import Infor from './components/Infor.vue'
-import Mine from './components/Mine.vue'
 // 蓝牙版本
 import HomeBlue from './components/HomeBlue.vue'
+import Infor from './components/Infor.vue'
 import InforBlue from './components/InforBlue.vue'
+import Mine from './components/Mine.vue'
 import MineBlue from './components/MineBlue.vue'
 
 // 类型定义
@@ -33,7 +33,6 @@ interface TabbarItem {
 defineOptions({
   name: 'Home',
 })
-
 
 const tabbar = ref<string>('home') // 页面状态
 const status = ref<string>('blue') // 车辆版本
@@ -75,7 +74,7 @@ const BluetoothTabbarItems: TabbarItem[] = [
     icon: '/static/tabbar/home.png',
     activeIcon: '/static/tabbar/home-active.png',
   },
-  
+
   {
     name: 'InforBlue',
     title: '数据',
@@ -94,7 +93,7 @@ const BluetoothTabbarItems: TabbarItem[] = [
 onLoad((option: Record<string, string>) => {
   // 初始化标签栏
   tabbarItems.value = status.value === 'blue' ? BluetoothTabbarItems : FourTabbarItems
-    // 验证选项卡是否有效
+  // 验证选项卡是否有效
   const validTab = option?.name && tabbarItems.value.some(item => item.name === option.name)
   tabbar.value = validTab ? option.name : 'HomeBlue'
 
@@ -106,7 +105,7 @@ onLoad((option: Record<string, string>) => {
     },
     fail: (error) => {
       console.log(`获取小程序位置失败：${error}`)
-    }
+    },
   })
 })
 </script>
@@ -121,7 +120,7 @@ onLoad((option: Record<string, string>) => {
     <Find v-show="tabbar === 'find'" />
     <Infor v-show="tabbar === 'infor'" />
     <Mine v-show="tabbar === 'mine'" />
-    
+
     <HomeBlue v-show="tabbar === 'HomeBlue'" />
     <InforBlue v-show="tabbar === 'InforBlue'" />
     <MineBlue v-show="tabbar === 'MineBlue'" />
