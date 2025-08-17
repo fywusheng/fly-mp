@@ -18,7 +18,20 @@ const distance = ref(1) // 感应距离
 const sliderRangeValue2 = ref([50, 150]) // 滑块范围值
 
 function onSubmitClick() {
-  console.log(distance.value)
+  uni.openAppAuthorizeSetting({
+    success (res) {
+      console.log(res)
+    },
+    fail (err) {
+      console.error(err)
+    },
+  })
+  // uni.navigateBack()
+  // wx.openAppAuthorizeSetting({
+  // success (res) {
+  //   console.log(res)
+  // }
+// })
 }
 </script>
 

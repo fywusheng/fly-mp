@@ -127,6 +127,9 @@ export default defineManifestConfig({
         desc: '以便为您提供更好的服务',
       },
     },
+    requiredPrivateInfos: [
+      "getLocation"
+    ],
     lazyCodeLoading: 'requiredComponents',
   },
   'mp-alipay': {

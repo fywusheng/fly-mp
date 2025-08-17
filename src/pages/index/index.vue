@@ -12,10 +12,15 @@
 </route>
 
 <script lang="ts" setup>
+//4G+蓝牙
 import Find from './components/Find.vue'
 import Home from './components/Home.vue'
 import Infor from './components/Infor.vue'
 import Mine from './components/Mine.vue'
+// 蓝牙版本
+import HomeBlue from './components/HomeBlue.vue'
+import InforBlue from './components/InforBlue.vue'
+import MineBlue from './components/MineBlue.vue'
 
 // 类型定义
 interface TabbarItem {
@@ -29,11 +34,13 @@ defineOptions({
   name: 'Home',
 })
 
-// 页面状态
-const tabbar = ref<string>('home')
 
-// 标签栏配置
-const tabbarItems: TabbarItem[] = [
+const tabbar = ref<string>('home') // 页面状态
+const status = ref<string>('blue') // 车辆版本
+const tabbarItems = ref<TabbarItem[]>([])
+
+// 4G+蓝牙标签栏配置
+const FourTabbarItems: TabbarItem[] = [
   {
     name: 'home',
     title: '骑行',
@@ -60,11 +67,47 @@ const tabbarItems: TabbarItem[] = [
   },
 ]
 
+// 蓝牙版标签栏配置
+const BluetoothTabbarItems: TabbarItem[] = [
+  {
+    name: 'HomeBlue',
+    title: '骑行',
+    icon: '/static/tabbar/home.png',
+    activeIcon: '/static/tabbar/home-active.png',
+  },
+  
+  {
+    name: 'InforBlue',
+    title: '数据',
+    icon: '/static/tabbar/data.png',
+    activeIcon: '/static/tabbar/data-active.png',
+  },
+  {
+    name: 'MineBlue',
+    title: '我的',
+    icon: '/static/tabbar/mine.png',
+    activeIcon: '/static/tabbar/mine-active.png',
+  },
+]
+
 // 处理页面加载参数
 onLoad((option: Record<string, string>) => {
-  // 验证选项卡是否有效
-  const validTab = option?.name && tabbarItems.some(item => item.name === option.name)
-  tabbar.value = validTab ? option.name : 'home'
+  // 初始化标签栏
+  tabbarItems.value = status.value === 'blue' ? BluetoothTabbarItems : FourTabbarItems
+    // 验证选项卡是否有效
+  const validTab = option?.name && tabbarItems.value.some(item => item.name === option.name)
+  tabbar.value = validTab ? option.name : 'HomeBlue'
+
+  // 获取小程序位置
+  uni.getLocation({
+    type: 'gcj02',
+    success: ({ longitude, latitude }) => {
+      console.log(`小程序位置：${longitude}, ${latitude}`)
+    },
+    fail: (error) => {
+      console.log(`获取小程序位置失败：${error}`)
+    }
+  })
 })
 </script>
 
@@ -78,6 +121,10 @@ onLoad((option: Record<string, string>) => {
     <Find v-show="tabbar === 'find'" />
     <Infor v-show="tabbar === 'infor'" />
     <Mine v-show="tabbar === 'mine'" />
+    
+    <HomeBlue v-show="tabbar === 'HomeBlue'" />
+    <InforBlue v-show="tabbar === 'InforBlue'" />
+    <MineBlue v-show="tabbar === 'MineBlue'" />
 
     <!-- 底部导航栏 -->
     <wd-tabbar v-model="tabbar" placeholder safe-area-inset-bottom fixed>

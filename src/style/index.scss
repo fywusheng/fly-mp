@@ -27,3 +27,16 @@ page {
   left: 0;
   bottom: 0;
 }
+
+.slide-text {
+  animation: slideFromRight 3s forwards; /* 直接在元素上定义动画 */
+}
+ 
+@keyframes slideFromRight {
+  0% {
+    transform: translateX(100%); /* 从右到左移动 */
+  }
+  100% {
+    transform: translateX(0); /* 移动到原点 */
+  }
+}
