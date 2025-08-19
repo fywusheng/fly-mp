@@ -72,6 +72,16 @@
             "navigationBarTitleText": "感应控车",
             "navigationBarBackgroundColor": "#ffffff"
           }
+        },
+        {
+          "path": "trackDetail/index",
+          "type": "page",
+          "layout": "default",
+          "style": {
+            "navigationStyle": "default",
+            "navigationBarTitleText": "轨迹详情",
+            "navigationBarBackgroundColor": "#ffffff"
+          }
         }
       ]
     }

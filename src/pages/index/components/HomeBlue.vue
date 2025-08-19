@@ -121,7 +121,7 @@ function toggleBluetooth() {
 
 function onItemClick(item) {
   console.log('点击了:', item)
-  if (status.value === 0) {
+  if (status.value === 0 || status.value === 1) {
     uni.showToast({
       title: '请先连接蓝牙',
       icon: 'none',
@@ -314,7 +314,7 @@ function onTouchEnd(event) {
         :src="TopIcon"
         mode="scaleToFill"
       />
-      <!-- top -->
+      <!-- 我的车辆&蓝牙状态 -->
       <view class="top-cont" :style="{ paddingTop: `${menuButtonInfo?.top + menuButtonInfo.height + 15}px` }">
         <view class="car flex items-center pl-29rpx" @click="show = true">
           <span class="text-30rpx font-bold">我的车辆</span>
@@ -359,43 +359,36 @@ function onTouchEnd(event) {
         </view>
       </view>
 
+      <!-- 蓝牙功能相关 -->
       <view class="relative z-10 mb-19rpx ml-20rpx mt-[-75rpx] box-border w-710rpx rounded-[10rpx] bg-white px-80rpx py-33rpx">
         <view
           class="slider relative z-11 mb-40rpx h-136rpx w-550rpx rounded-[136rpx]"
-          :style="{ background: status === 0 ? '#E6E6E6' : isUnlocked ? '#2CBC7B' : '#DB6477' }"
+          :style="{ background: status === 0 || status === 1 ? '#E6E6E6' : isUnlocked ? '#2CBC7B' : '#DB6477' }"
           @touchstart="onTouchStart"
           @touchmove="onTouchMove"
           @touchend="onTouchEnd"
         >
           <image
-            class="slider-bg absolute left-0 top-0 h-136rpx w-136rpx"
+            class="slider-bg absolute left-0 top-0 z-12 h-136rpx w-136rpx"
             :style="sliderStyle"
-            :src="status === 0 ? CloseBtnBrayIcon : isUnlocked ? CloseBtnIcon : CloseBtnRedIcon"
+            :src="status === 0 || status === 1 ? CloseBtnBrayIcon : isUnlocked ? CloseBtnIcon : CloseBtnRedIcon"
             mode="scaleToFill"
             @touchmove="onTouchMove"
           />
           <image
-            v-if="isUnlocked"
-            class="absolute left-73rpx top-36rpx h-64rpx w-101rpx"
-            :style="{ transform: isUnlocked ? 'rotate(0deg)' : 'rotate(180deg)' }"
-            :src="ArrowIcon"
-            mode="scaleToFill"
-          />
-          <image
-            v-else
-            class="absolute left-216rpx top-36rpx h-64rpx w-101rpx"
-            :style="{ transform: isUnlocked ? 'rotate(0deg)' : 'rotate(180deg)' }"
+            class="absolute top-36rpx h-64rpx w-101rpx"
+            :style="{ transform: isUnlocked ? 'rotate(0deg)' : 'rotate(180deg)', left: isUnlocked ? '73rpx' : '216rpx' }"
             :src="ArrowIcon"
             mode="scaleToFill"
           />
           <view
             class="absolute top-52rpx text-31rpx"
-            :style="{ left: isUnlocked ? '213rpx' : '353rpx', color: status === 0 ? '#333333' : isUnlocked ? '#ffffff' : '#ffffff' }"
+            :style="{ left: isUnlocked ? '213rpx' : '353rpx', color: status === 0 || status === 1 ? '#333333' : isUnlocked ? '#ffffff' : '#ffffff' }"
           >
-            {{ isUnlocked ? '滑动锁车' : '滑动开启' }}
+            {{ isUnlocked ? '滑动锁车' : '滑动开锁' }}
           </view>
         </view>
-        <l-scroll-x
+        <fg-scroll-x
           track-width="164rpx"
           track-height="10rpx"
           track-color="#EEEEEE"
@@ -405,15 +398,15 @@ function onTouchEnd(event) {
         >
           <view class="grid">
             <view v-for="item in list" :key="item.name" class="item" @click="onItemClick(item)">
-              <image mode="scaleToFill" class="item-img" :style="{ opacity: status === 0 ? '0.3' : '1' }" :src="item.active ? item.activeIcon : item.icon" />
+              <image mode="scaleToFill" class="item-img" :style="{ opacity: status === 2 ? '1' : '0.3' }" :src="item.active ? item.activeIcon : item.icon" />
               <text class="item-text">
                 {{ item.name }}
               </text>
             </view>
           </view>
-        </l-scroll-x>
+        </fg-scroll-x>
       </view>
-      <!-- bottom -->
+      <!-- 车辆位置 -->
       <view class="flex items-center justify-between px-20rpx">
         <view class="relative box-border w-710rpx rounded-[10rpx] bg-white px-25rpx py-23rpx">
           <view class="flex items-center justify-between">

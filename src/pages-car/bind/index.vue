@@ -16,6 +16,7 @@ const code = ref('')
 const name = ref('')
 const brand = ref('飞鸽')
 const color = ref('')
+const columns = ref(['选项1', '选项2', '选项3', '选项4', '选项5', '选项6', '选项7']) // 颜色列表
 
 function onScanClick() {
   uni.scanCode({
@@ -85,31 +86,12 @@ function onGoMenuClick() {
       <text>扫一扫</text>
     </view>
 
-    <view class="w-711rpx">
-      <text class="font-24rpx color-[#6E6E6E]">
-        设备信息
-      </text>
-      <view class="mt-8rpx">
+    <view class="mt-60rpx w-711rpx">
+      <view class="">
         <wd-cell-group border>
-          <wd-input v-model="code" size="large" label-width="30%" type="text" label="设备编码" required placeholder="请输入设备的SN编码" />
+          <wd-input v-model="code" label-width="30%" type="text" label="车辆编码" required placeholder="输入电动车的SN编码" />
         </wd-cell-group>
       </view>
-    </view>
-    <view class="mt-28rpx w-711rpx">
-      <text class="font-24rpx color-[#6E6E6E]">
-        车辆信息
-      </text>
-      <view class="mt-8rpx">
-        <wd-cell-group border>
-          <wd-input v-model="name" size="large" label-width="30%" type="text" label="车辆名字" placeholder="请输入车辆名称" />
-          <wd-input v-model="brand" size="large" label-width="30%" type="text" label="品牌" placeholder="请输入品牌" readonly />
-          <wd-input v-model="color" size="large" label-width="30%" type="text" label="颜色" placeholder="请输入颜色" />
-        </wd-cell-group>
-      </view>
-    </view>
-
-    <view class="mt-62rpx h-80rpx w-710rpx flex items-center justify-center rounded-[40rpx] bg-[#239AF6] color-white" @click="onSubmitClick">
-      提 交
     </view>
     <view class="font-24rpx mt-28rpx" @click="onGoMenuClick">
       <text class="color-[#6E6E6E]">
@@ -118,6 +100,37 @@ function onGoMenuClick() {
       <text class="color-[#239AF6]">
         请点击此处进行按钮绑定
       </text>
+    </view>
+    <view class="mt-28rpx w-711rpx">
+      <view class="mt-8rpx">
+        <wd-cell-group border>
+          <wd-input v-model="name" label-width="30%" type="text" label="车辆名字" placeholder="请输入车辆名称" />
+          <wd-input v-model="brand" label-width="30%" type="text" label="品牌" placeholder="请输入品牌" :disabled="true" />
+          <wd-cell value="内容">
+            <template #title>
+              <view class="text-24rpx">
+                颜色
+              </view>
+            </template>
+
+            <wd-picker v-model="color" :columns="columns" use-default-slot>
+              <view class="flex items-center justify-end">
+                <view v-if="color" class="mr-15rpx text-24rpx">
+                  {{ color }}
+                </view>
+                <view v-else class="mr-15rpx color-[#C8C8C8]">
+                  请选择颜色
+                </view>
+                <wd-icon name="arrow-down" size="20px" color="#6E6E6E" />
+              </view>
+            </wd-picker>
+          </wd-cell>
+        </wd-cell-group>
+      </view>
+    </view>
+
+    <view class="mt-62rpx h-80rpx w-710rpx flex items-center justify-center rounded-[40rpx] bg-[#239AF6] color-white" @click="onSubmitClick">
+      提 交
     </view>
   </view>
 </template>
@@ -132,5 +145,13 @@ function onGoMenuClick() {
   align-items: center;
   // padding: 16px;
   // border-radius: 8px;
+  :deep() {
+    .wd-input__inner {
+      text-align: right;
+    }
+    .wd-input__label-inner {
+      font-size: 24rpx;
+    }
+  }
 }
 </style>

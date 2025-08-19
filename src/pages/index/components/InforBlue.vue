@@ -32,6 +32,13 @@ function getPreviousDayTimestamp(): void {
 function getNextDayTimestamp(): void {
   date.value = dayjs(date.value).add(1, 'day').valueOf()
 }
+
+function goDetail(): void {
+  console.log('Navigating to track detail page')
+  uni.navigateTo({
+    url: '/pages-car/trackDetail/index',
+  })
+}
 </script>
 
 <template>
@@ -43,11 +50,22 @@ function getNextDayTimestamp(): void {
     />
     <!-- 行驶数据 -->
     <view class="relative flex justify-around" :style="{ paddingTop: `${menuButtonInfo?.top + menuButtonInfo.height + 10}px` }">
-      <image
+      <view class="relative h-136rpx w-128rpx flex items-center justify-end">
+        <image
+          class="h-136rpx w-128rpx"
+          :src="CarIcon"
+          mode="scaleToFill"
+        />
+        <view class="car-label">
+          我今年15岁了
+        </view>
+      </view>
+      <!-- <image
         class="h-136rpx w-128rpx"
         :src="CarIcon"
         mode="scaleToFill"
-      />
+      /> -->
+
       <view class="flex flex-col items-center justify-center pt-41rpx">
         <view class="text-24rpx text-[#333333] font-bold">
           累计出行(次)
@@ -146,9 +164,9 @@ function getNextDayTimestamp(): void {
         </view>
       </view>
 
-      <view>
+      <view @click="goDetail">
         <wd-swipe-action>
-          <view class="ml-20rpx mt-20rpx box-border w-710rpx rounded-8rpx bg-white py-30rpx">
+          <view class="ml-20rpx mt-20rpx box-border w-710rpx rounded-8rpx bg-white py-30rpx" @click="goDetail">
             <wd-steps :active="3" vertical>
               <wd-step :icon-slot="true">
                 <template #icon>
@@ -218,6 +236,23 @@ function getNextDayTimestamp(): void {
   // display: flex;
   // flex-direction: column;
   // align-items: center;
+  .car-label {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    background: #AD8AA9;
+    padding: 0rpx 8rpx;
+    height: 36rpx;
+    border-radius: 18rpx;
+    font-size: 20rpx;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2rpx solid #DA6579;
+  }
 }
 .action {
   height: 100%;

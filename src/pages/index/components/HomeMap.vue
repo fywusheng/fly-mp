@@ -51,7 +51,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <view class="mt-17rpx h-140rpx w-680rpx">
+  <view class="mt-17rpx h-140rpx w-660rpx">
     <map
       id="map"
       class="map"

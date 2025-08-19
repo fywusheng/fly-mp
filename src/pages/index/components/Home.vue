@@ -178,7 +178,7 @@ function onTouchEnd(event) {
             {{ isUnlocked ? '滑动锁车' : '滑动开启' }}
           </view>
         </view>
-        <l-scroll-x
+        <fg-scroll-x
           track-width="164rpx"
           track-height="10rpx"
           track-color="#EEEEEE"
@@ -194,7 +194,7 @@ function onTouchEnd(event) {
               </text>
             </view>
           </view>
-        </l-scroll-x>
+        </fg-scroll-x>
       </view>
       <!-- bottom -->
       <view class="flex items-center justify-between px-20rpx">

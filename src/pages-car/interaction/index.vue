@@ -19,10 +19,10 @@ const sliderRangeValue2 = ref([50, 150]) // 滑块范围值
 
 function onSubmitClick() {
   uni.openAppAuthorizeSetting({
-    success (res) {
+    success(res) {
       console.log(res)
     },
-    fail (err) {
+    fail(err) {
       console.error(err)
     },
   })
@@ -59,7 +59,7 @@ function onSubmitClick() {
           <view class="flex items-center justify-between px-30rpx">
             <text>近</text>
             <view class="w-516rpx">
-              <kw-slider
+              <fg-slider
                 v-model="distance"
                 bar-height="6"
                 :range="false"
@@ -76,7 +76,7 @@ function onSubmitClick() {
                     mode="scaleToFill"
                   />
                 </template>
-              </kw-slider>
+              </fg-slider>
             </view>
 
             <text>远</text>
