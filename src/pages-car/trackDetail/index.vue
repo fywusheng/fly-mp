@@ -89,14 +89,13 @@ onMounted(() => {
             </template>
             <template #title>
               <view class="text-[#666666]">
-                <span>广东省广州市珠海区广东省 广州市珠海区 (</span>
+                <span v-if="true">广东省广州市珠海区广东省 广州市珠海区 </span>
+                <span>(</span>
                 <span class="text-[#239AF6]">7:08</span>
                 <span>)</span>
-              </view>
-            </template>
-            <template v-if="false" #description>
-              <view class="text-[#DB6477]">
-                未获取位置信息，请打开手机定位
+                <text v-if="false" class="text-[#DB6477]">
+                  未获取位置信息，请打开手机定位
+                </text>
               </view>
             </template>
           </wd-step>
@@ -107,16 +106,14 @@ onMounted(() => {
               </view>
             </template>
             <template #title>
-              <view class="text-[#666666]">
-                <span>广东省广州市珠海区广东省 广州市珠海区 (</span>
+              <view class="text-[#333333]">
+                <span v-if="true">广东省广州市珠海区广东省 广州市珠海区 </span>
+                <span>(</span>
                 <span class="text-[#239AF6]">7:08</span>
                 <span>)</span>
-              </view>
-            </template>
-
-            <template v-if="false" #description>
-              <view class="text-[#DB6477]">
-                未获取位置信息，请打开手机定位
+                <text v-if="false" class="text-[#DB6477]">
+                  未获取位置信息，请打开手机定位
+                </text>
               </view>
             </template>
           </wd-step>

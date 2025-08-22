@@ -1,3 +1,4 @@
+<!-- eslint-disable vue/no-v-text-v-html-on-component -->
 <script lang="ts" setup>
 const props = defineProps({
   title: {
@@ -6,7 +7,7 @@ const props = defineProps({
   },
   message: {
     type: String,
-    default: '弹弹弹',
+    default: '',
   },
   messageId: {
     type: [String, Number],
@@ -31,6 +32,10 @@ const props = defineProps({
   closeOnClickModal: {
     type: Boolean,
     default: false,
+  },
+  confirmText: {
+    type: String,
+    default: '确定',
   },
 })
 
@@ -80,21 +85,20 @@ watch(() => props.closeOnClickModal, (val) => {
 </script>
 
 <template>
-  <wd-popup v-model="showPop" :close-on-click-modal="closeOnClickPop" custom-style="border-radius:32rpx;" @close="handleClose">
+  <wd-popup v-model="showPop" :z-index="1000" :close-on-click-modal="closeOnClickPop" custom-style="border-radius:32rpx;" @close="handleClose">
     <view class="flex flex-col items-center justify-center px-49rpx pb-70rpx pt-50rpx">
       <view class="mb-60rpx text-36rpx color-[#333333]">
         {{ title }}
       </view>
-      <view class="text-center text-28rpx color-[#666666]">
-        {{ message }}
-      </view>
+      <!-- <rich-text :nodes="message" /> -->
+      <view class="text-center text-28rpx color-[#666666]" v-html="message" />
     </view>
     <view v-if="showCancelBtn || showConfirmBtn" class="btn-cont">
       <view v-if="showCancelBtn" class="cancel-btn" @click="handleClose">
         取消
       </view>
       <view v-if="showConfirmBtn" class="confirm-btn" @click="handleConfirm">
-        确定
+        {{ confirmText }}
       </view>
     </view>
   </wd-popup>

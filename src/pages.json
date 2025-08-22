@@ -56,6 +56,15 @@
       "root": "pages-car",
       "pages": [
         {
+          "path": "addMember/index",
+          "type": "page",
+          "style": {
+            "navigationStyle": "default",
+            "navigationBarTitleText": "成员信息",
+            "navigationBarBackgroundColor": "#ffffff"
+          }
+        },
+        {
           "path": "bind/index",
           "type": "page",
           "style": {
@@ -65,11 +74,38 @@
           }
         },
         {
+          "path": "editCar/index",
+          "type": "page",
+          "style": {
+            "navigationStyle": "default",
+            "navigationBarTitleText": "编辑车辆",
+            "navigationBarBackgroundColor": "#ffffff"
+          }
+        },
+        {
           "path": "interaction/index",
           "type": "page",
           "style": {
             "navigationStyle": "default",
             "navigationBarTitleText": "感应控车",
+            "navigationBarBackgroundColor": "#ffffff"
+          }
+        },
+        {
+          "path": "myCar/index",
+          "type": "page",
+          "style": {
+            "navigationStyle": "default",
+            "navigationBarTitleText": "我的车辆",
+            "navigationBarBackgroundColor": "#ffffff"
+          }
+        },
+        {
+          "path": "shareCar/index",
+          "type": "page",
+          "style": {
+            "navigationStyle": "default",
+            "navigationBarTitleText": "分享与解绑",
             "navigationBarBackgroundColor": "#ffffff"
           }
         },

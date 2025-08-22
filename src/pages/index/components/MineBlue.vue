@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import AvatarIcon from '@/static/mine/avatar.png'
 import BindIcon from '@/static/mine/bind.png'
+import BlueAvatarIcon from '@/static/mine/blue-avatar.png'
 import CarSettingIcon from '@/static/mine/car-setting.png'
 import CustomerServiceIcon from '@/static/mine/customer-service.png'
-import FamilyIcon from '@/static/mine/family.png'
+// import FamilyIcon from '@/static/mine/family.png'
 import MyCarIcon from '@/static/mine/my-car.png'
 import RightIcon from '@/static/mine/right.png'
 import SettingIcon from '@/static/mine/setting.png'
+import ShareIcon from '@/static/mine/share.png'
 import TopBgIcon from '@/static/mine/top-bg.png'
 import UserManualIcon from '@/static/mine/user-manual.png'
 
@@ -20,24 +22,53 @@ const list = ref([
     icon: MyCarIcon,
   },
   {
-    name: '家庭成员',
-    icon: FamilyIcon,
+    name: '分享与解绑',
+    icon: ShareIcon,
   },
   {
     name: '绑定设备',
     icon: BindIcon,
   },
   {
-    name: '使用手册',
-    icon: UserManualIcon,
-  },
-  {
     name: '车辆设置',
     icon: CarSettingIcon,
   },
+  {
+    name: '使用手册',
+    icon: UserManualIcon,
+  },
+
 ])
 
 function handleListItemClick(item) {
+  switch (item.name) {
+    case '我的车辆':
+      uni.navigateTo({
+        url: '/pages-car/myCar/index',
+      })
+      break
+    case '分享与解绑':
+      uni.navigateTo({
+        url: '/pages-car/shareCar/index',
+      })
+      break
+    case '绑定设备':
+      uni.navigateTo({
+        url: '/pages-car/bind/index',
+      })
+      break
+    case '车辆设置':
+      uni.navigateTo({
+        url: '/pages-car/setting/index',
+      })
+      break
+    case '使用手册':
+      uni.navigateTo({
+        url: '/pages-car/userManual/index',
+      })
+      break
+  }
+  return
   uni.showToast({
     title: `点击了 ${item.name}`,
     icon: 'none',
@@ -74,7 +105,7 @@ function handleContact(e) {
     <view class="absolute left-288rpx top-210rpx">
       <image
         class="mb-18rpx h-173rpx w-173rpx"
-        :src="AvatarIcon"
+        :src="BlueAvatarIcon"
         mode="scaleToFill"
       />
       <view class="w-173rpx text-center text-36rpx text-white">
