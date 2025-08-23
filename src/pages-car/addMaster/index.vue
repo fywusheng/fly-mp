@@ -2,7 +2,7 @@
 {
   style: {
     navigationStyle: 'default',
-    navigationBarTitleText: '成员信息',
+    navigationBarTitleText: '车主信息',
     navigationBarBackgroundColor: '#ffffff',
   },
 }
@@ -106,27 +106,8 @@ onShareAppMessage(() => {
         <view class="mt-8rpx">
           <wd-cell-group border>
             <wd-input v-model="name" custom-style="text-align:left" label-width="15%" type="text" label="车辆名字" placeholder="请输入车辆名称" />
-            <wd-input v-model="brand" custom-style="text-align:right" label-width="30%" type="text" label="姓名" placeholder="请输入姓名" />
             <wd-input v-model="phone" custom-style="text-align:right" label-width="30%" type="text" label="手机号" placeholder="请输入手机号" />
-            <wd-cell value="与车主关系">
-              <template #title>
-                <view class="text-24rpx">
-                  与车主关系
-                </view>
-              </template>
-
-              <wd-picker v-model="color" :columns="columns" use-default-slot>
-                <view class="flex items-center justify-end">
-                  <view v-if="color" class="mr-15rpx text-24rpx">
-                    {{ color }}
-                  </view>
-                  <view v-else class="mr-15rpx text-24rpx color-[#C8C8C8]">
-                    请选择
-                  </view>
-                  <wd-icon name="arrow-down" size="20px" color="#6E6E6E" />
-                </view>
-              </wd-picker>
-            </wd-cell>
+            <wd-input v-model="code" custom-style="text-align:right" label-width="30%" type="text" label="验证码" placeholder="请输入验证码" />
           </wd-cell-group>
         </view>
       </view>

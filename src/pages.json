@@ -56,6 +56,15 @@
       "root": "pages-car",
       "pages": [
         {
+          "path": "addMaster/index",
+          "type": "page",
+          "style": {
+            "navigationStyle": "default",
+            "navigationBarTitleText": "车主信息",
+            "navigationBarBackgroundColor": "#ffffff"
+          }
+        },
+        {
           "path": "addMember/index",
           "type": "page",
           "style": {
@@ -88,6 +97,15 @@
           "style": {
             "navigationStyle": "default",
             "navigationBarTitleText": "感应控车",
+            "navigationBarBackgroundColor": "#ffffff"
+          }
+        },
+        {
+          "path": "keyBind/index",
+          "type": "page",
+          "style": {
+            "navigationStyle": "default",
+            "navigationBarTitleText": "车主信息",
             "navigationBarBackgroundColor": "#ffffff"
           }
         },

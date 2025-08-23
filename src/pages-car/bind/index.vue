@@ -36,36 +36,27 @@ function onScanClick() {
 }
 
 function onSubmitClick() {
-  if (!code.value || !name.value || !color.value) {
-    uni.showToast({
-      title: '请填写完整信息',
-      icon: 'none',
-    })
-    return
-  }
+  // if (!code.value || !name.value || !color.value) {
+  //   uni.showToast({
+  //     title: '请填写完整信息',
+  //     icon: 'none',
+  //   })
+  //   return
+  // }
 
-  // 提交绑定信息
-  uni.showLoading({
-    title: '提交中...',
+  uni.navigateTo({
+    url: `/pages-car/addMaster/index?info=${JSON.stringify({
+      name: name.value,
+      brand: brand.value,
+      color: color.value,
+      code: code.value,
+    })}`,
   })
-
-  // 模拟提交成功
-  setTimeout(() => {
-    uni.hideLoading()
-    uni.showToast({
-      title: '绑定成功',
-      icon: 'success',
-    })
-    // 跳转到菜单页面
-    uni.navigateTo({
-      url: '/pages-car/menu/index',
-    })
-  }, 1000)
 }
 
 function onGoMenuClick() {
   uni.navigateTo({
-    url: '/pages-car/menu/index',
+    url: '/pages-car/keyBind/index',
   })
 }
 </script>
@@ -105,7 +96,7 @@ function onGoMenuClick() {
       <view class="mt-8rpx">
         <wd-cell-group border>
           <wd-input v-model="name" label-width="30%" type="text" label="车辆名字" placeholder="请输入车辆名称" />
-          <wd-input v-model="brand" label-width="30%" type="text" label="品牌" placeholder="请输入品牌" :disabled="true" />
+          <wd-input v-model="brand" label-width="30%" type="text" label="品牌" placeholder="请输入品牌" :readonly="true" />
           <wd-cell value="内容">
             <template #title>
               <view class="text-24rpx">
@@ -130,7 +121,7 @@ function onGoMenuClick() {
     </view>
 
     <view class="mt-62rpx h-80rpx w-710rpx flex items-center justify-center rounded-[40rpx] bg-[#239AF6] color-white" @click="onSubmitClick">
-      提 交
+      下一步
     </view>
   </view>
 </template>
@@ -150,6 +141,10 @@ function onGoMenuClick() {
       text-align: right;
     }
     .wd-input__label-inner {
+      font-size: 24rpx;
+      color: #333333;
+    }
+    .wd-input__inner {
       font-size: 24rpx;
     }
   }

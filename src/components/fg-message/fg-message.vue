@@ -1,4 +1,3 @@
-<!-- eslint-disable vue/no-v-text-v-html-on-component -->
 <script lang="ts" setup>
 const props = defineProps({
   title: {
@@ -92,6 +91,7 @@ watch(() => props.closeOnClickModal, (val) => {
       </view>
       <!-- <rich-text :nodes="message" /> -->
       <view class="text-center text-28rpx color-[#666666]" v-html="message" />
+      <slot />
     </view>
     <view v-if="showCancelBtn || showConfirmBtn" class="btn-cont">
       <view v-if="showCancelBtn" class="cancel-btn" @click="handleClose">
