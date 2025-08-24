@@ -59,7 +59,7 @@ function handleListItemClick(item) {
       break
     case '车辆设置':
       uni.navigateTo({
-        url: '/pages-car/setting/index',
+        url: '/pages-car/settings/index',
       })
       break
     case '使用手册':
@@ -68,11 +68,7 @@ function handleListItemClick(item) {
       })
       break
   }
-  return
-  uni.showToast({
-    title: `点击了 ${item.name}`,
-    icon: 'none',
-  })
+  
 }
 
 function handleContact(e) {

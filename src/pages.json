@@ -119,6 +119,15 @@
           }
         },
         {
+          "path": "settings/index",
+          "type": "page",
+          "style": {
+            "navigationStyle": "default",
+            "navigationBarTitleText": "车辆设置",
+            "navigationBarBackgroundColor": "#ffffff"
+          }
+        },
+        {
           "path": "shareCar/index",
           "type": "page",
           "style": {
@@ -134,6 +143,69 @@
           "style": {
             "navigationStyle": "default",
             "navigationBarTitleText": "轨迹详情",
+            "navigationBarBackgroundColor": "#ffffff"
+          }
+        },
+        {
+          "path": "userBind/index",
+          "type": "page",
+          "style": {
+            "navigationStyle": "default",
+            "navigationBarTitleText": "飞鸽电动车",
+            "navigationBarBackgroundColor": "#ffffff"
+          }
+        },
+        {
+          "path": "userDesk/index",
+          "type": "page",
+          "style": {
+            "navigationStyle": "default",
+            "navigationBarTitleText": "飞鸽电动车",
+            "navigationBarBackgroundColor": "#ffffff"
+          }
+        },
+        {
+          "path": "userManual/index",
+          "type": "page",
+          "style": {
+            "navigationStyle": "default",
+            "navigationBarTitleText": "使用手册",
+            "navigationBarBackgroundColor": "#ffffff"
+          }
+        },
+        {
+          "path": "userOverSpeed/index",
+          "type": "page",
+          "style": {
+            "navigationStyle": "default",
+            "navigationBarTitleText": "飞鸽电动车",
+            "navigationBarBackgroundColor": "#ffffff"
+          }
+        },
+        {
+          "path": "userShare/index",
+          "type": "page",
+          "style": {
+            "navigationStyle": "default",
+            "navigationBarTitleText": "飞鸽电动车",
+            "navigationBarBackgroundColor": "#ffffff"
+          }
+        },
+        {
+          "path": "userStart/index",
+          "type": "page",
+          "style": {
+            "navigationStyle": "default",
+            "navigationBarTitleText": "飞鸽电动车",
+            "navigationBarBackgroundColor": "#ffffff"
+          }
+        },
+        {
+          "path": "userUse/index",
+          "type": "page",
+          "style": {
+            "navigationStyle": "default",
+            "navigationBarTitleText": "飞鸽电动车",
             "navigationBarBackgroundColor": "#ffffff"
           }
         }
