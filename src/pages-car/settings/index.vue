@@ -9,15 +9,11 @@
 </route>
 
 <script lang="ts" setup>
-import GreenCar from '@/static/mine/car-green.png'
-import RedCar from '@/static/mine/car-red.png'
-import White from '@/static/mine/car-white.png'
-import EditIcon from '@/static/mine/edit.png'
-import rightIcon from '@/static/mine/right.png'
 import AutoSheFang from '@/static/mine/auto-shefang.png'
 import AutoXihuo from '@/static/mine/auto-xihuo.png'
 import MuteShefang from '@/static/mine/mute-shefang.png'
 import OverSpeed from '@/static/mine/over-speed.png'
+import RemoteControl from '@/static/mine/remote-control.png'
 
 const columns = ref(['选项1', '选项2', '选项3', '选项4', '选项5', '选项6', '选项7'])
 const value = ref('选项1')
@@ -48,7 +44,7 @@ function handleOnConfirm({ value }) {
   value.value = value
 }
 
-const beforeChange = ({ value, resolve }) => {
+function beforeChange({ value, resolve }) {
   console.log('切换前的值:', value)
   setTimeout(() => {
     resolve(true)
@@ -62,7 +58,6 @@ const beforeChange = ({ value, resolve }) => {
     showMessagePopup.value = true
   }, 1000)
 }
-
 </script>
 
 <template>
@@ -74,79 +69,97 @@ const beforeChange = ({ value, resolve }) => {
       </view>
     </wd-picker>
 
-    <view class="mt-53rpx rounded-[10rpx] bg-white  text-24rpx">
+    <view class="mt-53rpx rounded-[10rpx] bg-white text-24rpx">
       <view class="flex items-center justify-between px-30rpx py-10rpx">
-        <view class=" flex items-center justify-center ">
+        <view class="flex items-center justify-center">
           <image
-            class="w-26rpx h-26rpx mr-20rpx"
+            class="mr-20rpx h-26rpx w-26rpx"
             :src="MuteShefang"
             mode="scaleToFill"
           />
           <view>静音设防</view>
         </view>
-       <wd-switch v-model="checked1" active-color="#2CBD7C" :before-change="beforeChange"/>
+        <wd-switch v-model="checked1" active-color="#2CBD7C" :before-change="beforeChange" />
       </view>
-      <view class="w-100% h-2rpx bg-[#E6E6E6]"></view>
+      <view class="h-2rpx w-100% bg-[#E6E6E6]" />
       <view class="relative box-border w-711rpx px-30rpx py-30rpx">
         功能开启后，车辆设防状态下，无喇叭报警提示音
       </view>
     </view>
-     <view class="mt-53rpx rounded-[10rpx] bg-white  text-24rpx">
+    <view class="mt-53rpx rounded-[10rpx] bg-white text-24rpx">
       <view class="flex items-center justify-between px-30rpx py-10rpx">
-        <view class=" flex items-center justify-center ">
+        <view class="flex items-center justify-center">
           <image
-            class="w-26rpx h-26rpx mr-20rpx"
+            class="mr-20rpx h-26rpx w-26rpx"
             :src="AutoXihuo"
             mode="scaleToFill"
           />
           <view>自动熄火</view>
         </view>
-       <wd-switch v-model="checked2" active-color="#2CBD7C" :before-change="beforeChange"/>
+        <wd-switch v-model="checked2" active-color="#2CBD7C" :before-change="beforeChange" />
       </view>
-      <view class="w-100% h-2rpx bg-[#E6E6E6]"></view>
+      <view class="h-2rpx w-100% bg-[#E6E6E6]" />
       <view class="relative box-border w-711rpx px-30rpx py-30rpx">
         功能开启后，车辆忘记熄火，车辆在5分钟后自动熄火
       </view>
     </view>
-     <view class="mt-53rpx rounded-[10rpx] bg-white  text-24rpx">
+    <view class="mt-53rpx rounded-[10rpx] bg-white text-24rpx">
       <view class="flex items-center justify-between px-30rpx py-10rpx">
-        <view class=" flex items-center justify-center ">
+        <view class="flex items-center justify-center">
           <image
-            class="w-26rpx h-26rpx mr-20rpx"
+            class="mr-20rpx h-26rpx w-26rpx"
             :src="AutoSheFang"
             mode="scaleToFill"
           />
           <view>自动设防</view>
         </view>
-       <wd-switch v-model="checked3" active-color="#2CBD7C" :before-change="beforeChange"/>
+        <wd-switch v-model="checked3" active-color="#2CBD7C" :before-change="beforeChange" />
       </view>
-      <view class="w-100% h-2rpx bg-[#E6E6E6]"></view>
+      <view class="h-2rpx w-100% bg-[#E6E6E6]" />
       <view class="relative box-border w-711rpx px-30rpx py-30rpx">
         功能开启后，车辆熄火后5秒未启动，将自动进入设防状态
       </view>
     </view>
-     <view class="mt-53rpx rounded-[10rpx] bg-white  text-24rpx">
+    <view class="mt-53rpx rounded-[10rpx] bg-white text-24rpx">
       <view class="flex items-center justify-between px-30rpx py-10rpx">
-        <view class=" flex items-center justify-center ">
+        <view class="flex items-center justify-center">
           <image
-            class="w-26rpx h-26rpx mr-20rpx"
+            class="mr-20rpx h-26rpx w-26rpx"
             :src="OverSpeed"
             mode="scaleToFill"
           />
           <view>超速报警提示音</view>
         </view>
-       <wd-switch v-model="checked4" active-color="#2CBD7C" :before-change="beforeChange"/>
+        <wd-switch v-model="checked4" active-color="#2CBD7C" :before-change="beforeChange" />
       </view>
-      <view class="w-100% h-2rpx bg-[#E6E6E6]"></view>
+      <view class="h-2rpx w-100% bg-[#E6E6E6]" />
       <view class="relative box-border w-711rpx px-30rpx py-30rpx">
         功能关闭后，车辆行驶速度超过15km/h不会有提示音
       </view>
     </view>
 
+    <view class="mt-53rpx rounded-[10rpx] bg-white text-24rpx">
+      <view class="flex items-center justify-between px-30rpx py-10rpx">
+        <view class="flex items-center justify-center">
+          <image
+            class="mr-20rpx h-26rpx w-26rpx"
+            :src="RemoteControl"
+            mode="scaleToFill"
+          />
+          <view>复制遥控器</view>
+        </view>
+        <wd-button size="medium">
+          复 制
+        </wd-button>
+      </view>
+      <view class="h-2rpx w-100% bg-[#E6E6E6]" />
+      <view class="relative box-border w-711rpx px-30rpx py-30rpx">
+        收到系统提示音后，按需要复制遥控器的解锁键，仅支持 频率为433的遥控设备
+      </view>
+    </view>
+
     <!-- 操作提示弹窗 -->
     <fg-message v-model:show="showMessagePopup" :duration="duration" :confirm-text="confirmText" :show-cancel-btn="showCancelBtn" :show-confirm-btn="showConfirmBtn" :close-on-click-modal="closeOnClickModal" :message="message" :message-id="messageId" @cancel="handleCancel" @confirm="handleConfirm" />
-
-   
   </view>
 </template>
 

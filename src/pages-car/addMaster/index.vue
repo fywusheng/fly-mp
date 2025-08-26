@@ -10,7 +10,6 @@
 
 <script lang="ts" setup>
 import ScanDescIcon from '@/static/car/scan-desc.png'
-import ScanIcon from '@/static/car/scan.png'
 import SuccessDefault from '@/static/mine/success-default.png'
 import YellowTips from '@/static/mine/yellow-tips.png'
 
@@ -24,8 +23,8 @@ const addFlag = ref(false)
 const showShare = ref(false)
 
 function onSubmitClick() {
-  showShare.value = true
-  return
+  // showShare.value = true
+  // return
   addFlag.value = true
   if (!code.value || !name.value || !phone.value) {
     uni.showToast({

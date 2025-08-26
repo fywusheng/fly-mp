@@ -20,12 +20,12 @@ import TopIcon from '@/static/home/top-bg.png'
 import WarnNoticeIcon from '@/static/home/warn-icon.png'
 import WarningIcon from '@/static/home/warning.png'
 import WhistleOpenIcon from '@/static/home/whistle-open.png'
-import WhistleIcon from '@/static/home/whistle.png'
 
+import WhistleIcon from '@/static/home/whistle.png'
 import {
   openAndSearchAndConnect,
 } from '@/utils/EvsBikeSdk'
-// import EVSBikeSDK from '@/utils/EVSBikeSDK_1.0.0'
+import EVSBikeSDK from '@/utils/EVSBikeSDK.v1.1.0'
 import HomeMap from './HomeMap.vue'
 
 defineOptions({
@@ -71,6 +71,7 @@ const state = ref({
   isLocked: true, // 锁车
   isArmed: false, // 设防
 })
+const devicesList = ref<UniApp.BluetoothDeviceInfo[]>([])
 const list = ref([{
   name: '车辆解防',
   icon: LockIcon,
@@ -94,7 +95,10 @@ const list = ref([{
 }])
 
 onMounted(() => {
-  connectBle()
+  // 获取位置信息和蓝牙权限
+  getLocationAndBlueAuth()
+  // connectBle()
+
   uni.createSelectorQuery()
     .in(getCurrentInstance().proxy)
     .select('.slider')
@@ -102,10 +106,82 @@ onMounted(() => {
       maxRight.value = res.width - 70 // 70为滑块的宽度
     })
     .exec()
-  setTimeout(() => {
-    console.log('弹出框自动关闭', showMessagePopup.value)
-  }, 3000)
 })
+
+function getLocationAndBlueAuth() {
+  uni.getSetting({
+    success(res) {
+      // 检测地理位置权限
+      if (!res.authSetting['scope.userLocation']) {
+        uni.showModal({
+          title: '请求权限',
+          content: '需要获取您的地理位置',
+          success(res) {
+            if (res.confirm) {
+              uni.openSetting({
+                success(res) {
+                  console.log('openSetting success', res.authSetting)
+                  if (res.authSetting['scope.userLocation']) {
+                    // 用户同意授权地理位置
+                    console.log('用户同意授权地理位置')
+                    uni.getLocation({
+                      type: 'wgs84',
+                      success(res1) {
+                        const latitude = res1.latitude
+                        const longitude = res1.longitude
+                        console.log(latitude, longitude)
+                      },
+                    })
+                  }
+                },
+              })
+            }
+          },
+        })
+      }
+      else {
+      // 已经授权，可以获取位置信息
+        uni.getLocation({
+          type: 'wgs84',
+          success(res1) {
+            const latitude = res1.latitude
+            const longitude = res1.longitude
+            console.log(latitude, longitude)
+          },
+        })
+      }
+      // 检测蓝牙权限
+      if (!res.authSetting['scope.bluetooth']) {
+        uni.showModal({
+          title: '请求权限',
+          content: '需要打开您的蓝牙权限',
+          success(res) {
+            if (res.confirm) {
+              uni.openSetting({
+                success(res) {
+                  console.log('openSetting success', res.authSetting)
+                  if (res.authSetting['scope.bluetooth']) {
+                    // 用户同意授权蓝牙
+                    console.log('用户同意授权蓝牙')
+
+                    // initBluetooth()
+                    connectBle()
+                  }
+                },
+              })
+            }
+          },
+        })
+      }
+      else {
+        // 已经授权，可以打开蓝牙
+        console.log('已经授权')
+        // initBluetooth()
+        connectBle()
+      }
+    },
+  })
+}
 
 // 蓝牙状态切换
 function toggleBluetooth() {
@@ -159,6 +235,65 @@ function onItemClick(item) {
       })
       break
   }
+}
+
+function initBluetooth() {
+  uni.onBluetoothAdapterStateChange((res) => {
+    console.log(`蓝牙状态变化,用户${res.available ? '打开' : '关闭'}蓝牙!`)
+    // btOpenStatus.value = res.available
+    devicesList.value = []
+    if (res.available) {
+      startBluetoothScan()
+    }
+    else {
+      // 停止扫描设备
+      // stopBluetoothScan()
+    }
+  })
+
+  uni.openBluetoothAdapter({
+    success: () => {
+      console.log('蓝牙适配器已打开!')
+      startBluetoothScan() // 开始扫描设备
+    },
+    fail: (err) => {
+      if (err.errMsg === 'openBluetoothAdapter:fail already opened') {
+        console.log('蓝牙已打开!')
+        startBluetoothScan() // 开始扫描蓝牙设备
+      }
+      else {
+        console.log('蓝牙未打开!')
+        // btOpenStatus.value = false
+        // showToast('蓝牙未打开!')
+      }
+    },
+  })
+}
+
+function startBluetoothScan() {
+  uni.startBluetoothDevicesDiscovery({
+    allowDuplicatesKey: true,
+    success: (res) => {
+      console.log('开始扫描蓝牙设备...', res)
+    },
+    fail: (err) => {
+      console.log('启动扫描失败', err)
+      // showToast('启动蓝牙扫描失败')
+    },
+  })
+  // 监听新发现的设备
+  uni.onBluetoothDeviceFound((res) => {
+    console.log('发现新设备', res)
+    // 遍历发现的设备
+    res.devices.forEach((device) => {
+      // 去重：根据 deviceId 判断是否已存在
+      const exists = devicesList.value.some(d => d.deviceId === device.deviceId)
+      if (!exists) {
+        devicesList.value.push(device)
+      }
+      console.log('当前设备列表:', devicesList.value)
+    })
+  })
 }
 
 // 连接蓝牙
