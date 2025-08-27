@@ -2,10 +2,16 @@
  * 用户信息
  */
 export interface IUserInfoVo {
-  id: number
-  username: string
   avatar: string
+  gender: number
+  lastLoginTime: string
+  mobile: string
+  nickname: string
+  openId: null
+  status: 1
   token: string
+  userId: number
+  userType: number
 }
 
 /**

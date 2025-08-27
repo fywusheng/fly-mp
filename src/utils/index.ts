@@ -161,3 +161,21 @@ export function getEnvBaseUploadUrl() {
 
   return baseUploadUrl
 }
+
+/**
+ * 获取当前位置
+ * @returns {Promise<uni.GetLocationSuccessRes>} 当前位置
+ */
+export function getLocation(): Promise<UniApp.GetLocationSuccess> {
+  return new Promise((resolve, reject) => {
+    uni.getLocation({
+      type: 'wgs84',
+      success: (res) => {
+        resolve(res)
+      },
+      fail: (err) => {
+        reject(err)
+      },
+    })
+  })
+}

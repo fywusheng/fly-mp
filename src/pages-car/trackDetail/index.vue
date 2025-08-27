@@ -10,9 +10,9 @@
 </route>
 
 <script lang="ts" setup>
-import EndPointIcon from '@/static/common/end-point.png'
-import StartPointIcon from '@/static/common/start-point.png'
-// import MapArrow from '@/static/home/map-arrow.png'
+const EndPointIcon = 'http://121.89.87.166/static/common/end-point.png'
+const StartPointIcon = 'http://121.89.87.166/static/common/start-point.png'
+// import MapArrow from 'http://121.89.87.166/static/home/map-arrow.png'
 
 // 使用ref定义响应式数据
 const scale = ref(16.5)

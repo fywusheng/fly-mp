@@ -9,8 +9,8 @@
 </route>
 
 <script lang="ts" setup>
-import UserStart from '@/static/mine/user-start.png'
-// import UserUse from '@/static/mine/user-use.png'
+const UserStart = 'http://121.89.87.166/static/mine/user-start.png'
+// import UserUse from 'http://121.89.87.166/static/mine/user-use.png'
 </script>
 
 <template>

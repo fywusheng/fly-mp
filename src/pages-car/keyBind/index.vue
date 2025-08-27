@@ -9,7 +9,7 @@
 </route>
 
 <script lang="ts" setup>
-import KeyIcon from '@/static/mine/key.png'
+const KeyIcon = 'http://121.89.87.166/static/mine/key.png'
 // message弹窗
 const showMessagePopup = ref(false) // 控制弹窗显示
 const messageId = ref<number>(0) // 弹窗ID
@@ -93,14 +93,16 @@ function onBindClick() {
     </view>
     <!-- 操作提示弹窗 -->
     <fg-message v-model:show="showMessagePopup" :title="title" :duration="duration" :confirm-text="confirmText" :show-cancel-btn="showCancelBtn" :show-confirm-btn="showConfirmBtn" :close-on-click-modal="closeOnClickModal" :message="message" :message-id="messageId" @cancel="handleCancel" @confirm="handleConfirm">
-      <view v-if="showSlot" class="text-[#666666] text-28rpx text-center">
+      <view v-if="showSlot" class="text-center text-28rpx text-[#666666]">
         <view class="flex items-center justify-center">
           <image
             class="h-40rpx w-40rpx"
             :src="KeyIcon"
             mode="scaleToFill"
           />
-          <view class="mx-25rpx">+</view>
+          <view class="mx-25rpx">
+            +
+          </view>
           <image
             class="h-40rpx w-40rpx"
             :src="KeyIcon"
@@ -108,7 +110,9 @@ function onBindClick() {
           />
         </view>
 
-        <view class="mt-25rpx">“Bi”提示音后松开等待绑定成功   30秒</view>
+        <view class="mt-25rpx">
+          “Bi”提示音后松开等待绑定成功   30秒
+        </view>
       </view>
     </fg-message>
   </view>

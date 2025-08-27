@@ -1,20 +1,25 @@
 <script setup lang="ts">
-import AvatarIcon from '@/static/mine/avatar.png'
-import BindIcon from '@/static/mine/bind.png'
-import BlueAvatarIcon from '@/static/mine/blue-avatar.png'
-import CarSettingIcon from '@/static/mine/car-setting.png'
-import CustomerServiceIcon from '@/static/mine/customer-service.png'
-// import FamilyIcon from '@/static/mine/family.png'
-import MyCarIcon from '@/static/mine/my-car.png'
-import RightIcon from '@/static/mine/right.png'
-import SettingIcon from '@/static/mine/setting.png'
-import ShareIcon from '@/static/mine/share.png'
-import TopBgIcon from '@/static/mine/top-bg.png'
-import UserManualIcon from '@/static/mine/user-manual.png'
+import { useUserStore } from '@/store'
 
 defineOptions({
   name: 'MineBlue',
 })
+
+const userStore = useUserStore()
+
+const AvatarIcon = 'http://121.89.87.166/static/mine/avatar.png'
+const BindIcon = 'http://121.89.87.166/static/mine/bind.png'
+const BlueAvatarIcon = 'http://121.89.87.166/static/mine/blue-avatar.png'
+const CarSettingIcon = 'http://121.89.87.166/static/mine/car-setting.png'
+const CustomerServiceIcon = 'http://121.89.87.166/static/mine/customer-service.png'
+// import FamilyIcon from 'http://121.89.87.166/static/mine/family.png'
+const MyCarIcon = 'http://121.89.87.166/static/mine/my-car.png'
+const RightIcon = 'http://121.89.87.166/static/mine/right.png'
+const SettingIcon = 'http://121.89.87.166/static/mine/setting.png'
+const ShareIcon = 'http://121.89.87.166/static/mine/share.png'
+const TopBgIcon = 'http://121.89.87.166/static/mine/top-bg.png'
+const UserManualIcon = 'http://121.89.87.166/static/mine/user-manual.png'
+
 // 功能列表
 const list = ref([
   {
@@ -41,6 +46,12 @@ const list = ref([
 ])
 
 function handleListItemClick(item) {
+  if (!userStore.userInfo.token) {
+    uni.navigateTo({
+      url: '/pages/login/login',
+    })
+    return
+  }
   switch (item.name) {
     case '我的车辆':
       uni.navigateTo({
@@ -68,15 +79,6 @@ function handleListItemClick(item) {
       })
       break
   }
-  
-}
-
-function handleContact(e) {
-  console.log('用户点击了联系按钮', e.detail)
-  uni.showToast({
-    title: '感谢您的联系！',
-    icon: 'none',
-  })
 }
 </script>
 
@@ -98,14 +100,14 @@ function handleContact(e) {
       :src="TopBgIcon"
       mode="widthFix"
     />
-    <view class="absolute left-288rpx top-210rpx">
+    <view class="absolute left-0 top-210rpx w-100% flex flex-col items-center justify-center">
       <image
         class="mb-18rpx h-173rpx w-173rpx"
         :src="BlueAvatarIcon"
         mode="scaleToFill"
       />
-      <view class="w-173rpx text-center text-36rpx text-white">
-        用户名
+      <view class="whitespace-nowrap text-center text-36rpx text-white">
+        {{ userStore.userInfo && userStore.userInfo.nickname ? userStore.userInfo.nickname : '--' }}
       </view>
     </view>
     <!-- 功能列表 -->

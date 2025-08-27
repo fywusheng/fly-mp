@@ -30,8 +30,8 @@ export function login(loginForm: ILoginForm) {
 /**
  * 获取用户信息
  */
-export function getUserInfo() {
-  return http.get<IUserInfoVo>('/user/info')
+export function getUserInfo(id) {
+  return http.get<IUserInfoVo>(`/user/mini/user/info/${id}`)
 }
 
 /**
@@ -78,6 +78,6 @@ export function getWxCode() {
  * @param params 微信登录参数，包含code
  * @returns Promise 包含登录结果
  */
-export function wxLogin(data: { code: string }) {
-  return http.post<IUserLogin>('/user/wxLogin', data)
+export function wxLogin({ code, phoneCode }) {
+  return http.post('/user/mini/user/sessions/wechat-with-phone', { code, phoneCode })
 }

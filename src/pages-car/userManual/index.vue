@@ -9,13 +9,12 @@
 </route>
 
 <script lang="ts" setup>
-import QuestionBind from '@/static/mine/question-bind.png'
-import QuestionDesk from '@/static/mine/question-desk.png'
-import QuestionOver from '@/static/mine/question-over.png'
-import QuestionStart from '@/static/mine/question-start.png'
-import QuestionUse from '@/static/mine/question-use.png'
-//
-import Question from '@/static/mine/question.png'
+const QuestionBind = 'http://121.89.87.166/static/mine/question-bind.png'
+const QuestionDesk = 'http://121.89.87.166/static/mine/question-desk.png'
+const QuestionOver = 'http://121.89.87.166/static/mine/question-over.png'
+const QuestionStart = 'http://121.89.87.166/static/mine/question-start.png'
+const QuestionUse = 'http://121.89.87.166/static/mine/question-use.png'
+const Question = 'http://121.89.87.166/static/mine/question.png'
 
 function goPage(url: string) {
   uni.navigateTo({

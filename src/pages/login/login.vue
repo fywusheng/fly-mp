@@ -9,24 +9,46 @@
 </route>
 
 <script lang="ts" setup>
-import CursorIcon from '@/static/login/cursor.png'
-import LogoIcon from '@/static/login/logo.png'
-import ParticleIcon from '@/static/login/particle.png'
+import { useUserStore } from '@/store'
 
 defineOptions({
   name: 'Login',
 })
+const userStore = useUserStore()
 const loading = ref(false)
+const CursorIcon = 'http://121.89.87.166/static/login/cursor.png'
+const LogoIcon = 'http://121.89.87.166/static/login/logo.png'
+const ParticleIcon = 'http://121.89.87.166/static/login/particle.png'
 
-function onGetPhoneNumber(e: any) {
+async function onGetPhoneNumber(e: any) {
+  // 处理获取到的手机号
+
   loading.value = true
-  if (e.detail.errMsg === 'getPhoneNumber:ok') {
-    // 处理获取到的手机号
-    console.log('手机号:', e.detail)
+  if (e.errMsg === 'getPhoneNumber:ok') {
+    // 登录
+    const res = await userStore.wxLogin({ phoneCode: e.code })
+    if (res.code === '200') {
+      // 登录成功
+      uni.showToast({
+        title: '登录成功',
+        icon: 'success',
+        duration: 500,
+      })
+      setTimeout(() => {
+        uni.navigateBack()
+      }, 500)
+    }
+    else {
+      // 登录失败
+      uni.showToast({
+        title: res.message || '登录失败',
+        duration: 2000,
+      })
+    }
   }
   else {
     // 用户拒绝授权
-    console.error('用户拒绝授权')
+    console.log('用户拒绝授权')
   }
   loading.value = false
 }

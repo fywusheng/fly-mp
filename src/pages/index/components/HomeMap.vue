@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import MapArrow from '@/static/home/map-arrow.png'
+const MapArrow = 'http://121.89.87.166/static/home/map-arrow.png'
 // 使用ref定义响应式数据
 const scale = ref(16.5)
 const location = ref({

@@ -9,8 +9,8 @@
 </route>
 
 <script lang="ts" setup>
-import ScanDescIcon from '@/static/car/scan-desc.png'
-import CarGreenIcon from '@/static/mine/bind-car-green.png'
+const ScanDescIcon = 'http://121.89.87.166/static/car/scan-desc.png'
+const CarGreenIcon = 'http://121.89.87.166/static/mine/bind-car-green.png'
 
 const code = ref('')
 const name = ref('')

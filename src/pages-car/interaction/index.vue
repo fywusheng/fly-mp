@@ -9,7 +9,7 @@
 </route>
 
 <script lang="ts" setup>
-import PointIcon from '@/static/car/point.png'
+const PointIcon = 'http://121.89.87.166/static/car/point.png'
 
 const isInductionCar = ref(true) // 感应控车
 const isInductionOpenCar = ref(true) // 感应开锁

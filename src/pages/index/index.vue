@@ -43,26 +43,26 @@ const FourTabbarItems: TabbarItem[] = [
   {
     name: 'home',
     title: '骑行',
-    icon: '/static/tabbar/home.png',
-    activeIcon: '/static/tabbar/home-active.png',
+    icon: 'http://121.89.87.166/static/tabbar/home.png',
+    activeIcon: 'http://121.89.87.166/static/tabbar/home-active.png',
   },
   {
     name: 'find',
     title: '发现',
-    icon: '/static/tabbar/find.png',
-    activeIcon: '/static/tabbar/find-active.png',
+    icon: 'http://121.89.87.166/static/tabbar/find.png',
+    activeIcon: 'http://121.89.87.166/static/tabbar/find-active.png',
   },
   {
     name: 'infor',
     title: '数据',
-    icon: '/static/tabbar/data.png',
-    activeIcon: '/static/tabbar/data-active.png',
+    icon: 'http://121.89.87.166/static/tabbar/data.png',
+    activeIcon: 'http://121.89.87.166/static/tabbar/data-active.png',
   },
   {
     name: 'mine',
     title: '我的',
-    icon: '/static/tabbar/mine.png',
-    activeIcon: '/static/tabbar/mine-active.png',
+    icon: 'http://121.89.87.166/static/tabbar/mine.png',
+    activeIcon: 'http://121.89.87.166/static/tabbar/mine-active.png',
   },
 ]
 
@@ -71,21 +71,21 @@ const BluetoothTabbarItems: TabbarItem[] = [
   {
     name: 'HomeBlue',
     title: '骑行',
-    icon: '/static/tabbar/home.png',
-    activeIcon: '/static/tabbar/home-active.png',
+    icon: 'http://121.89.87.166/static/tabbar/home.png',
+    activeIcon: 'http://121.89.87.166/static/tabbar/home-active.png',
   },
 
   {
     name: 'InforBlue',
     title: '数据',
-    icon: '/static/tabbar/data.png',
-    activeIcon: '/static/tabbar/data-active.png',
+    icon: 'http://121.89.87.166/static/tabbar/data.png',
+    activeIcon: 'http://121.89.87.166/static/tabbar/data-active.png',
   },
   {
     name: 'MineBlue',
     title: '我的',
-    icon: '/static/tabbar/mine.png',
-    activeIcon: '/static/tabbar/mine-active.png',
+    icon: 'http://121.89.87.166/static/tabbar/mine.png',
+    activeIcon: 'http://121.89.87.166/static/tabbar/mine-active.png',
   },
 ]
 
@@ -96,17 +96,6 @@ onLoad((option: Record<string, string>) => {
   // 验证选项卡是否有效
   const validTab = option?.name && tabbarItems.value.some(item => item.name === option.name)
   tabbar.value = validTab ? option.name : 'HomeBlue'
-
-  // 获取小程序位置
-  uni.getLocation({
-    type: 'gcj02',
-    success: ({ longitude, latitude }) => {
-      console.log(`小程序位置：${longitude}, ${latitude}`)
-    },
-    fail: (error) => {
-      console.log(`获取小程序位置失败：${error}`)
-    },
-  })
 })
 </script>
 

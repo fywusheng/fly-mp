@@ -1,28 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, getCurrentInstance } from 'vue'
-import CircleIcon from '@/static/car/circle.png'
-interface Props {
-  modelValue?: number | number[]
-  barHeight?: number | string
-  unit?: string
-  range?: boolean
-  customBlock?: boolean
-  backgroundColor?: string
-  activeColor?: string
-  labelColor?: string
-  blockColor?: string
-  tipColor?: string
-  tipBackgroundColor?: string
-  tipPosition?: 'top' | 'inner' | 'bottom'
-  showLabel?: boolean
-  showTip?: boolean
-  showSteps?: boolean
-  stepDotColor?: string
-  stepDotActiveColor?: string
-  min?: number
-  max?: number
-  step?: number
-}
+import { computed, getCurrentInstance, onMounted, ref, watch } from 'vue'
 
 const props = withDefaults(defineProps<Props>(), {
   modelValue: () => 0,
@@ -46,13 +23,35 @@ const props = withDefaults(defineProps<Props>(), {
   max: 100,
   step: 1,
 })
-
 const emit = defineEmits<{
   'update:modelValue': [value: number | number[]]
-  input: [value: number | number[]]
-  change: [value: number | number[]]
-  changing: [value: number | number[]]
+  'input': [value: number | number[]]
+  'change': [value: number | number[]]
+  'changing': [value: number | number[]]
 }>()
+const CircleIcon = 'http://121.89.87.166/static/car/circle.png'
+interface Props {
+  modelValue?: number | number[]
+  barHeight?: number | string
+  unit?: string
+  range?: boolean
+  customBlock?: boolean
+  backgroundColor?: string
+  activeColor?: string
+  labelColor?: string
+  blockColor?: string
+  tipColor?: string
+  tipBackgroundColor?: string
+  tipPosition?: 'top' | 'inner' | 'bottom'
+  showLabel?: boolean
+  showTip?: boolean
+  showSteps?: boolean
+  stepDotColor?: string
+  stepDotActiveColor?: string
+  min?: number
+  max?: number
+  step?: number
+}
 
 const instance = getCurrentInstance()
 const bindValue = ref<number | number[]>(0)
@@ -62,26 +61,26 @@ const isDragging = ref(false)
 const currentIndex = ref(-1)
 
 // 实时跟踪拖拽位置
-const dragPositions = ref<{ left?: number; right?: number }>({})
+const dragPositions = ref<{ left?: number, right?: number }>({})
 // 记录拖拽开始时的原始值，用于回退
-const originalValues = ref<{ left?: number; right?: number }>({})
+const originalValues = ref<{ left?: number, right?: number }>({})
 
 // 计算比率
 const rate = computed(() => (initWidth.value || 1) / (props.max - props.min))
 
 // 限制值在边界内
-const clampValue = (value: number) => {
+function clampValue(value: number) {
   return Math.max(props.min, Math.min(props.max, value))
 }
 
 // 对齐到步长
-const snapToStep = (value: number) => {
+function snapToStep(value: number) {
   const steps = Math.round((value - props.min) / props.step)
   return props.min + steps * props.step
 }
 
 // 检查值是否达到了一个完整的 step
-const isValidStep = (oldValue: number, newValue: number) => {
+function isValidStep(oldValue: number, newValue: number) {
   const oldSteps = Math.round((oldValue - props.min) / props.step)
   const newSteps = Math.round((newValue - props.min) / props.step)
   return oldSteps !== newSteps
@@ -89,93 +88,102 @@ const isValidStep = (oldValue: number, newValue: number) => {
 
 // 计算步长指示器
 const stepDots = computed(() => {
-  if (!props.showSteps || !initWidth.value) return []
-  
+  if (!props.showSteps || !initWidth.value)
+    return []
+
   const dots = []
   const totalSteps = Math.floor((props.max - props.min) / props.step)
-  
+
   for (let i = 0; i <= totalSteps; i++) {
     const stepValue = props.min + i * props.step
     const position = (stepValue - props.min) * rate.value
-    
+
     // 判断当前步长是否为激活状态
     let isActive = false
     if (props.range) {
       const values = bindValue.value as number[]
       let min = values[0]
       let max = values[1]
-      
+
       // 如果正在拖拽，使用实时位置计算
       if (isDragging.value) {
         if (currentIndex.value === 0 && dragPositions.value.left !== undefined) {
           min = props.min + dragPositions.value.left / rate.value
-        } else if (currentIndex.value === 1 && dragPositions.value.right !== undefined) {
+        }
+        else if (currentIndex.value === 1 && dragPositions.value.right !== undefined) {
           max = props.min + dragPositions.value.right / rate.value
         }
       }
-      
+
       isActive = stepValue >= min && stepValue <= max
-    } else {
+    }
+    else {
       let value = bindValue.value as number
-      
+
       // 如果正在拖拽，使用实时位置计算
       if (isDragging.value && dragPositions.value.left !== undefined) {
         value = props.min + dragPositions.value.left / rate.value
       }
-      
+
       isActive = stepValue <= value
     }
-    
+
     dots.push({
       value: stepValue,
       position,
       isActive,
     })
   }
-  
+
   return dots
 })
 
 // 滑块样式计算
 const minBlockStyle = computed(() => {
-  if (!props.range) return ''
+  if (!props.range)
+    return ''
   const values = bindValue.value as number[]
   let position = 0
-  
+
   if (isDragging.value && currentIndex.value === 0 && dragPositions.value.left !== undefined) {
     position = dragPositions.value.left
-  } else if (initWidth.value) {
+  }
+  else if (initWidth.value) {
     position = (values[0] - props.min) * rate.value
   }
-  
+
   return `left: ${position}px;`
 })
 
 const maxBlockStyle = computed(() => {
-  if (!props.range) return ''
+  if (!props.range)
+    return ''
   const values = bindValue.value as number[]
   let position = initWidth.value
-  
+
   if (isDragging.value && currentIndex.value === 1 && dragPositions.value.right !== undefined) {
     position = dragPositions.value.right
-  } else if (initWidth.value) {
+  }
+  else if (initWidth.value) {
     position = (values[1] - props.min) * rate.value
   }
-  
+
   return `left: ${position}px;`
 })
 
 const blockStyle = computed(() => {
-  if (props.range) return ''
+  if (props.range)
+    return ''
   const value = bindValue.value as number
   let position = initWidth.value
-  
+
   if (isDragging.value && dragPositions.value.left !== undefined) {
     position = dragPositions.value.left
-  } else if (initWidth.value) {
+  }
+  else if (initWidth.value) {
     position = (value - props.min) * rate.value
   }
-  
+
   return `left: ${position}px;`
 })
 
@@ -186,27 +194,29 @@ const progressBarStyle = computed(() => {
     const values = bindValue.value as number[]
     let min = values[0]
     let max = values[1]
-    
+
     // 如果正在拖拽，使用实时位置计算
     if (isDragging.value) {
       if (currentIndex.value === 0 && dragPositions.value.left !== undefined) {
         min = props.min + dragPositions.value.left / rate.value
-      } else if (currentIndex.value === 1 && dragPositions.value.right !== undefined) {
+      }
+      else if (currentIndex.value === 1 && dragPositions.value.right !== undefined) {
         max = props.min + dragPositions.value.right / rate.value
       }
     }
-    
+
     return initWidth.value
       ? `left: ${(min - props.min) * rate.value}px; width: ${(max - min) * rate.value}px;`
       : 'left: 0; width: 100%;'
-  } else {
+  }
+  else {
     const value = bindValue.value as number
     let currentValue = value
-    
+
     if (isDragging.value && dragPositions.value.left !== undefined) {
       currentValue = props.min + dragPositions.value.left / rate.value
     }
-    
+
     return initWidth.value
       ? `left: 0px; width: ${(currentValue - props.min) * rate.value}px;`
       : 'left: 0; width: 100%;'
@@ -247,14 +257,15 @@ const kwSliderStyle = computed(() => {
 })
 
 // 获取初始宽度
-const getInitWidth = () => {
+function getInitWidth() {
   uni.createSelectorQuery()
     .in(instance)
     .select('.kw-slider-bar')
     .fields({ size: true }, (data) => {
       if (data && !Array.isArray(data) && data.width) {
         initWidth.value = data.width
-      } else {
+      }
+      else {
         // 如果获取失败，延迟重试
         setTimeout(() => {
           getInitWidth()
@@ -265,36 +276,37 @@ const getInitWidth = () => {
 }
 
 // 初始化值
-const getInitValue = (newVal: number | number[]) => {
+function getInitValue(newVal: number | number[]) {
   if (Array.isArray(newVal)) {
     bindValue.value = [...newVal]
-  } else {
+  }
+  else {
     bindValue.value = newVal
   }
 }
 
 // 更新值
-const updateValue = () => {
+function updateValue() {
   emit('update:modelValue', bindValue.value)
   emit('input', bindValue.value)
   emit('change', bindValue.value)
 }
 
 // 触摸开始
-const onBlockTouchStart = (e: TouchEvent) => {
+function onBlockTouchStart(e: TouchEvent) {
   if (!initWidth.value) {
     getInitWidth()
     return
   }
-  
+
   const touch = e.changedTouches[0]
   const target = e.currentTarget as HTMLElement
-  const index = parseInt(target.dataset.index || '0')
-  
+  const index = Number.parseInt(target.dataset.index || '0')
+
   startX.value = touch.clientX
   currentIndex.value = index
   isDragging.value = true
-  
+
   // 记录原始值，用于不满足step时的回退
   if (props.range) {
     const values = bindValue.value as number[]
@@ -306,7 +318,8 @@ const onBlockTouchStart = (e: TouchEvent) => {
       left: (values[0] - props.min) * rate.value,
       right: (values[1] - props.min) * rate.value,
     }
-  } else {
+  }
+  else {
     const value = bindValue.value as number
     originalValues.value = {
       left: value,
@@ -318,90 +331,98 @@ const onBlockTouchStart = (e: TouchEvent) => {
 }
 
 // 触摸移动
-const onBlockTouchMove = (e: TouchEvent) => {
-  if (!isDragging.value || !initWidth.value) return
-  
+function onBlockTouchMove(e: TouchEvent) {
+  if (!isDragging.value || !initWidth.value)
+    return
+
   const touch = e.changedTouches[0]
   const deltaX = touch.clientX - startX.value
-  
+
   if (props.range) {
     const values = bindValue.value as number[]
-    
+
     if (currentIndex.value === 0) {
       // 左滑块
       let newPosition = (originalValues.value.left! - props.min) * rate.value + deltaX
       newPosition = Math.max(0, Math.min(newPosition, initWidth.value))
-      
+
       // 确保不超过右滑块
       const rightPosition = (values[1] - props.min) * rate.value
       newPosition = Math.min(newPosition, rightPosition)
-      
+
       dragPositions.value.left = newPosition
-      
+
       // 只在拖拽过程中更新视觉位置，不改变实际值
-    } else {
+    }
+    else {
       // 右滑块
       let newPosition = (originalValues.value.right! - props.min) * rate.value + deltaX
       newPosition = Math.max(0, Math.min(newPosition, initWidth.value))
-      
+
       // 确保不低于左滑块
       const leftPosition = (values[0] - props.min) * rate.value
       newPosition = Math.max(newPosition, leftPosition)
-      
+
       dragPositions.value.right = newPosition
     }
-  } else {
+  }
+  else {
     // 单个滑块
     let newPosition = (originalValues.value.left! - props.min) * rate.value + deltaX
     newPosition = Math.max(0, Math.min(newPosition, initWidth.value))
-    
+
     dragPositions.value.left = newPosition
   }
 }
 
 // 触摸结束
-const onBlockTouchEnd = () => {
-  if (!isDragging.value) return
-  
+function onBlockTouchEnd() {
+  if (!isDragging.value)
+    return
+
   if (props.range) {
     const values = bindValue.value as number[]
     let newValues = [...values]
     let hasChanged = false
-    
+
     if (currentIndex.value === 0 && dragPositions.value.left !== undefined) {
       // 左滑块
       const newValue = clampValue(snapToStep(props.min + dragPositions.value.left / rate.value))
-      
+
       // 检查是否达到了完整的step
       if (isValidStep(originalValues.value.left!, newValue) && newValue <= values[1]) {
         newValues[0] = newValue
         hasChanged = true
-      } else {
+      }
+      else {
         // 回到原始位置
         newValues[0] = originalValues.value.left!
       }
-    } else if (currentIndex.value === 1 && dragPositions.value.right !== undefined) {
+    }
+    else if (currentIndex.value === 1 && dragPositions.value.right !== undefined) {
       // 右滑块
       const newValue = clampValue(snapToStep(props.min + dragPositions.value.right / rate.value))
-      
+
       // 检查是否达到了完整的step
       if (isValidStep(originalValues.value.right!, newValue) && newValue >= values[0]) {
         newValues[1] = newValue
         hasChanged = true
-      } else {
+      }
+      else {
         // 回到原始位置
         newValues[1] = originalValues.value.right!
       }
     }
-    
+
     if (hasChanged) {
       bindValue.value = newValues
       updateValue()
     }
-  } else {
+  }
+  else {
     if (dragPositions.value.left !== undefined) {
       const newValue = clampValue(snapToStep(props.min + dragPositions.value.left / rate.value))
-      
+
       // 检查是否达到了完整的step
       if (isValidStep(originalValues.value.left!, newValue)) {
         bindValue.value = newValue
@@ -410,7 +431,7 @@ const onBlockTouchEnd = () => {
       // 如果没有达到完整step，保持原值不变
     }
   }
-  
+
   isDragging.value = false
   currentIndex.value = -1
   dragPositions.value = {}
@@ -425,7 +446,7 @@ watch(
       getInitValue(newVal)
     }
   },
-  { deep: true, immediate: true }
+  { deep: true, immediate: true },
 )
 
 onMounted(() => {
@@ -445,27 +466,27 @@ onMounted(() => {
     <view v-if="showLabel" class="kw-slider-label">
       {{ min }}{{ unit }}
     </view>
-    
+
     <view class="kw-slider-bar" :style="bgBarStyle">
       <view class="kai-slider-bar-progress" :style="progressBarStyle" />
-      
+
       <!-- 步长指示器 -->
       <template v-if="showSteps">
         <view
           v-for="dot in stepDots"
           :key="dot.value"
           class="kw-slider-step-dot"
-          :class="{ 'active': dot.isActive }"
+          :class="{ active: dot.isActive }"
           :style="`left: ${dot.position}px;`"
         >
-        <image
-        class="w-26rpx h-26rpx"
-          :src="CircleIcon"
-          mode="scaleToFill"
-        />
-      </view>
+          <image
+            class="h-26rpx w-26rpx"
+            :src="CircleIcon"
+            mode="scaleToFill"
+          />
+        </view>
       </template>
-      
+
       <template v-if="range">
         <view
           class="kw-slider-block"
@@ -481,7 +502,7 @@ onMounted(() => {
           </view>
           <slot name="minBlock" />
         </view>
-        
+
         <view
           class="kw-slider-block"
           :class="{ 'block-box': !customBlock }"
@@ -497,7 +518,7 @@ onMounted(() => {
           <slot name="maxBlock" />
         </view>
       </template>
-      
+
       <template v-else>
         <view
           class="kw-slider-block"
@@ -515,7 +536,7 @@ onMounted(() => {
         </view>
       </template>
     </view>
-    
+
     <view v-if="showLabel" class="kw-slider-label">
       {{ max }}{{ unit }}
     </view>
@@ -570,7 +591,7 @@ $kw-slider-transition: var(--kw-slider-transition, left 0.2s ease-out, width 0.2
   justify-content: center;
   align-items: center;
   // box-shadow: 0 1rpx 3rpx rgba(0, 0, 0, 0.2);
-  
+
   &.active {
     transform: translateY(-50%) translateX(-50%) scale(1.3);
     border-width: 3rpx;

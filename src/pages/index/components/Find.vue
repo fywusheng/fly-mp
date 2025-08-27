@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import BgIcon from '@/static/find/bg.png'
-import DescIcon from '@/static/find/desc.png'
-import FlyLogoIcon from '@/static/find/fly-logo.png'
-import FlyIcon from '@/static/find/fly.png'
-import HelloTextIcon from '@/static/find/helloText.png'
-import LineIcon from '@/static/find/line.png'
-
 defineOptions({
   name: 'Find',
 })
+const BgIcon = 'http://121.89.87.166/static/find/bg.png'
+const DescIcon = 'http://121.89.87.166/static/find/desc.png'
+const FlyLogoIcon = 'http://121.89.87.166/static/find/fly-logo.png'
+const FlyIcon = 'http://121.89.87.166/static/find/fly.png'
+const HelloTextIcon = 'http://121.89.87.166/static/find/helloText.png'
+const LineIcon = 'http://121.89.87.166/static/find/line.png'
+
 // 获取胶囊位置信息
 const menuButtonInfo = uni.getMenuButtonBoundingClientRect()
 const navHeight = ref(0)

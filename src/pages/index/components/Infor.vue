@@ -1,15 +1,14 @@
 <script setup lang="ts">
-import BgIcon from '@/static/infor/bg.png'
-import DataIcon from '@/static/infor/data.png'
-import HistoryIcon from '@/static/infor/history.png'
-import RightIcon from '@/static/infor/right.png'
-import RoundMileageIcon from '@/static/infor/round-mileage.png'
-import RoundTimeIcon from '@/static/infor/round-time.png'
-import TraceIcon from '@/static/infor/track.png'
-
 defineOptions({
   name: 'Infor',
 })
+const BgIcon = 'http://121.89.87.166/static/infor/bg.png'
+const DataIcon = 'http://121.89.87.166/static/infor/data.png'
+const HistoryIcon = 'http://121.89.87.166/static/infor/history.png'
+const RightIcon = 'http://121.89.87.166/static/infor/right.png'
+const RoundMileageIcon = 'http://121.89.87.166/static/infor/round-mileage.png'
+const RoundTimeIcon = 'http://121.89.87.166/static/infor/round-time.png'
+const TraceIcon = 'http://121.89.87.166/static/infor/track.png'
 </script>
 
 <template>

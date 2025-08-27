@@ -1,18 +1,18 @@
 <script setup lang="ts">
-import AvatarIcon from '@/static/mine/avatar.png'
-import BindIcon from '@/static/mine/bind.png'
-import CarSettingIcon from '@/static/mine/car-setting.png'
-import CustomerServiceIcon from '@/static/mine/customer-service.png'
-import FamilyIcon from '@/static/mine/family.png'
-import MyCarIcon from '@/static/mine/my-car.png'
-import RightIcon from '@/static/mine/right.png'
-import SettingIcon from '@/static/mine/setting.png'
-import TopBgIcon from '@/static/mine/top-bg.png'
-import UserManualIcon from '@/static/mine/user-manual.png'
-
 defineOptions({
   name: 'Mine',
 })
+const AvatarIcon = 'http://121.89.87.166/static/mine/avatar.png'
+const BindIcon = 'http://121.89.87.166/static/mine/bind.png'
+const CarSettingIcon = 'http://121.89.87.166/static/mine/car-setting.png'
+const CustomerServiceIcon = 'http://121.89.87.166/static/mine/customer-service.png'
+const FamilyIcon = 'http://121.89.87.166/static/mine/family.png'
+const MyCarIcon = 'http://121.89.87.166/static/mine/my-car.png'
+const RightIcon = 'http://121.89.87.166/static/mine/right.png'
+const SettingIcon = 'http://121.89.87.166/static/mine/setting.png'
+const TopBgIcon = 'http://121.89.87.166/static/mine/top-bg.png'
+const UserManualIcon = 'http://121.89.87.166/static/mine/user-manual.png'
+
 // 功能列表
 const list = ref([
   {

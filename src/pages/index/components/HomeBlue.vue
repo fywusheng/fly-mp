@@ -1,39 +1,50 @@
 <script setup lang="ts">
-import ArrowIcon from '@/static/home/arrow.png'
-import BlueConnect from '@/static/home/blue-connect.png'
-import BLueDisconnect from '@/static/home/blue-disconnect.png'
-import CloseBtnIcon from '@/static/home/close-bth.png'
-import CloseBtnBrayIcon from '@/static/home/close-btn-gray.png'
-import CloseBtnRedIcon from '@/static/home/close-btn-red.png'
-import DownIcon from '@/static/home/down.png'
-import FlyTitleIcon from '@/static/home/fly-title.png'
-import InductionOpenIcon from '@/static/home/induction-open.png'
-import InductionIcon from '@/static/home/induction.png'
-import LocationIcon from '@/static/home/location.png'
-import LockOpenIcon from '@/static/home/lock-open.png'
-import LockIcon from '@/static/home/lock.png'
-import ReloadIcon from '@/static/home/reload.png'
-import SpeakerOpenIcon from '@/static/home/speaker-open.png'
-import SpeakerIcon from '@/static/home/speaker.png'
-import SunIcon from '@/static/home/sun.png'
-import TopIcon from '@/static/home/top-bg.png'
-import WarnNoticeIcon from '@/static/home/warn-icon.png'
-import WarningIcon from '@/static/home/warning.png'
-import WhistleOpenIcon from '@/static/home/whistle-open.png'
-
-import WhistleIcon from '@/static/home/whistle.png'
+import { useUserStore } from '@/store'
+import { getLocation } from '@/utils'
 import {
   openAndSearchAndConnect,
 } from '@/utils/EvsBikeSdk'
 import EVSBikeSDK from '@/utils/EVSBikeSDK.v1.1.0'
+import { httpGet, httpPost } from '@/utils/http'
 import HomeMap from './HomeMap.vue'
 
 defineOptions({
   name: 'HomeBlue',
 })
+const ArrowIcon = 'http://121.89.87.166/static/home/arrow.png'
+const BlueConnect = 'http://121.89.87.166/static/home/blue-connect.png'
+const BLueDisconnect = 'http://121.89.87.166/static/home/blue-disconnect.png'
+const CloseBtnIcon = 'http://121.89.87.166/static/home/close-bth.png'
+const CloseBtnBrayIcon = 'http://121.89.87.166/static/home/close-btn-gray.png'
+const CloseBtnRedIcon = 'http://121.89.87.166/static/home/close-btn-red.png'
+const DownIcon = 'http://121.89.87.166/static/home/down.png'
+const FlyTitleIcon = 'http://121.89.87.166/static/home/fly-title.png'
+const InductionOpenIcon = 'http://121.89.87.166/static/home/induction-open.png'
+const InductionIcon = 'http://121.89.87.166/static/home/induction.png'
+const LocationIcon = 'http://121.89.87.166/static/home/location.png'
+const LockOpenIcon = 'http://121.89.87.166/static/home/lock-open.png'
+const LockIcon = 'http://121.89.87.166/static/home/lock.png'
+const ReloadIcon = 'http://121.89.87.166/static/home/reload.png'
+const SpeakerOpenIcon = 'http://121.89.87.166/static/home/speaker-open.png'
+const SpeakerIcon = 'http://121.89.87.166/static/home/speaker.png'
+const SunIcon = 'http://121.89.87.166/static/home/sun.png'
+const TopIcon = 'http://121.89.87.166/static/home/top-bg.png'
+const WarnNoticeIcon = 'http://121.89.87.166/static/home/warn-icon.png'
+const WarningIcon = 'http://121.89.87.166/static/home/warning.png'
+const WhistleOpenIcon = 'http://121.89.87.166/static/home/whistle-open.png'
 
+const WhistleIcon = 'http://121.89.87.166/static/home/whistle.png'
+
+const userStore = useUserStore()
 // 获取胶囊位置信息
 const menuButtonInfo = uni.getMenuButtonBoundingClientRect()
+const weatherInfo = ref<{
+  weather: string
+  temperature: number | string
+  temperatureDay: number | string
+  temperatureNight: number | string
+  weaImg: string
+}>({ weather: '', temperature: '', temperatureDay: '', temperatureNight: '', weaImg: '' }) // 天气信息
 // 滑动开锁相关
 const startX = ref(0)
 const sliderX = ref(0)
@@ -43,8 +54,13 @@ const isUnlocked = ref(false) // 是否解锁成功
 
 // 弹出框相关
 const show = ref(false)
-const columns = ref(['选项1', '选项2', '选项3', '选项4', '选项5', '选项6', '选项7'])
-const value = ref<string>('')
+const carList = ref([{ value: 13, label: '车辆1' }, { value: 14, label: '车辆2' }])
+const selectCarValue = ref<number>(14)
+const selectCar = ref<number>(0)
+
+function onChange({ picker, value, index }) {
+  console.log('当前选中项:', value, '下标:', index, selectCar.value)
+}
 // message弹窗
 const showMessagePopup = ref(false) // 控制弹窗显示
 const messageId = ref<number>(0) // 弹窗ID
@@ -71,7 +87,6 @@ const state = ref({
   isLocked: true, // 锁车
   isArmed: false, // 设防
 })
-const devicesList = ref<UniApp.BluetoothDeviceInfo[]>([])
 const list = ref([{
   name: '车辆解防',
   icon: LockIcon,
@@ -97,6 +112,12 @@ const list = ref([{
 onMounted(() => {
   // 获取位置信息和蓝牙权限
   getLocationAndBlueAuth()
+  // 已经登录
+  if (userStore.userInfo.userId) {
+    // 获取车辆列表
+    getCarList(userStore.userInfo.userId)
+  }
+
   // connectBle()
 
   uni.createSelectorQuery()
@@ -108,6 +129,7 @@ onMounted(() => {
     .exec()
 })
 
+// 获取位置和蓝牙权限
 function getLocationAndBlueAuth() {
   uni.getSetting({
     success(res) {
@@ -124,14 +146,7 @@ function getLocationAndBlueAuth() {
                   if (res.authSetting['scope.userLocation']) {
                     // 用户同意授权地理位置
                     console.log('用户同意授权地理位置')
-                    uni.getLocation({
-                      type: 'wgs84',
-                      success(res1) {
-                        const latitude = res1.latitude
-                        const longitude = res1.longitude
-                        console.log(latitude, longitude)
-                      },
-                    })
+                    getLocationAndWeather()
                   }
                 },
               })
@@ -140,15 +155,8 @@ function getLocationAndBlueAuth() {
         })
       }
       else {
-      // 已经授权，可以获取位置信息
-        uni.getLocation({
-          type: 'wgs84',
-          success(res1) {
-            const latitude = res1.latitude
-            const longitude = res1.longitude
-            console.log(latitude, longitude)
-          },
-        })
+        // 已经授权，可以获取位置信息
+        getLocationAndWeather()
       }
       // 检测蓝牙权限
       if (!res.authSetting['scope.bluetooth']) {
@@ -163,9 +171,7 @@ function getLocationAndBlueAuth() {
                   if (res.authSetting['scope.bluetooth']) {
                     // 用户同意授权蓝牙
                     console.log('用户同意授权蓝牙')
-
-                    // initBluetooth()
-                    connectBle()
+                    // connectBle()
                   }
                 },
               })
@@ -175,9 +181,8 @@ function getLocationAndBlueAuth() {
       }
       else {
         // 已经授权，可以打开蓝牙
-        console.log('已经授权')
-        // initBluetooth()
-        connectBle()
+        console.log('已经授权，可以打开蓝牙')
+        // connectBle()
       }
     },
   })
@@ -237,62 +242,27 @@ function onItemClick(item) {
   }
 }
 
-function initBluetooth() {
-  uni.onBluetoothAdapterStateChange((res) => {
-    console.log(`蓝牙状态变化,用户${res.available ? '打开' : '关闭'}蓝牙!`)
-    // btOpenStatus.value = res.available
-    devicesList.value = []
-    if (res.available) {
-      startBluetoothScan()
-    }
-    else {
-      // 停止扫描设备
-      // stopBluetoothScan()
-    }
-  })
-
-  uni.openBluetoothAdapter({
-    success: () => {
-      console.log('蓝牙适配器已打开!')
-      startBluetoothScan() // 开始扫描设备
-    },
-    fail: (err) => {
-      if (err.errMsg === 'openBluetoothAdapter:fail already opened') {
-        console.log('蓝牙已打开!')
-        startBluetoothScan() // 开始扫描蓝牙设备
-      }
-      else {
-        console.log('蓝牙未打开!')
-        // btOpenStatus.value = false
-        // showToast('蓝牙未打开!')
-      }
-    },
+// 获取位置信息和天气
+function getLocationAndWeather() {
+  getLocation().then((res) => {
+    // 根据当前位置获取天气信息
+    const { latitude, longitude } = res
+    httpGet(`/weather/location?latitude=${latitude}&longitude=${longitude}`).then((weatherRes) => {
+      weatherInfo.value = weatherRes.data as any
+    }).catch((err) => {
+      console.error('获取天气信息失败:', err)
+    })
+  }).catch((err) => {
+    console.error('获取位置失败:', err)
   })
 }
 
-function startBluetoothScan() {
-  uni.startBluetoothDevicesDiscovery({
-    allowDuplicatesKey: true,
-    success: (res) => {
-      console.log('开始扫描蓝牙设备...', res)
-    },
-    fail: (err) => {
-      console.log('启动扫描失败', err)
-      // showToast('启动蓝牙扫描失败')
-    },
-  })
-  // 监听新发现的设备
-  uni.onBluetoothDeviceFound((res) => {
-    console.log('发现新设备', res)
-    // 遍历发现的设备
-    res.devices.forEach((device) => {
-      // 去重：根据 deviceId 判断是否已存在
-      const exists = devicesList.value.some(d => d.deviceId === device.deviceId)
-      if (!exists) {
-        devicesList.value.push(device)
-      }
-      console.log('当前设备列表:', devicesList.value)
-    })
+// 获取车辆列表
+function getCarList(userId) {
+  httpPost('/user/mini/user/vehicles', { userId }).then((res) => {
+    carList.value = res.data as any
+  }).catch((err) => {
+    console.error('获取车辆列表失败:', err)
   })
 }
 
@@ -389,6 +359,9 @@ function onTapFindCar() {
 
 function onConfirm() {
   show.value = false
+  selectCar.value = selectCarValue.value
+  console.log('选中车辆selectCarValue:', selectCarValue.value)
+  console.log('选中车辆 selectCar:', selectCar.value)
 }
 
 function onTouchStart(event) {
@@ -458,20 +431,20 @@ function onTouchEnd(event) {
             :src="DownIcon"
             mode="aspectFit"
           />
-          <view class="ml-295rpx flex items-center justify-center color-[#333333]">
+          <view v-if="weatherInfo && weatherInfo.temperature" class="ml-295rpx flex items-center justify-center color-[#333333]">
             <image
               class="h-40rpx w-34rpx"
-              :src="SunIcon"
+              :src="weatherInfo.weaImg"
               mode="aspectFit"
             />
             <view class="slide-text flex items-center justify-center">
               <view class="ml-16rpx text-48rpx">
-                25°
+                {{ weatherInfo.temperature }}°
               </view>
               <view class="ml-12rpx text-20rpx">
-                <view>晴</view>
+                <view>{{ weatherInfo.weather }}</view>
                 <view>
-                  33°/18°
+                  {{ weatherInfo.temperatureDay }}°/{{ weatherInfo.temperatureNight }}°
                 </view>
               </view>
             </view>
@@ -570,7 +543,7 @@ function onTouchEnd(event) {
     </view>
   </view>
   <!-- 车辆选择 -->
-  <wd-popup v-model="show" :z-index="100" position="bottom" custom-style="border-radius:32rpx;">
+  <wd-popup v-model="show" :z-index="100" position="bottom" custom-style="border-radius:32rpx;" :close-on-click-modal="false">
     <view class="flex justify-between px-30rpx py-40rpx text-40rpx">
       <view class="color-[#999999]" @click="show = false">
         取消
@@ -579,7 +552,7 @@ function onTouchEnd(event) {
         确认
       </view>
     </view>
-    <wd-picker-view v-model="value" :columns="columns" />
+    <wd-picker-view v-model="selectCarValue" :columns="carList" @change="onChange" />
   </wd-popup>
   <!-- 操作提示弹窗 -->
   <fg-message v-model:show="showMessagePopup" :duration="duration" :show-cancel-btn="showCancelBtn" :show-confirm-btn="showConfirmBtn" :close-on-click-modal="closeOnClickModal" :message-id="messageId" @cancel="handleCancel" @confirm="handleConfirm" />

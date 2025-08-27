@@ -24,15 +24,16 @@ export const useUserStore = defineStore(
     // 定义用户信息
     const userInfo = ref<IUserInfoVo>({ ...userInfoState })
     // 设置用户信息
-    const setUserInfo = (val: IUserInfoVo) => {
-      console.log('设置用户信息', val)
-      // 若头像为空 则使用默认头像
-      if (!val.avatar) {
-        val.avatar = userInfoState.avatar
-      }
-      else {
-        val.avatar = 'https://oss.laf.run/ukw0y1-site/avatar.jpg?feige'
-      }
+    const setUserInfo = (val: IUserInfoVo, token: string) => {
+      console.log('设置用户信息', val, token)
+      val.token = token || uni.getStorageSync('token')
+      // // 若头像为空 则使用默认头像
+      // if (!val.avatar) {
+      //   val.avatar = userInfoState.avatar
+      // }
+      // else {
+      //   val.avatar = 'https://oss.laf.run/ukw0y1-site/avatar.jpg?feige'
+      // }
       userInfo.value = val
     }
     const setUserAvatar = (avatar: string) => {
@@ -49,10 +50,10 @@ export const useUserStore = defineStore(
     /**
      * 获取用户信息
      */
-    const getUserInfo = async () => {
-      const res = await _getUserInfo()
+    const getUserInfo = async (id, token) => {
+      const res = await _getUserInfo(id)
       const userInfo = res.data
-      setUserInfo(userInfo)
+      setUserInfo(userInfo, token)
       uni.setStorageSync('userInfo', userInfo)
       uni.setStorageSync('token', userInfo.token)
       // TODO 这里可以增加获取用户路由的方法 根据用户的角色动态生成路由
@@ -86,13 +87,13 @@ export const useUserStore = defineStore(
     /**
      * 微信登录
      */
-    const wxLogin = async () => {
+    const wxLogin = async ({ phoneCode }) => {
       // 获取微信小程序登录的code
       const data = await getWxCode()
       console.log('微信登录code', data)
 
-      const res = await _wxLogin(data)
-      await getUserInfo()
+      const res = await _wxLogin({ code: data.code, phoneCode })
+      await getUserInfo(res.data.userId, res.data.token)
       return res
     }
 

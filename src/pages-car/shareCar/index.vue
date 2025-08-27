@@ -9,11 +9,11 @@
 </route>
 
 <script lang="ts" setup>
-import GreenCar from '@/static/mine/car-green.png'
-import RedCar from '@/static/mine/car-red.png'
-import White from '@/static/mine/car-white.png'
-import EditIcon from '@/static/mine/edit.png'
-import rightIcon from '@/static/mine/right.png'
+const GreenCar = 'http://121.89.87.166/static/mine/car-green.png'
+const RedCar = 'http://121.89.87.166/static/mine/car-red.png'
+const White = 'http://121.89.87.166/static/mine/car-white.png'
+const EditIcon = 'http://121.89.87.166/static/mine/edit.png'
+const rightIcon = 'http://121.89.87.166/static/mine/right.png'
 
 const columns = ref(['选项1', '选项2', '选项3', '选项4', '选项5', '选项6', '选项7'])
 const value = ref('选项1')

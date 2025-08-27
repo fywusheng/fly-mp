@@ -2,8 +2,8 @@
 
 declare global {
   interface IResData<T> {
-    code: number
-    msg: string
+    code: number | string
+    message: string
     data: T
   }
 

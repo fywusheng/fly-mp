@@ -9,8 +9,8 @@
 </route>
 
 <script lang="ts" setup>
-import UserShare from '@/static/mine/user-share.png'
-import UserUse from '@/static/mine/user-use.png'
+const UserShare = 'http://121.89.87.166/static/mine/user-share.png'
+const UserUse = 'http://121.89.87.166/static/mine/user-use.png'
 
 const tabs = ref(['分享', '使用'])
 const tab = ref('分享')

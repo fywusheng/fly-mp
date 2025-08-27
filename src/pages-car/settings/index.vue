@@ -9,11 +9,11 @@
 </route>
 
 <script lang="ts" setup>
-import AutoSheFang from '@/static/mine/auto-shefang.png'
-import AutoXihuo from '@/static/mine/auto-xihuo.png'
-import MuteShefang from '@/static/mine/mute-shefang.png'
-import OverSpeed from '@/static/mine/over-speed.png'
-import RemoteControl from '@/static/mine/remote-control.png'
+const AutoSheFang = 'http://121.89.87.166/static/mine/auto-shefang.png'
+const AutoXihuo = 'http://121.89.87.166/static/mine/auto-xihuo.png'
+const MuteShefang = 'http://121.89.87.166/static/mine/mute-shefang.png'
+const OverSpeed = 'http://121.89.87.166/static/mine/over-speed.png'
+const RemoteControl = 'http://121.89.87.166/static/mine/remote-control.png'
 
 const columns = ref(['选项1', '选项2', '选项3', '选项4', '选项5', '选项6', '选项7'])
 const value = ref('选项1')

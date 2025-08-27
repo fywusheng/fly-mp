@@ -1,15 +1,16 @@
 <script setup lang="ts">
 import dayjs from 'dayjs'
-import BgIcon from '@/static/infor/blue-bg.png'
-import CarIcon from '@/static/infor/car-icon.png'
-import DateIcon from '@/static/infor/date.png'
-import LeftArrow from '@/static/infor/left-arrow.png'
-import LocationIcon from '@/static/infor/location-icon.png'
-import RightArrow from '@/static/infor/right-arrow.png'
 
 defineOptions({
   name: 'InforBlue',
 })
+const BgIcon = 'http://121.89.87.166/static/infor/blue-bg.png'
+const CarIcon = 'http://121.89.87.166/static/infor/car-icon.png'
+const DateIcon = 'http://121.89.87.166/static/infor/date.png'
+const LeftArrow = 'http://121.89.87.166/static/infor/left-arrow.png'
+const LocationIcon = 'http://121.89.87.166/static/infor/location-icon.png'
+const RightArrow = 'http://121.89.87.166/static/infor/right-arrow.png'
+
 // 获取胶囊位置信息
 const menuButtonInfo = uni.getMenuButtonBoundingClientRect()
 const date = ref<number>(Date.now())
