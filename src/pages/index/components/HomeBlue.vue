@@ -81,17 +81,13 @@ function handleConfirm() {
 
 // 蓝牙功能相关
 const status = ref(0) // 蓝牙状态 0:未连接 1:连接中 2:已连接
-const name = ref('EV12C-1911BA')
-const state = ref({
-  isStarted: false, // 启动
-  isLocked: true, // 锁车
-  isArmed: false, // 设防
-})
+
+// 蓝牙功能列表
 const list = ref([{
-  name: '车辆解防',
+  name: '车辆设防',
   icon: LockIcon,
   activeIcon: LockOpenIcon,
-  active: true,
+  active: false,
 }, {
   name: '一键静音',
   icon: SpeakerIcon,
@@ -109,6 +105,19 @@ const list = ref([{
   active: false,
 }])
 
+// 车辆状态
+const carState = ref({
+  isStarted: false, // 车辆是否已启动。`true`：已启动  - `false`：未启动
+  isLocked: false, // 车辆是否处于锁车状态。  - `true`：已锁车  - `false`：未锁车
+  isArmed: false, // 车辆是否已设防（防盗报警激活）。  - `true`：已设防  - `false`：未设防
+  isMuteArmOn: false, // 车辆是否已开启静音设防。  - `true`：已开启  - `false`：未开启
+  isKeylessOn: false, // 感应启动功能是否开启。  - `true`：开启  - `false`：关闭
+  keylessType: false, // 感应启动类型。  - `1`：感应启动  - `2`：震动启动  - `3`：一键启动
+  keylessRange: false, // 感应启动距离。 - `1`：一档，信号强度最高 - `2`：二档，信号强度中等  - `3`：表示三档，信号强度最低。
+})
+// 更新车辆状态
+const updateCarStatusDebounced = debounce(updateCarStatus, 500)
+
 onMounted(() => {
   // 获取位置信息和蓝牙权限
   getLocationAndBlueAuth()
@@ -118,16 +127,28 @@ onMounted(() => {
     getCarList(userStore.userInfo.userId)
   }
 
-  // connectBle()
-
   uni.createSelectorQuery()
     .in(getCurrentInstance().proxy)
     .select('.slider')
     .boundingClientRect((res: UniApp.NodeInfo) => {
       maxRight.value = res.width - 70 // 70为滑块的宽度
+      console.log('滑块最大右侧位置:', maxRight.value)
+      // setSliderStatus(false)
     })
     .exec()
 })
+
+function setSliderStatus(open) {
+  // 设置车辆锁定状态
+  if (open) {
+    sliderX.value = maxRight.value
+    sliderStyle.value = `transform: translateX(${maxRight.value}px)`
+  }
+  else {
+    sliderX.value = 0
+    sliderStyle.value = `transform: translateX(0)`
+  }
+}
 
 // 获取位置和蓝牙权限
 function getLocationAndBlueAuth() {
@@ -191,15 +212,20 @@ function getLocationAndBlueAuth() {
 // 蓝牙状态切换
 function toggleBluetooth() {
   console.log('当前蓝牙状态:', status.value)
+  // 蓝牙状态 0:未连接 1:连接中 2:已连接
   if (status.value === 0) {
-    status.value = 2 // 连接中
+    // status.value = 2 // 连接中
+    connectBle()
     return
   }
-  if (status.value === 2) {
+
+  if (status.value === 2 || status.value === 1) {
     status.value = 0 // 断开连接
+    disconnect()
   }
 }
 
+// 蓝牙功能列表操作
 function onItemClick(item) {
   console.log('点击了:', item)
   if (status.value === 0 || status.value === 1) {
@@ -210,34 +236,37 @@ function onItemClick(item) {
     })
     return
   }
-  item.active = !item.active
+  // item.active = !item.active
   switch (item.name) {
-    case '车辆解防':
-      // onTapFortify()
-      uni.showToast({
-        title: item.active ? '已解防 ' : '已设防',
-        icon: 'none',
-      })
+    case '车辆设防':
+      item.active ? EVSBikeSDK.bleCommandsApi.sendDisarmCommand() : EVSBikeSDK.bleCommandsApi.sendArmCommand()
+      // item.active = !item.active
+      // uni.showToast({
+      //   title: item.active ? '已解防 ' : '已设防',
+      //   icon: 'none',
+      // })
       break
     case '一键静音':
-      // onTapMute()
-      uni.showToast({
-        title: item.active ? '已开启静音' : ' 已取消静音',
-        icon: 'none',
-      })
+      EVSBikeSDK.bleCommandsApi.setHornVolumeCommand(item.active ? 2 : 1)
+      // item.active = !item.active
+      // uni.showToast({
+      //   title: item.active ? '已开启静音' : ' 已取消静音',
+      //   icon: 'none',
+      // })
+
       break
     case '感应控车':
-      // onTapInduction()
       uni.navigateTo({
         url: '/pages-car/interaction/index',
       })
       break
     case '鸣笛寻车':
-      // onTapFindCar()
-      uni.showToast({
-        title: item.active ? '已开启鸣笛寻车 ' : '已关闭鸣笛寻车',
-        icon: 'none',
-      })
+      uni.vibrateLong()
+      EVSBikeSDK.bleCommandsApi.sendFindVehicleCommand()
+      // uni.showToast({
+      //   title: item.active ? '已开启鸣笛寻车 ' : '已关闭鸣笛寻车',
+      //   icon: 'none',
+      // })
       break
   }
 }
@@ -269,31 +298,32 @@ function getCarList(userId) {
 // 连接蓝牙
 async function connectBle() {
   try {
-    uni.showLoading({
-      mask: true,
-    })
+    status.value = 1
+
     // 统一入口：传name或deviceId
     const device = await openAndSearchAndConnect({
-      name: name.value,
+      name: 'EV10C-154928',
+    }) as { deviceId: string }
+    const res = await EVSBikeSDK.connect({
+      deviceId: device.deviceId,
+      type: 'at', // 设备类型
     })
-    const res = await EVSBikeSDK.connect(device.deviceId)
     console.log(res)
-    wx.showToast({
-      title: '连接成功',
-      icon: 'success',
-    })
-    // this.setData({
-    //   status: 1,
-    // })
+
+    status.value = 2
+
     EVSBikeSDK.subscribe(onStateChange)
     // 发送指令
-    EVSBikeSDK.bleCommandsApi.sendBindOwnerCommand('7248303F')
+    // EVSBikeSDK.bleCommandsApi.sendUnbindOwnerCommand()
+    EVSBikeSDK.bleCommandsApi.sendBindOwnerCommand('4F7A126E')
   }
   catch (err) {
+    status.value = 0
     console.log(err)
     wx.showToast({
       title: err.message || '连接失败',
       icon: 'none',
+      duration: 500,
     })
   }
 }
@@ -307,54 +337,79 @@ function onStateChange(data) {
     state,
   } = data
   switch (operType) {
+    // 绑定用户
     case 'BIND_USER':
+      // 查询车辆状态和取设备设置参数，感应启动相关
       EVSBikeSDK.bleCommandsApi.sendGetVehicleStatusCommand()
+      EVSBikeSDK.bleCommandsApi.sendGetEcuConfigCommand()
       break
+    // 获取车辆状态
     case 'GET_CAR_STATUS':
+      // isUnlocked.value = state.isLocked // 车辆锁定状态
+      // setSliderStatus(state.isLocked)
+      // list.value[0].active = state.isArmed // 车辆设防
+      // list.value[1].active = state.isArmed // 一键静音
+      break
+      // 取设备设置参数，感应启动相关
+    case 'GET_ECU_STATUS':
+      // 设备状态变化: {"state": {"keylessRange": 2, "isKeylessOn": true}, "operType": "GET_ECU_STATUS", "success": true, "message": "获取车辆设置参数成功"}
+      // list.value[2].active = state.isKeylessOn // 感应控车
+      // 感应启动距离。 - `1`：一档，信号强度最高 - `2`：二档，信号强度中等  - `3`：表示三档，信号强度最低。
+      // state.keylessRange
       break
     default:
       break
   }
+
   if (!state)
     return
-  this.setData({
-    state: {
-      ...this.data.state,
-      ...state,
-    },
+
+  carState.value = {
+    ...carState.value,
+    ...state,
+  }
+  // 防抖
+  updateCarStatusDebounced()
+}
+
+function updateCarStatus() {
+  list.value = list.value.map((item) => {
+    if (item.name === '车辆设防')
+      item.active = carState.value.isArmed
+    if (item.name === '一键静音')
+      item.active = carState.value.isMuteArmOn
+    if (item.name === '感应控车')
+      item.active = carState.value.isKeylessOn
+    return item
   })
+
+  isUnlocked.value = !carState.value.isLocked
+  setSliderStatus(isUnlocked.value)
+}
+
+function debounce<T extends (...args: any[]) => void>(fn: T, delay = 500) {
+  let timer: ReturnType<typeof setTimeout> | null = null
+  return function (...args: Parameters<T>) {
+    if (timer)
+      clearTimeout(timer)
+    timer = setTimeout(() => {
+      fn(...args)
+    }, delay)
+  }
 }
 function disconnect() {
   EVSBikeSDK.disconnect()
     .then((res) => {
       console.log(res)
-      this.setData({
-        status: 0,
-      })
+      status.value = 0
       wx.showToast({
         title: '断开连接成功',
       })
-      EVSBikeSDK.unsubscribe(this.onStateChange)
+      EVSBikeSDK.unsubscribe(onStateChange)
     })
     .catch((err) => {
       console.log(err)
     })
-}
-//
-function onTapLock() {
-  let {
-    isStarted,
-  } = this.data.state
-  isStarted ? EVSBikeSDK.bleCommandsApi.sendPowerOffCommand() : EVSBikeSDK.bleCommandsApi.sendPowerOnCommand()
-}
-function onTapFortify() {
-  let {
-    isArmed,
-  } = this.data.state
-  isArmed ? EVSBikeSDK.bleCommandsApi.sendDisarmCommand() : EVSBikeSDK.bleCommandsApi.sendArmCommand()
-}
-function onTapFindCar() {
-  EVSBikeSDK.bleCommandsApi.sendFindVehicleCommand()
 }
 
 function onConfirm() {
@@ -387,6 +442,8 @@ function onTouchEnd(event) {
       title: '操作成功',
       icon: 'success',
     })
+    // console.log('isUnlocked:', isUnlocked.value)
+    isUnlocked.value ? EVSBikeSDK.bleCommandsApi.sendPowerOnCommand() : EVSBikeSDK.bleCommandsApi.sendPowerOffCommand()
   }
   const fail = () => {
     uni.showToast({

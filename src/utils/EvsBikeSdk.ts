@@ -19,7 +19,7 @@ export function openAndSearchAndConnect(options) {
           allowDuplicatesKey: false,
           interval: 300,
           success(res) {
-            console.log(res, 2222)
+            console.log('已连接设备', res)
             const devices = res.devices || []
             let target = null
             if (deviceId) {
@@ -48,7 +48,43 @@ export function openAndSearchAndConnect(options) {
         })
       },
       fail(err) {
-        reject(err)
+        if (err.errMsg === 'openBluetoothAdapter:fail already opened') {
+          wx.getConnectedBluetoothDevices({
+            services: serviceUUID,
+            allowDuplicatesKey: false,
+            interval: 300,
+            success(res) {
+              console.log('已连接设备', res)
+              const devices = res.devices || []
+              let target = null
+              if (deviceId) {
+                target = devices.find(d => d.deviceId === deviceId)
+              }
+              else if (name) {
+                target = devices.find(d => d.name === name)
+              }
+              console.log(target, 'target')
+              if (target) {
+                found = true
+                wx.createBLEConnection({
+                  deviceId: target.deviceId,
+                  success: () => resolve(target),
+                  fail: err => reject(err),
+                })
+                return
+              }
+              // 2. 未找到则开始搜索
+              startDiscovery()
+            },
+            fail() {
+            // 查询失败也直接开始搜索
+              startDiscovery()
+            },
+          })
+        }
+        else {
+          reject(err)
+        }
       },
     })
 
@@ -60,9 +96,7 @@ export function openAndSearchAndConnect(options) {
           wx.onBluetoothDeviceFound(listener)
           timer = setTimeout(() => {
             cleanup()
-            reject({
-              errMsg: 'search timeout',
-            })
+            reject(new Error('查找蓝牙超超时'))
           }, timeout)
         },
         fail(err) {

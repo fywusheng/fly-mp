@@ -9,29 +9,105 @@
 </route>
 
 <script lang="ts" setup>
-const PointIcon = 'http://121.89.87.166/static/car/point.png'
+// 感应距离
 
+import {
+  openAndSearchAndConnect,
+} from '@/utils/EvsBikeSdk'
+import EVSBikeSDK from '@/utils/EVSBikeSDK.v1.1.0'
+
+const PointIcon = 'http://121.89.87.166/static/car/point.png'
 const isInductionCar = ref(true) // 感应控车
 const isInductionOpenCar = ref(true) // 感应开锁
 const isInductionCloseCar = ref(true) // 感应锁车
-const distance = ref(1) // 感应距离
-const sliderRangeValue2 = ref([50, 150]) // 滑块范围值
+const distance = ref(1)
+
+// 车辆状态
+const carState = ref({
+  isStarted: false, // 车辆是否已启动。`true`：已启动  - `false`：未启动
+  isLocked: false, // 车辆是否处于锁车状态。  - `true`：已锁车  - `false`：未锁车
+  isArmed: false, // 车辆是否已设防（防盗报警激活）。  - `true`：已设防  - `false`：未设防
+  isMuteArmOn: false, // 车辆是否已开启静音设防。  - `true`：已开启  - `false`：未开启
+  isKeylessOn: false, // 感应启动功能是否开启。  - `true`：开启  - `false`：关闭
+  keylessType: 1, // 感应启动类型。  - `1`：感应启动  - `2`：震动启动  - `3`：一键启动
+  keylessRange: 1, // 感应启动距离。 - `1`：一档，信号强度最高 - `2`：二档，信号强度中等  - `3`：表示三档，信号强度最低。
+})
+
+onLoad(() => {
+  connectBle()
+})
+onUnload(() => {
+  EVSBikeSDK.unsubscribe(onStateChange)
+})
+
+// 连接蓝牙
+async function connectBle() {
+  try {
+    // 统一入口：传name或deviceId
+    const device = await openAndSearchAndConnect({
+      name: 'EV10C-154928',
+    }) as { deviceId: string }
+    const res = await EVSBikeSDK.connect({
+      deviceId: device.deviceId,
+      type: 'at', // 设备类型
+    })
+    console.log('连接成功', res)
+    EVSBikeSDK.subscribe(onStateChange)
+    // 发送指令
+    EVSBikeSDK.bleCommandsApi.sendBindOwnerCommand('4F7A126E')
+  }
+  catch (err) {
+    console.log(err)
+    wx.showToast({
+      title: err.message || '连接失败',
+      icon: 'none',
+      duration: 500,
+    })
+  }
+}
+
+function onStateChange(data) {
+  console.log('设备状态变化:', data)
+  const {
+    operType,
+    message,
+    success,
+    state,
+  } = data
+  switch (operType) {
+    // 绑定用户
+    case 'BIND_USER':
+      // 查询车辆状态和取设备设置参数，感应启动相关
+      EVSBikeSDK.bleCommandsApi.sendGetVehicleStatusCommand()
+      EVSBikeSDK.bleCommandsApi.sendGetEcuConfigCommand()
+      break
+    case 'SET_KEYLESS_RANGE':
+      // 取设备设置参数，感应启动相关
+      EVSBikeSDK.bleCommandsApi.sendGetEcuConfigCommand()
+      break
+    default:
+      break
+  }
+
+  if (!state)
+    return
+
+  carState.value = {
+    ...carState.value,
+    ...state,
+  }
+  isInductionCar.value = carState.value.isKeylessOn
+  distance.value = carState.value.keylessRange || 1
+
+  // 防抖
+  // updateCarStatusDebounced()
+}
 
 function onSubmitClick() {
-  uni.openAppAuthorizeSetting({
-    success(res) {
-      console.log(res)
-    },
-    fail(err) {
-      console.error(err)
-    },
-  })
-  // uni.navigateBack()
-  // wx.openAppAuthorizeSetting({
-  // success (res) {
-  //   console.log(res)
-  // }
-// })
+  // 开启/关闭感应功能
+  isInductionCar.value ? EVSBikeSDK.bleCommandsApi.sendGetKeylessUnlockExpireCommand('251224') : EVSBikeSDK.bleCommandsApi.sendKeylessUnlockCloseCommand()
+  // 设置感应距离
+  EVSBikeSDK.bleCommandsApi.sendKeylessUnlockRangCommand(distance.value)
 }
 </script>
 
