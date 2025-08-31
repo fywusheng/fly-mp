@@ -96,10 +96,19 @@
     "permission": {
       "scope.userLocation": {
         "desc": "以便为您提供更好的服务"
+      },
+      "scope.userLocationBackground": {
+        "desc": "以便为您提供更好的服务"
       }
     },
     "requiredPrivateInfos": [
-      "getLocation"
+      "getLocation",
+      "startLocationUpdate",
+      "onLocationChange",
+      "startLocationUpdateBackground"
+    ],
+    "requiredBackgroundModes": [
+      "location"
     ],
     "lazyCodeLoading": "requiredComponents"
   },

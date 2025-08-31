@@ -22,6 +22,9 @@ const isInductionOpenCar = ref(true) // 感应开锁
 const isInductionCloseCar = ref(true) // 感应锁车
 const distance = ref(1)
 
+// 更新车辆状态
+const updateCarStatusDebounced = debounce(updateCarStatus, 500)
+
 // 车辆状态
 const carState = ref({
   isStarted: false, // 车辆是否已启动。`true`：已启动  - `false`：未启动
@@ -35,6 +38,10 @@ const carState = ref({
 
 onLoad(() => {
   connectBle()
+})
+
+onHide(() => {
+  EVSBikeSDK.unsubscribe(onStateChange)
 })
 onUnload(() => {
   EVSBikeSDK.unsubscribe(onStateChange)
@@ -78,12 +85,12 @@ function onStateChange(data) {
     // 绑定用户
     case 'BIND_USER':
       // 查询车辆状态和取设备设置参数，感应启动相关
-      EVSBikeSDK.bleCommandsApi.sendGetVehicleStatusCommand()
+      // EVSBikeSDK.bleCommandsApi.sendGetVehicleStatusCommand()
       EVSBikeSDK.bleCommandsApi.sendGetEcuConfigCommand()
       break
-    case 'SET_KEYLESS_RANGE':
-      // 取设备设置参数，感应启动相关
-      EVSBikeSDK.bleCommandsApi.sendGetEcuConfigCommand()
+      // case 'SET_KEYLESS_RANGE':
+      //   // 取设备设置参数，感应启动相关
+      //   EVSBikeSDK.bleCommandsApi.sendGetEcuConfigCommand()
       break
     default:
       break
@@ -96,18 +103,44 @@ function onStateChange(data) {
     ...carState.value,
     ...state,
   }
-  isInductionCar.value = carState.value.isKeylessOn
-  distance.value = carState.value.keylessRange || 1
 
   // 防抖
-  // updateCarStatusDebounced()
+  updateCarStatusDebounced()
+}
+
+function updateCarStatus() {
+  // 更新数据
+  isInductionCar.value = carState.value.isKeylessOn
+  distance.value = carState.value.keylessRange || 1
+}
+
+function debounce<T extends (...args: any[]) => void>(fn: T, delay = 500) {
+  let timer: ReturnType<typeof setTimeout> | null = null
+  return function (...args: Parameters<T>) {
+    if (timer)
+      clearTimeout(timer)
+    timer = setTimeout(() => {
+      fn(...args)
+    }, delay)
+  }
 }
 
 function onSubmitClick() {
   // 开启/关闭感应功能
-  isInductionCar.value ? EVSBikeSDK.bleCommandsApi.sendGetKeylessUnlockExpireCommand('251224') : EVSBikeSDK.bleCommandsApi.sendKeylessUnlockCloseCommand()
-  // 设置感应距离
+  isInductionCar.value ? EVSBikeSDK.bleCommandsApi.sendSetKeylessUnlockExpireCommand('251224') : EVSBikeSDK.bleCommandsApi.sendKeylessUnlockCloseCommand()
+  // // 设置感应距离
   EVSBikeSDK.bleCommandsApi.sendKeylessUnlockRangCommand(distance.value)
+
+  uni.showToast({
+    title: '设置成功',
+    icon: 'success',
+    duration: 2000,
+  })
+
+  // setTimeout(() => {
+  //   // 返回首页
+  //   uni.navigateBack()
+  // }, 2000)
 }
 </script>
 
@@ -217,30 +250,30 @@ function onSubmitClick() {
 
 <style lang="scss">
 .slider-block {
-		position: relative;
-		height: 30rpx;
-		width: 50rpx;
-		background-color: #fff;
-		border-radius: 5rpx;
+    position: relative;
+    height: 30rpx;
+    width: 50rpx;
+    background-color: #fff;
+    border-radius: 5rpx;
 
-		&::after,
-		&::before {
-			position: absolute;
-			height: 10px;
-			width: 3px;
-			content: '';
-			border-radius: 2rpx;
-			display: block;
-			background-color: #666;
-			top: 50%;
-			transform: translateY(-50%);
-			left: 9px;
-			box-shadow: 0px 0px 1px 1px #ccc;
-		}
+    &::after,
+    &::before {
+      position: absolute;
+      height: 10px;
+      width: 3px;
+      content: '';
+      border-radius: 2rpx;
+      display: block;
+      background-color: #666;
+      top: 50%;
+      transform: translateY(-50%);
+      left: 9px;
+      box-shadow: 0px 0px 1px 1px #ccc;
+    }
 
-		&::after {
-			right: 9px;
-			left: unset;
-		}
-	}
+    &::after {
+      right: 9px;
+      left: unset;
+    }
+}
 </style>

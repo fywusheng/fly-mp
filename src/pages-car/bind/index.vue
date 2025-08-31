@@ -9,6 +9,8 @@
 </route>
 
 <script lang="ts" setup>
+import { httpGet } from '@/utils/http'
+
 const ScanDescIcon = 'http://121.89.87.166/static/car/scan-desc.png'
 const ScanIcon = 'http://121.89.87.166/static/car/scan.png'
 
@@ -16,11 +18,38 @@ const code = ref('')
 const name = ref('')
 const brand = ref('飞鸽')
 const color = ref('')
-const columns = ref(['选项1', '选项2', '选项3', '选项4', '选项5', '选项6', '选项7']) // 颜色列表
+const colorCode = ref('')
+
+// 定义columns的类型
+interface Column {
+  dictCode: string
+  dictName: string
+}
+const columns = ref<Column[]>([]) // 颜色列表
+
+onLoad(() => {
+  getCarColor()
+})
+
+function getCarColor() {
+  httpGet('/common/dict/vehicle_color').then((res) => {
+    if (res.code === '200') {
+      columns.value = res.data as Column[]
+    }
+    else {
+      console.log('获取车辆颜色列表失败:', res)
+    }
+  })
+}
+
+function onConfirm({ value, selectedItems }) {
+  console.log('选中的车辆颜色:', value, selectedItems)
+  color.value = selectedItems.dictName
+  colorCode.value = selectedItems.dictCode
+}
 
 function onScanClick() {
   uni.scanCode({
-    onlyFromCamera: true,
     success: (res) => {
       code.value = res.result
       // 根据code获取车辆信息
@@ -36,21 +65,24 @@ function onScanClick() {
 }
 
 function onSubmitClick() {
-  // if (!code.value || !name.value || !color.value) {
-  //   uni.showToast({
-  //     title: '请填写完整信息',
-  //     icon: 'none',
-  //   })
-  //   return
-  // }
+  if (!code.value || !name.value || !color.value) {
+    uni.showToast({
+      title: '请填写完整信息',
+      icon: 'none',
+    })
+    return
+  }
 
+  // 进行页面跳转传递数据
   uni.navigateTo({
-    url: `/pages-car/addMaster/index?info=${JSON.stringify({
-      name: name.value,
-      brand: brand.value,
-      color: color.value,
-      code: code.value,
-    })}`,
+    url: `/pages-car/addMaster/index?info= ${encodeURIComponent(
+      JSON.stringify({
+        name: name.value,
+        brand: brand.value,
+        colorCode: colorCode.value,
+        code: code.value,
+      }),
+    )}`,
   })
 }
 
@@ -104,7 +136,7 @@ function onGoMenuClick() {
               </view>
             </template>
 
-            <wd-picker v-model="color" :columns="columns" use-default-slot>
+            <wd-picker v-model="color" :columns="columns" value-key="dictCode" label-key="dictName" use-default-slot @confirm="onConfirm">
               <view class="flex items-center justify-end">
                 <view v-if="color" class="mr-15rpx text-24rpx">
                   {{ color }}

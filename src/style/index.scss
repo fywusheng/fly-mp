@@ -31,6 +31,10 @@ page {
 .slide-text {
   animation: slideFromRight 3s forwards; /* 直接在元素上定义动画 */
 }
+
+.animate-opacity {
+  animation: animateOpacity 2s linear infinite;
+}
  
 @keyframes slideFromRight {
   0% {
@@ -38,5 +42,17 @@ page {
   }
   100% {
     transform: translateX(0); /* 移动到原点 */
+  }
+}
+
+@keyframes animateOpacity {
+  0% {
+    opacity: 0.2; /* 初始透明度 */
+  }
+  50% {
+    opacity: 0.5; /* 初始透明度 */
+  }
+  100% {
+    opacity: 1; /* 结束透明度 */
   }
 }

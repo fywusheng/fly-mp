@@ -124,10 +124,17 @@ export default defineManifestConfig({
       'scope.userLocation': {
         desc: '以便为您提供更好的服务',
       },
+      'scope.userLocationBackground': {
+        desc: '以便为您提供更好的服务',
+      },
     },
     requiredPrivateInfos: [
       'getLocation',
+      'startLocationUpdate',
+      'onLocationChange',
+      'startLocationUpdateBackground',
     ],
+    requiredBackgroundModes: ['location'], // 申明需要后台定位能力
     lazyCodeLoading: 'requiredComponents',
   },
   'mp-alipay': {

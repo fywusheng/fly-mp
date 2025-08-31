@@ -51,37 +51,8 @@ const sliderX = ref(0)
 const maxRight = ref(0)
 const sliderStyle = ref({})
 const isUnlocked = ref(false) // 是否解锁成功
-
-// 弹出框相关
-const show = ref(false)
-const carList = ref([{ value: 13, label: '车辆1' }, { value: 14, label: '车辆2' }])
-const selectCarValue = ref<number>(14)
-const selectCar = ref<number>(0)
-
-function onChange({ picker, value, index }) {
-  console.log('当前选中项:', value, '下标:', index, selectCar.value)
-}
-// message弹窗
-const showMessagePopup = ref(false) // 控制弹窗显示
-const messageId = ref<number>(0) // 弹窗ID
-const duration = ref(0) // 弹窗持续时间
-const showCancelBtn = ref(true) // 是否显示取消按钮
-const showConfirmBtn = ref(true) // 是否显示确认按钮
-const closeOnClickModal = ref(true) // 是否点击蒙层关闭弹窗
-
-function handleCancel() {
-  showMessagePopup.value = false
-  console.log('取消操作')
-}
-
-function handleConfirm() {
-  showMessagePopup.value = false
-  console.log('确认操作')
-}
-
-// 蓝牙功能相关
-const status = ref(0) // 蓝牙状态 0:未连接 1:连接中 2:已连接
-
+// 蓝牙状态 0:未连接 1:连接中 2:已连接
+const status = ref(0)
 // 蓝牙功能列表
 const list = ref([{
   name: '车辆设防',
@@ -118,7 +89,45 @@ const carState = ref({
 // 更新车辆状态
 const updateCarStatusDebounced = debounce(updateCarStatus, 500)
 
+// 弹出框相关
+const show = ref(false)
+const carList = ref([{ value: 13, label: '车辆1' }, { value: 14, label: '车辆2' }])
+const selectCarValue = ref<number>(14)
+const selectCar = ref<number>(0)
+
+function onChange({ picker, value, index }) {
+  console.log('当前选中项:', value, '下标:', index, selectCar.value)
+}
+// message弹窗
+const showMessagePopup = ref(false) // 控制弹窗显示
+const messageId = ref<number>(0) // 弹窗ID
+const duration = ref(0) // 弹窗持续时间
+const showCancelBtn = ref(true) // 是否显示取消按钮
+const showConfirmBtn = ref(true) // 是否显示确认按钮
+const closeOnClickModal = ref(true) // 是否点击蒙层关闭弹窗
+
+function handleCancel() {
+  showMessagePopup.value = false
+  console.log('取消操作')
+}
+
+function handleConfirm() {
+  showMessagePopup.value = false
+  console.log('确认操作')
+}
+
 onMounted(() => {
+  uni.createSelectorQuery()
+    .in(getCurrentInstance().proxy)
+    .select('.slider')
+    .boundingClientRect((res: UniApp.NodeInfo) => {
+      maxRight.value = res.width - 70 // 70为滑块的宽度
+      // console.log('滑块最大右侧位置:', maxRight.value)
+      // setSliderStatus(true)
+    })
+    .exec()
+
+  console.log('组件挂载')
   // 获取位置信息和蓝牙权限
   getLocationAndBlueAuth()
   // 已经登录
@@ -126,16 +135,12 @@ onMounted(() => {
     // 获取车辆列表
     getCarList(userStore.userInfo.userId)
   }
+})
 
-  uni.createSelectorQuery()
-    .in(getCurrentInstance().proxy)
-    .select('.slider')
-    .boundingClientRect((res: UniApp.NodeInfo) => {
-      maxRight.value = res.width - 70 // 70为滑块的宽度
-      console.log('滑块最大右侧位置:', maxRight.value)
-      // setSliderStatus(false)
-    })
-    .exec()
+onHide(() => {
+  // 清理工作
+  EVSBikeSDK.unsubscribe(onStateChange)
+  console.log('组件卸载')
 })
 
 function setSliderStatus(open) {
@@ -211,16 +216,11 @@ function getLocationAndBlueAuth() {
 
 // 蓝牙状态切换
 function toggleBluetooth() {
-  console.log('当前蓝牙状态:', status.value)
   // 蓝牙状态 0:未连接 1:连接中 2:已连接
   if (status.value === 0) {
-    // status.value = 2 // 连接中
     connectBle()
-    return
   }
-
-  if (status.value === 2 || status.value === 1) {
-    status.value = 0 // 断开连接
+  else {
     disconnect()
   }
 }
@@ -236,24 +236,30 @@ function onItemClick(item) {
     })
     return
   }
-  // item.active = !item.active
   switch (item.name) {
     case '车辆设防':
-      item.active ? EVSBikeSDK.bleCommandsApi.sendDisarmCommand() : EVSBikeSDK.bleCommandsApi.sendArmCommand()
-      // item.active = !item.active
-      // uni.showToast({
-      //   title: item.active ? '已解防 ' : '已设防',
-      //   icon: 'none',
-      // })
+      uni.showModal({
+        title: '操作提示',
+        content: item.active ? '确定要解防车辆吗？' : '确定要设防车辆吗？',
+        success(res) {
+          if (res.confirm) {
+            // 设防/解防指令
+            item.active ? EVSBikeSDK.bleCommandsApi.sendDisarmCommand() : EVSBikeSDK.bleCommandsApi.sendArmCommand()
+          }
+        },
+      })
       break
     case '一键静音':
-      EVSBikeSDK.bleCommandsApi.setHornVolumeCommand(item.active ? 2 : 1)
-      // item.active = !item.active
-      // uni.showToast({
-      //   title: item.active ? '已开启静音' : ' 已取消静音',
-      //   icon: 'none',
-      // })
-
+      if (carState.value.isLocked) {
+        // 解防指令
+        EVSBikeSDK.bleCommandsApi.sendDisarmCommand()
+      }
+      else {
+        uni.showToast({
+          title: '车辆已开启',
+          icon: 'none',
+        })
+      }
       break
     case '感应控车':
       uni.navigateTo({
@@ -261,12 +267,16 @@ function onItemClick(item) {
       })
       break
     case '鸣笛寻车':
-      uni.vibrateLong()
-      EVSBikeSDK.bleCommandsApi.sendFindVehicleCommand()
-      // uni.showToast({
-      //   title: item.active ? '已开启鸣笛寻车 ' : '已关闭鸣笛寻车',
-      //   icon: 'none',
-      // })
+      if (carState.value.isLocked) {
+        uni.vibrateLong()
+        EVSBikeSDK.bleCommandsApi.sendFindVehicleCommand()
+      }
+      else {
+        uni.showToast({
+          title: '车辆已开启',
+          icon: 'none',
+        })
+      }
       break
   }
 }
@@ -313,8 +323,7 @@ async function connectBle() {
     status.value = 2
 
     EVSBikeSDK.subscribe(onStateChange)
-    // 发送指令
-    // EVSBikeSDK.bleCommandsApi.sendUnbindOwnerCommand()
+    // 发送密码验证指令
     EVSBikeSDK.bleCommandsApi.sendBindOwnerCommand('4F7A126E')
   }
   catch (err) {
@@ -376,8 +385,8 @@ function updateCarStatus() {
   list.value = list.value.map((item) => {
     if (item.name === '车辆设防')
       item.active = carState.value.isArmed
-    if (item.name === '一键静音')
-      item.active = carState.value.isMuteArmOn
+    // if (item.name === '一键静音')
+    //   item.active = carState.value.isMuteArmOn
     if (item.name === '感应控车')
       item.active = carState.value.isKeylessOn
     return item
@@ -438,18 +447,10 @@ function onTouchMove(event) {
 }
 function onTouchEnd(event) {
   const success = () => {
-    uni.showToast({
-      title: '操作成功',
-      icon: 'success',
-    })
-    // console.log('isUnlocked:', isUnlocked.value)
-    isUnlocked.value ? EVSBikeSDK.bleCommandsApi.sendPowerOnCommand() : EVSBikeSDK.bleCommandsApi.sendPowerOffCommand()
+    // 发送解锁、开锁指令
+    carState.value.isLocked ? EVSBikeSDK.bleCommandsApi.sendPowerOnCommand() : EVSBikeSDK.bleCommandsApi.sendPowerOffCommand()
   }
   const fail = () => {
-    uni.showToast({
-      title: '操作失败',
-      icon: 'none',
-    })
     // 回弹到对应位置
     sliderX.value = isUnlocked.value ? maxRight.value : 0
     sliderStyle.value = isUnlocked.value
@@ -458,11 +459,13 @@ function onTouchEnd(event) {
   }
 
   if (!isUnlocked.value && sliderX.value === maxRight.value) {
-    isUnlocked.value = true
+    // isUnlocked.value = true
+    // 操作成功
     success()
   }
   else if (isUnlocked.value && sliderX.value === 0) {
-    isUnlocked.value = false
+    // isUnlocked.value = false
+    // 操作成功
     success()
   }
   else {
@@ -481,17 +484,20 @@ function onTouchEnd(event) {
       />
       <!-- 我的车辆&蓝牙状态 -->
       <view class="top-cont" :style="{ paddingTop: `${menuButtonInfo?.top + menuButtonInfo.height + 15}px` }">
-        <view class="car flex items-center pl-29rpx" @click="show = true">
-          <span class="text-30rpx font-bold">我的车辆</span>
-          <image
-            class="ml-16rpx h-15rpx w-30rpx"
-            :src="DownIcon"
-            mode="aspectFit"
-          />
-          <view v-if="weatherInfo && weatherInfo.temperature" class="ml-295rpx flex items-center justify-center color-[#333333]">
+        <view class="car flex items-center justify-between px-29rpx" @click="show = true">
+          <view>
+            <span class="text-30rpx font-bold">我的车辆</span>
+            <image
+              class="ml-16rpx h-15rpx w-30rpx"
+              :src="DownIcon"
+              mode="aspectFit"
+            />
+          </view>
+
+          <view v-if="weatherInfo && weatherInfo.temperature" class="flex items-center justify-center color-[#333333]">
             <image
               class="h-40rpx w-34rpx"
-              :src="weatherInfo.weaImg"
+              :src="SunIcon"
               mode="aspectFit"
             />
             <view class="slide-text flex items-center justify-center">
@@ -517,10 +523,11 @@ function onTouchEnd(event) {
         <view class="pl-60rpx" @click="toggleBluetooth">
           <image
             class="h-60rpx w-40rpx"
-            :src="status === 2 ? BlueConnect : BLueDisconnect"
+            :class="{ 'animate-opacity': status === 1 }"
+            :src="status === 0 ? BLueDisconnect : BlueConnect"
             mode="scaleToFill"
           />
-          <span class="ml-20rpx text-24rpx">{{ status === 2 ? '已连接' : status === 1 ? '连接中' : '未连接' }}</span>
+          <span class="ml-20rpx text-24rpx">{{ status === 2 ? '已连接' : status === 1 ? '蓝牙连接中' : '未连接' }}</span>
         </view>
       </view>
 
@@ -618,6 +625,8 @@ function onTouchEnd(event) {
 <style lang="scss" scoped>
 .Home {
   height: 100vh;
+  width: 100vw;
+  overflow: hidden;
   background: #E4EBF2;
   .top-card {
     width: 100%;
@@ -693,6 +702,9 @@ function onTouchEnd(event) {
     font-size: 26rpx;
     white-space: nowrap;
   }
+}
+.slider-bg {
+  transition: all 0.5s ease;
 }
 </style>
 

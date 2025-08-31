@@ -9,6 +9,8 @@
 </route>
 
 <script lang="ts" setup>
+import { httpGet, httpPost } from '@/utils/http'
+
 const ScanDescIcon = 'http://121.89.87.166/static/car/scan-desc.png'
 const SuccessDefault = 'http://121.89.87.166/static/mine/success-default.png'
 const YellowTips = 'http://121.89.87.166/static/mine/yellow-tips.png'
@@ -16,15 +18,65 @@ const YellowTips = 'http://121.89.87.166/static/mine/yellow-tips.png'
 const code = ref('')
 const name = ref('')
 const brand = ref('')
-const color = ref('')
+const colorCode = ref('')
 const phone = ref('')
 const columns = ref(['朋友', '夫妻', '父母', '子女', '情侣', '亲戚']) // 关系列表
 const addFlag = ref(false)
 const showShare = ref(false)
+const validCode = ref('')
 
-function onSubmitClick() {
+// 发送短信
+async function sendSmsClick() {
+  if (!phone.value) {
+    uni.showToast({
+      title: '请填写手机号',
+      icon: 'none',
+    })
+    return
+  }
+  if (phone.value.length !== 11) {
+    uni.showToast({
+      title: '请填写手机号',
+      icon: 'none',
+    })
+    return
+  }
+  // 发送短信
+  const res = await httpPost('/common/sms/send', {
+    phoneNumber: phone.value,
+    codeType: 1,
+  })
+  if (res.code === 'OK') {
+    uni.showToast({
+      title: '短信发送成功',
+      icon: 'success',
+    })
+  }
+  else {
+    uni.showToast({
+      title: res.message || '短信发送失败',
+      icon: 'none',
+    })
+  }
+}
+
+// 绑定车辆
+async function onSubmitClick() {
   // showShare.value = true
-  // return
+
+  const res = await httpPost('/device/vehicle/bind', {
+    deviceNo: code.value, // 车辆编码
+    vehicleName: name.value, // 车辆名称
+    brand: brand.value, // 品牌
+    model: 'EV10C', // 车型，暂无
+    colorCode: colorCode.value, // 颜色
+    vehicleCode: 'YD-DE3-001', // 暂无
+    ownerName: '张三',
+    ownerPhone: phone.value, // 车主手机号
+    userId: 10086, // 用户id
+    code: validCode.value, // 验证码
+  })
+
   addFlag.value = true
   if (!code.value || !name.value || !phone.value) {
     uni.showToast({
@@ -75,12 +127,12 @@ function onMessageClick() {
 onLoad((option: Record<string, string>) => {
   // 初始化标签栏
   if (option.info && option.info !== 'null') {
-    const info = JSON.parse(option.info)
+    const info = JSON.parse(decodeURIComponent(option.info))
+    code.value = info.code || ''
     name.value = info.name || ''
-    brand.value = info.brand || '飞鸽'
-    color.value = info.color || ''
+    brand.value = info.brand || ''
+    colorCode.value = info.colorCode || ''
   }
-  console.log(option, 'open:')
 })
 
 // 分享好友
@@ -106,10 +158,20 @@ onShareAppMessage(() => {
           <wd-cell-group border>
             <wd-input v-model="name" custom-style="text-align:left" label-width="15%" type="text" label="车辆名字" placeholder="请输入车辆名称" />
             <wd-input v-model="phone" custom-style="text-align:right" label-width="30%" type="text" label="手机号" placeholder="请输入手机号" />
-            <wd-input v-model="code" custom-style="text-align:right" label-width="30%" type="text" label="验证码" placeholder="请输入验证码" />
+            <wd-input v-model="validCode" custom-style="text-align:right" label-width="30%" type="text" label="验证码" placeholder="请输入验证码">
+              <!-- suffix - 发送验证码 -->
+              <template #suffix>
+                <view class="flex items-center justify-center pl-10rpx">
+                  <wd-button size="small" type="primary" @click="sendSmsClick">
+                    发送验证码
+                  </wd-button>
+                </view>
+              </template>
+            </wd-input>
           </wd-cell-group>
         </view>
       </view>
+
       <view class="mt-62rpx h-80rpx w-710rpx flex items-center justify-center rounded-[40rpx] bg-[#239AF6] color-white" @click="onSubmitClick">
         提 交
       </view>
