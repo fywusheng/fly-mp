@@ -9,7 +9,8 @@
 </route>
 
 <script lang="ts" setup>
-import { httpGet, httpPost } from '@/utils/http'
+import { useUserStore } from '@/store'
+import { httpPost } from '@/utils/http'
 
 const ScanDescIcon = 'http://121.89.87.166/static/car/scan-desc.png'
 const SuccessDefault = 'http://121.89.87.166/static/mine/success-default.png'
@@ -20,10 +21,11 @@ const name = ref('')
 const brand = ref('')
 const colorCode = ref('')
 const phone = ref('')
-const columns = ref(['朋友', '夫妻', '父母', '子女', '情侣', '亲戚']) // 关系列表
 const addFlag = ref(false)
 const showShare = ref(false)
 const validCode = ref('')
+
+const userStore = useUserStore()
 
 // 发送短信
 async function sendSmsClick() {
@@ -42,20 +44,22 @@ async function sendSmsClick() {
     return
   }
   // 发送短信
-  const res = await httpPost('/common/sms/send', {
+  const res = await httpPost('/common/sms/aliyun/send', {
     phoneNumber: phone.value,
     codeType: 1,
   })
-  if (res.code === 'OK') {
+  if (res.code === '200') {
     uni.showToast({
       title: '短信发送成功',
       icon: 'success',
+      duration: 1000,
     })
   }
   else {
     uni.showToast({
       title: res.message || '短信发送失败',
       icon: 'none',
+      duration: 2000,
     })
   }
 }
@@ -68,41 +72,33 @@ async function onSubmitClick() {
     deviceNo: code.value, // 车辆编码
     vehicleName: name.value, // 车辆名称
     brand: brand.value, // 品牌
-    model: 'EV10C', // 车型，暂无
+    // model: 'EV10C', // 车型，暂无
     colorCode: colorCode.value, // 颜色
-    vehicleCode: 'YD-DE3-001', // 暂无
-    ownerName: '张三',
+    // vehicleCode: '', // 暂无
+    // ownerName: '张三',
     ownerPhone: phone.value, // 车主手机号
-    userId: 10086, // 用户id
+    userId: userStore.userInfo.userId, // 用户id
     code: validCode.value, // 验证码
   })
-
-  addFlag.value = true
-  if (!code.value || !name.value || !phone.value) {
-    uni.showToast({
-      title: '请填写完整信息',
-      icon: 'none',
-    })
-    return
-  }
-
-  // 提交绑定信息
-  uni.showLoading({
-    title: '提交中...',
-  })
-
-  // 模拟提交成功
-  setTimeout(() => {
-    uni.hideLoading()
+  if (res.code === '200') {
+    // addFlag.value = true
     uni.showToast({
       title: '绑定成功',
       icon: 'success',
     })
-    // 跳转到菜单页面
-    uni.navigateTo({
-      url: '/pages-car/menu/index',
+    setTimeout(() => {
+      // 跳转到菜单页面
+      uni.reLaunch({
+        url: '/pages/index/index?name=HomeBlue',
+      })
+    }, 1000)
+  }
+  else {
+    uni.showToast({
+      title: res.message || '绑定失败',
+      icon: 'none',
     })
-  }, 1000)
+  }
 }
 
 function onCompleteClick() {
@@ -124,14 +120,27 @@ function onMessageClick() {
 }
 
 // 处理页面加载参数
-onLoad((option: Record<string, string>) => {
-  // 初始化标签栏
-  if (option.info && option.info !== 'null') {
-    const info = JSON.parse(decodeURIComponent(option.info))
-    code.value = info.code || ''
-    name.value = info.name || ''
-    brand.value = info.brand || ''
-    colorCode.value = info.colorCode || ''
+// onLoad((option: Record<string, string>) => {
+//   // 初始化标签栏
+//   if (option.info && option.info !== 'null') {
+//     const info = JSON.parse(decodeURIComponent(option.info))
+//     code.value = info.code || ''
+//     name.value = info.name || ''
+//     brand.value = info.brand || ''
+//     colorCode.value = info.colorCode || ''
+//   }
+// })
+
+onMounted(() => {
+  const instance = getCurrentInstance()?.proxy as { getOpenerEventChannel?: () => UniApp.EventChannel }
+  if (instance?.getOpenerEventChannel) {
+    const eventChannel = instance.getOpenerEventChannel()
+    eventChannel.on('formData', (info: any) => {
+      code.value = info.code || ''
+      name.value = info.name || ''
+      brand.value = info.brand || ''
+      colorCode.value = info.colorCode || ''
+    })
   }
 })
 
@@ -142,7 +151,7 @@ onShareAppMessage(() => {
     path: `/pages-car/addMember/index?info=${JSON.stringify({
       name: name.value,
       brand: brand.value,
-      color: color.value,
+      // color: color.value,
       phone: phone.value,
     })}`,
     imageUrl: ScanDescIcon,

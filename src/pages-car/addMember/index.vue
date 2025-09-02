@@ -9,6 +9,8 @@
 </route>
 
 <script lang="ts" setup>
+import { httpGet } from '@/utils/http'
+
 const ScanDescIcon = 'http://121.89.87.166/static/car/scan-desc.png'
 const SuccessDefault = 'http://121.89.87.166/static/mine/success-default.png'
 const YellowTips = 'http://121.89.87.166/static/mine/yellow-tips.png'
@@ -18,9 +20,31 @@ const name = ref('')
 const brand = ref('')
 const color = ref('')
 const phone = ref('')
-const columns = ref(['朋友', '夫妻', '父母', '子女', '情侣', '亲戚']) // 关系列表
+// const columns = ref(['朋友', '夫妻', '父母', '子女', '情侣', '亲戚']) // 关系列表
 const addFlag = ref(false)
 const showShare = ref(false)
+
+// 定义columns的类型
+interface Column {
+  dictCode: string
+  dictName: string
+}
+const columns = ref<Column[]>([]) // 关系列表
+
+onLoad(() => {
+  getRelationship()
+})
+
+function getRelationship() {
+  httpGet('/common/dict/owner_relationship').then((res) => {
+    if (res.code === '200') {
+      columns.value = res.data as Column[]
+    }
+    else {
+      console.log('获取车辆颜色列表失败:', res)
+    }
+  })
+}
 
 function onSubmitClick() {
   // showShare.value = true

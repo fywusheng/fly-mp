@@ -9,17 +9,63 @@
 </route>
 
 <script lang="ts" setup>
-const ScanDescIcon = 'http://121.89.87.166/static/car/scan-desc.png'
+import { getColorImg } from '@/utils'
+import { httpGet, httpPost } from '@/utils/http'
+
 const CarGreenIcon = 'http://121.89.87.166/static/mine/bind-car-green.png'
 
-const code = ref('')
 const name = ref('')
 const brand = ref('飞鸽')
-const color = ref('')
-const columns = ref(['选项1', '选项2', '选项3', '选项4', '选项5', '选项6', '选项7']) // 颜色列表
+const colorCode = ref('')
+let carInfo = {}// 车辆信息
 
-function onSubmitClick() {
-  if (!code.value || !name.value || !color.value) {
+// 定义columns的类型
+interface Column {
+  dictCode: string
+  dictName: string
+}
+const columns = ref<Column[]>([]) // 颜色列表
+
+const color = computed(() => {
+  const found = columns.value.find(item => item.dictCode === colorCode.value)
+  return found ? found.dictName : ''
+})
+
+onMounted(() => {
+  // 获取车辆颜色
+  getCarColor()
+  // 获取车辆信息
+  const instance = getCurrentInstance()?.proxy as { getOpenerEventChannel?: () => UniApp.EventChannel }
+  if (instance?.getOpenerEventChannel) {
+    const eventChannel = instance.getOpenerEventChannel()
+    eventChannel.on('editCar', (info: any) => {
+      console.log('接收到的车辆信息:', info)
+      carInfo = info
+      name.value = info.vehicleName || ''
+      brand.value = info.brand || '飞鸽'
+      colorCode.value = info.colorCode || ''
+    })
+  }
+})
+
+function getCarColor() {
+  httpGet('/common/dict/vehicle_color').then((res) => {
+    if (res.code === '200') {
+      columns.value = res.data as Column[]
+    }
+    else {
+      console.log('获取车辆颜色列表失败:', res)
+    }
+  })
+}
+
+function onConfirm({ value, selectedItems }) {
+  console.log('选中的车辆颜色:', value, selectedItems)
+  colorCode.value = selectedItems.dictCode
+}
+
+async function onSubmitClick() {
+  if (!name.value || !colorCode.value) {
     uni.showToast({
       title: '请填写完整信息',
       icon: 'none',
@@ -27,23 +73,31 @@ function onSubmitClick() {
     return
   }
 
-  // 提交绑定信息
-  uni.showLoading({
-    title: '提交中...',
+  // 更新车辆信息
+  const res = await httpPost('/device/vehicle/update', {
+    ...carInfo,
+    vehicleName: name.value,
+    brand: brand.value,
+    colorCode: colorCode.value,
   })
 
-  // 模拟提交成功
-  setTimeout(() => {
-    uni.hideLoading()
+  if (res.code === '200') {
     uni.showToast({
-      title: '绑定成功',
+      title: '更新成功',
       icon: 'success',
+      duration: 1000,
     })
-    // 跳转到菜单页面
-    uni.navigateTo({
-      url: '/pages-car/menu/index',
+    // 返回上一页
+    setTimeout(() => {
+      uni.navigateBack()
+    }, 1000)
+  }
+  else {
+    uni.showToast({
+      title: '更新失败',
+      icon: 'none',
     })
-  }, 1000)
+  }
 }
 </script>
 
@@ -51,7 +105,7 @@ function onSubmitClick() {
   <view class="bind-car">
     <image
       class="mt-30rpx h-465rpx w-663rpx"
-      :src="CarGreenIcon"
+      :src="getColorImg(colorCode, 'bindCar')"
       mode="scaleToFill"
     />
 
@@ -67,7 +121,7 @@ function onSubmitClick() {
               </view>
             </template>
 
-            <wd-picker v-model="color" :columns="columns" use-default-slot>
+            <wd-picker v-model="colorCode" :columns="columns" use-default-slot value-key="dictCode" label-key="dictName" @confirm="onConfirm">
               <view class="flex items-center justify-end">
                 <view v-if="color" class="mr-15rpx text-24rpx">
                   {{ color }}

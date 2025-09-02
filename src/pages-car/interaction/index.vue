@@ -9,8 +9,6 @@
 </route>
 
 <script lang="ts" setup>
-// 感应距离
-
 import {
   openAndSearchAndConnect,
 } from '@/utils/EvsBikeSdk'
@@ -18,17 +16,12 @@ import EVSBikeSDK from '@/utils/EVSBikeSDK.v1.1.0'
 
 const PointIcon = 'http://121.89.87.166/static/car/point.png'
 const isInductionCar = ref(true) // 感应控车
-const isInductionOpenCar = ref(true) // 感应开锁
-const isInductionCloseCar = ref(true) // 感应锁车
 const distance = ref(1)
-
-// 更新车辆状态
-const updateCarStatusDebounced = debounce(updateCarStatus, 500)
-
+const updateCarStatusDebounced = debounce(updateCarStatus, 500) // 更新车辆状态
 // 车辆状态
 const carState = ref({
   isStarted: false, // 车辆是否已启动。`true`：已启动  - `false`：未启动
-  isLocked: false, // 车辆是否处于锁车状态。  - `true`：已锁车  - `false`：未锁车
+  isLocked: true, // 车辆是否处于锁车状态。  - `true`：已锁车  - `false`：未锁车
   isArmed: false, // 车辆是否已设防（防盗报警激活）。  - `true`：已设防  - `false`：未设防
   isMuteArmOn: false, // 车辆是否已开启静音设防。  - `true`：已开启  - `false`：未开启
   isKeylessOn: false, // 感应启动功能是否开启。  - `true`：开启  - `false`：关闭
@@ -85,12 +78,7 @@ function onStateChange(data) {
     // 绑定用户
     case 'BIND_USER':
       // 查询车辆状态和取设备设置参数，感应启动相关
-      // EVSBikeSDK.bleCommandsApi.sendGetVehicleStatusCommand()
       EVSBikeSDK.bleCommandsApi.sendGetEcuConfigCommand()
-      break
-      // case 'SET_KEYLESS_RANGE':
-      //   // 取设备设置参数，感应启动相关
-      //   EVSBikeSDK.bleCommandsApi.sendGetEcuConfigCommand()
       break
     default:
       break
@@ -134,36 +122,30 @@ function onSubmitClick() {
   uni.showToast({
     title: '设置成功',
     icon: 'success',
-    duration: 2000,
+    duration: 1000,
   })
 
-  // setTimeout(() => {
-  //   // 返回首页
-  //   uni.navigateBack()
-  // }, 2000)
+  setTimeout(() => {
+    // 返回首页
+    uni.navigateBack()
+  }, 1000)
 }
 </script>
 
 <template>
   <view class="bind-car">
-    <view class="mt-30rpx w-711rpx overflow-hidden rounded-[10rpx]">
-      <view class="mt-8rpx">
+    <view class="mt-30rpx w-711rpx">
+      <view class="mt-8rpx overflow-hidden rounded-[10rpx]">
         <wd-cell-group border>
           <wd-cell title="感应控车">
             <wd-switch v-model="isInductionCar" active-color="#2CBC7B" inactive-color="#E9E9EB" />
-          </wd-cell>
-          <wd-cell title="感应开锁">
-            <wd-switch v-model="isInductionOpenCar" active-color="#2CBC7B" inactive-color="#E9E9EB" />
-          </wd-cell>
-          <wd-cell title="感应锁车">
-            <wd-switch v-model="isInductionCloseCar" active-color="#2CBC7B" inactive-color="#E9E9EB" />
           </wd-cell>
         </wd-cell-group>
       </view>
     </view>
 
-    <view class="mt-28rpx w-711rpx overflow-hidden rounded-[10rpx]">
-      <view class="mt-8rpx">
+    <view class="mt-28rpx w-711rpx">
+      <view class="mt-8rpx overflow-hidden rounded-[10rpx]">
         <wd-cell-group title="感应距离" border>
           <view class="flex items-center justify-between px-30rpx">
             <text>近</text>
@@ -194,8 +176,8 @@ function onSubmitClick() {
       </view>
     </view>
 
-    <view class="mt-28rpx w-711rpx overflow-hidden rounded-[10rpx]">
-      <view class="mt-8rpx">
+    <view class="mt-28rpx w-711rpx">
+      <view class="mt-8rpx overflow-hidden rounded-[10rpx]">
         <wd-cell-group title="说明" border>
           <div class="px-31rpx py-41rpx text-24rpx color-[#6E6E6E]">
             感应控车开启后可实现手机靠近车辆，即可解锁同时启动 车辆。远离车辆自动断电并设防。
@@ -204,8 +186,8 @@ function onSubmitClick() {
       </view>
     </view>
 
-    <view class="mt-28rpx w-711rpx overflow-hidden rounded-[10rpx]">
-      <view class="mt-8rpx">
+    <view class="mt-28rpx w-711rpx">
+      <view class="mt-8rpx overflow-hidden rounded-[10rpx]">
         <wd-cell-group title="注意" border>
           <div class="px-31rpx py-41rpx text-24rpx color-[#6E6E6E]">
             <view>受不同手机蓝牙信号强弱及周围环境干扰，可能会偶发断 电或启动延时等情况。</view>
@@ -229,7 +211,7 @@ function onSubmitClick() {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-bottom: 143rpx;
+  min-height: 100vh;
   :deep() {
     .wd-cell-group__left {
       font-family: Microsoft YaHei;
@@ -245,35 +227,5 @@ function onSubmitClick() {
     }
   }
 
-}
-</style>
-
-<style lang="scss">
-.slider-block {
-    position: relative;
-    height: 30rpx;
-    width: 50rpx;
-    background-color: #fff;
-    border-radius: 5rpx;
-
-    &::after,
-    &::before {
-      position: absolute;
-      height: 10px;
-      width: 3px;
-      content: '';
-      border-radius: 2rpx;
-      display: block;
-      background-color: #666;
-      top: 50%;
-      transform: translateY(-50%);
-      left: 9px;
-      box-shadow: 0px 0px 1px 1px #ccc;
-    }
-
-    &::after {
-      right: 9px;
-      left: unset;
-    }
 }
 </style>

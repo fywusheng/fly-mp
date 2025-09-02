@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useUserStore } from '@/store'
-import { getLocation } from '@/utils'
+import { debounce, getLocation } from '@/utils'
 import {
   openAndSearchAndConnect,
 } from '@/utils/EvsBikeSdk'
@@ -51,6 +51,7 @@ const sliderX = ref(0)
 const maxRight = ref(0)
 const sliderStyle = ref({})
 const isUnlocked = ref(false) // 是否解锁成功
+
 // 蓝牙状态 0:未连接 1:连接中 2:已连接
 const status = ref(0)
 // 蓝牙功能列表
@@ -79,7 +80,7 @@ const list = ref([{
 // 车辆状态
 const carState = ref({
   isStarted: false, // 车辆是否已启动。`true`：已启动  - `false`：未启动
-  isLocked: false, // 车辆是否处于锁车状态。  - `true`：已锁车  - `false`：未锁车
+  isLocked: true, // 车辆是否处于锁车状态。  - `true`：已锁车  - `false`：未锁车
   isArmed: false, // 车辆是否已设防（防盗报警激活）。  - `true`：已设防  - `false`：未设防
   isMuteArmOn: false, // 车辆是否已开启静音设防。  - `true`：已开启  - `false`：未开启
   isKeylessOn: false, // 感应启动功能是否开启。  - `true`：开启  - `false`：关闭
@@ -90,14 +91,9 @@ const carState = ref({
 const updateCarStatusDebounced = debounce(updateCarStatus, 500)
 
 // 弹出框相关
-const show = ref(false)
-const carList = ref([{ value: 13, label: '车辆1' }, { value: 14, label: '车辆2' }])
-const selectCarValue = ref<number>(14)
-const selectCar = ref<number>(0)
+const carList = ref([])
+const selectCar = ref<number>(4)
 
-function onChange({ picker, value, index }) {
-  console.log('当前选中项:', value, '下标:', index, selectCar.value)
-}
 // message弹窗
 const showMessagePopup = ref(false) // 控制弹窗显示
 const messageId = ref<number>(0) // 弹窗ID
@@ -116,24 +112,105 @@ function handleConfirm() {
   console.log('确认操作')
 }
 
-onMounted(() => {
-  uni.createSelectorQuery()
-    .in(getCurrentInstance().proxy)
-    .select('.slider')
-    .boundingClientRect((res: UniApp.NodeInfo) => {
-      maxRight.value = res.width - 70 // 70为滑块的宽度
-      // console.log('滑块最大右侧位置:', maxRight.value)
-      // setSliderStatus(true)
-    })
-    .exec()
+// 获取选中车辆名称
+const currentCarName = computed(() => {
+  const car = carList.value.find(item => item.id === selectCar.value)
+  return car ? car.vehicleName : '我的车辆'
+})
 
-  console.log('组件挂载')
+onMounted(() => {
+  // 获取后台定位权限
+  // wx.getSetting({
+  //   success(res) {
+  //     if (!res.authSetting['scope.userLocationBackground']) {
+  //       wx.authorize({
+  //         scope: 'scope.userLocationBackground',
+  //         success() {
+  //           // 用户同意授权后台定位
+  //           // getLocationAndBlueAuth()
+
+  //           // 开启后台定位
+  //           // wx.startLocationUpdateBackground({
+  //           //   success: (res) => {
+  //           //     console.log('开启后台定位成功', res)
+  //           //     // 成功后可开始监听位置变化
+  //           //     startListeningLocation()
+  //           //   },
+  //           //   fail: (err) => {
+  //           //     console.error('开启后台定位失败', err)
+  //           //     // this.handleLocationError(err)
+  //           //   },
+  //           // })
+  //         },
+  //         fail(err) {
+  //           console.log(err)
+  //           // 用户拒绝授权后台定位
+  //           uni.showModal({
+  //             title: '提示',
+  //             content: '需要获取您的后台定位权限',
+  //             showCancel: true,
+  //             success: ({ confirm, cancel }) => {
+  //               console.log('用户点击了', confirm ? '确认' : '取消')
+  //               if (confirm) {
+  //                 uni.openSetting(
+  //                   {
+  //                     success(res) {
+  //                       if (res.authSetting['scope.userLocationBackground']) {
+  //                         // 用户同意授权后台定位
+  //                         console.log('用户同意授权后台定位')
+  //                         getLocationAndBlueAuth()
+  //                         // 开启后台定位
+  //                         wx.startLocationUpdateBackground({
+  //                           success: (res) => {
+  //                             console.log('开启后台定位成功', res)
+  //                             // 成功后可开始监听位置变化
+  //                             startListeningLocation()
+  //                           },
+  //                           fail: (err) => {
+  //                             console.error('开启后台定位失败', err)
+  //                             // this.handleLocationError(err)
+  //                           },
+  //                         })
+  //                       }
+  //                     },
+  //                     fail(err) {
+  //                       console.log('openSetting fail', err)
+  //                     },
+  //                   },
+  //                 )
+  //               }
+  //             },
+  //           })
+  //         },
+  //       })
+  //     }
+  //     else {
+  //       // 已经授权，可以获取位置信息
+  //       getLocationAndBlueAuth()
+
+  //       // 开启后台定位
+  //       wx.startLocationUpdateBackground({
+  //         success: (res) => {
+  //           console.log('开启后台定位成功', res)
+  //           // 成功后可开始监听位置变化
+  //           startListeningLocation()
+  //         },
+  //         fail: (err) => {
+  //           console.error('开启后台定位失败', err)
+  //           // this.handleLocationError(err)
+  //         },
+  //       })
+  //     }
+  //   },
+  // })
+  // 获取滑块最大宽度
+  getMaxSliderWidth()
   // 获取位置信息和蓝牙权限
   getLocationAndBlueAuth()
   // 已经登录
   if (userStore.userInfo.userId) {
     // 获取车辆列表
-    getCarList(userStore.userInfo.userId)
+    getCarList()
   }
 })
 
@@ -143,15 +220,75 @@ onHide(() => {
   console.log('组件卸载')
 })
 
+// 监听位置变化
+function startListeningLocation() {
+  wx.onLocationChange((location) => {
+    console.log('位置发生变化', location)
+    // 处理位置信息，例如上传到服务器
+    processNewLocation(location)
+  })
+}
+
+// 处理新的位置信息
+// let lastUploadTime = Date.now() // 上次上传时间
+function processNewLocation(location) {
+  // 获取位置详细信息
+  const {
+    latitude, // 纬度
+    longitude, // 经度
+    speed, // 速度，单位 m/s
+    accuracy, // 定位精度
+    altitude, // 高度，单位 m
+    verticalAccuracy, // 垂直精度(iOS)
+    horizontalAccuracy, // 水平精度
+  } = location
+
+  // 示例：每5分钟上传一次位置信息
+  // const currentTime = Date.now()
+  // const lastUploadTime = lastUploadTime || 0
+
+  // if (currentTime - lastUploadTime > 5 * 60 * 1000) {
+  //   // uploadLocationToServer(location)
+  //   lastUploadTime = currentTime
+  // }
+  console.log('处理新的位置信息', location, carState.value)
+}
+
+// 停止定位
+function stopLocationTracking() {
+  wx.stopLocationUpdate({
+    success: (res) => {
+      console.log('停止定位成功', res)
+    },
+    fail: (err) => {
+      console.error('停止定位失败', err)
+    },
+  })
+
+  // 取消位置监听
+  wx.offLocationChange()
+}
+
+function getMaxSliderWidth() {
+  uni.createSelectorQuery()
+    .in(getCurrentInstance().proxy)
+    .select('.slider')
+    .boundingClientRect((res: UniApp.NodeInfo) => {
+      maxRight.value = res.width - 70 // 70为滑块的宽度
+      // console.log('滑块最大右侧位置:', maxRight.value)
+      // setSliderStatus(true)
+    })
+    .exec()
+}
 function setSliderStatus(open) {
   // 设置车辆锁定状态
   if (open) {
     sliderX.value = maxRight.value
-    sliderStyle.value = `transform: translateX(${maxRight.value}px)`
+    sliderStyle.value = `transform: translateX(${maxRight.value}px); transition: all 0.5s ease`
   }
   else {
     sliderX.value = 0
-    sliderStyle.value = `transform: translateX(0)`
+    sliderStyle.value = `transform: translateX(0); transition: all 0.5s ease`
   }
 }
 
@@ -159,6 +296,7 @@ function setSliderStatus(open) {
 function getLocationAndBlueAuth() {
   uni.getSetting({
     success(res) {
+      console.log('蓝牙权限', res)
       // 检测地理位置权限
       if (!res.authSetting['scope.userLocation']) {
         uni.showModal({
@@ -205,11 +343,11 @@ function getLocationAndBlueAuth() {
           },
         })
       }
-      else {
-        // 已经授权，可以打开蓝牙
-        console.log('已经授权，可以打开蓝牙')
-        // connectBle()
-      }
+      // else {
+      //   // 已经授权，可以打开蓝牙
+      //   console.log('已经授权，可以打开蓝牙')
+      //   // connectBle()
+      // }
     },
   })
 }
@@ -281,12 +419,17 @@ function onItemClick(item) {
   }
 }
 
+// 刷新
+function reloadLocation() {
+  EVSBikeSDK.bleCommandsApi.sendGetVehicleStatusCommand()
+}
+
 // 获取位置信息和天气
 function getLocationAndWeather() {
   getLocation().then((res) => {
     // 根据当前位置获取天气信息
     const { latitude, longitude } = res
-    httpGet(`/weather/location?latitude=${latitude}&longitude=${longitude}`).then((weatherRes) => {
+    httpGet(`/device/weather/location?latitude=${latitude}&longitude=${longitude}`).then((weatherRes) => {
       weatherInfo.value = weatherRes.data as any
     }).catch((err) => {
       console.error('获取天气信息失败:', err)
@@ -297,11 +440,15 @@ function getLocationAndWeather() {
 }
 
 // 获取车辆列表
-function getCarList(userId) {
-  httpPost('/user/mini/user/vehicles', { userId }).then((res) => {
-    carList.value = res.data as any
+function getCarList() {
+  httpGet('/device/vehicle/user/complete').then((res) => {
+    carList.value = (res.data as any).resultList
   }).catch((err) => {
     console.error('获取车辆列表失败:', err)
+    uni.showToast({
+      title: '获取车辆列表失败',
+      icon: 'none',
+    })
   })
 }
 
@@ -327,12 +474,12 @@ async function connectBle() {
     EVSBikeSDK.bleCommandsApi.sendBindOwnerCommand('4F7A126E')
   }
   catch (err) {
-    status.value = 0
     console.log(err)
+    status.value = 0
     wx.showToast({
-      title: err.message || '连接失败',
-      icon: 'none',
-      duration: 500,
+      title: '请开启蓝牙',
+      icon: 'error',
+      duration: 600,
     })
   }
 }
@@ -350,7 +497,9 @@ function onStateChange(data) {
     case 'BIND_USER':
       // 查询车辆状态和取设备设置参数，感应启动相关
       EVSBikeSDK.bleCommandsApi.sendGetVehicleStatusCommand()
-      EVSBikeSDK.bleCommandsApi.sendGetEcuConfigCommand()
+      setTimeout(() => {
+        EVSBikeSDK.bleCommandsApi.sendGetEcuConfigCommand()
+      }, 500)
       break
     // 获取车辆状态
     case 'GET_CAR_STATUS':
@@ -396,16 +545,6 @@ function updateCarStatus() {
   setSliderStatus(isUnlocked.value)
 }
 
-function debounce<T extends (...args: any[]) => void>(fn: T, delay = 500) {
-  let timer: ReturnType<typeof setTimeout> | null = null
-  return function (...args: Parameters<T>) {
-    if (timer)
-      clearTimeout(timer)
-    timer = setTimeout(() => {
-      fn(...args)
-    }, delay)
-  }
-}
 function disconnect() {
   EVSBikeSDK.disconnect()
     .then((res) => {
@@ -421,11 +560,8 @@ function disconnect() {
     })
 }
 
-function onConfirm() {
-  show.value = false
-  selectCar.value = selectCarValue.value
-  console.log('选中车辆selectCarValue:', selectCarValue.value)
-  console.log('选中车辆 selectCar:', selectCar.value)
+function handleConfirmCar({ value }) {
+  console.log('选中车辆:', value)
 }
 
 function onTouchStart(event) {
@@ -454,8 +590,8 @@ function onTouchEnd(event) {
     // 回弹到对应位置
     sliderX.value = isUnlocked.value ? maxRight.value : 0
     sliderStyle.value = isUnlocked.value
-      ? `transform: translateX(${maxRight.value}px)`
-      : `transform: translateX(0px)`
+      ? `transform: translateX(${maxRight.value}px); transition: all 0.5s ease`
+      : `transform: translateX(0px); transition: all 0.5s ease `
   }
 
   if (!isUnlocked.value && sliderX.value === maxRight.value) {
@@ -478,15 +614,16 @@ function onTouchEnd(event) {
   <view class="Home">
     <view class="top-card">
       <image
-        class="top-bg"
+        class="top-bg z-0"
         :src="TopIcon"
         mode="scaleToFill"
       />
+
       <!-- 我的车辆&蓝牙状态 -->
-      <view class="top-cont" :style="{ paddingTop: `${menuButtonInfo?.top + menuButtonInfo.height + 15}px` }">
-        <view class="car flex items-center justify-between px-29rpx" @click="show = true">
+      <wd-picker v-model="selectCar" :z-index="100" label-key="vehicleName" value-key="id" :columns="carList" use-default-slot @confirm="handleConfirmCar">
+        <view class="car relative z-1 h-90rpx flex items-center justify-between px-29rpx" :style="{ paddingTop: `${menuButtonInfo?.top + menuButtonInfo.height + 15}px` }">
           <view>
-            <span class="text-30rpx font-bold">我的车辆</span>
+            <span class="text-30rpx font-bold">{{ currentCarName }}</span>
             <image
               class="ml-16rpx h-15rpx w-30rpx"
               :src="DownIcon"
@@ -513,6 +650,8 @@ function onTouchEnd(event) {
             </view>
           </view>
         </view>
+      </wd-picker>
+      <view class="top-cont">
         <view class="mb-37rpx mt-53rpx flex items-center justify-center">
           <image
             class="h-133rpx w-517rpx"
@@ -545,7 +684,6 @@ function onTouchEnd(event) {
             :style="sliderStyle"
             :src="status === 0 || status === 1 ? CloseBtnBrayIcon : isUnlocked ? CloseBtnIcon : CloseBtnRedIcon"
             mode="scaleToFill"
-            @touchmove="onTouchMove"
           />
           <image
             class="absolute top-36rpx h-64rpx w-101rpx"
@@ -587,7 +725,7 @@ function onTouchEnd(event) {
                 车辆位置
               </view>
               <image class="ml-30rpx h-22rpx w-22rpx" :src="ReloadIcon" mode="scaleToFill" />
-              <view class="ml-24rpx whitespace-nowrap text-28rpx color-[#666666]">
+              <view class="ml-24rpx whitespace-nowrap text-28rpx color-[#666666]" @click="reloadLocation">
                 刷新
               </view>
             </view>
@@ -607,7 +745,7 @@ function onTouchEnd(event) {
     </view>
   </view>
   <!-- 车辆选择 -->
-  <wd-popup v-model="show" :z-index="100" position="bottom" custom-style="border-radius:32rpx;" :close-on-click-modal="false">
+  <!-- <wd-popup v-model="show" :z-index="100" position="bottom" custom-style="border-radius:32rpx;" :close-on-click-modal="false">
     <view class="flex justify-between px-30rpx py-40rpx text-40rpx">
       <view class="color-[#999999]" @click="show = false">
         取消
@@ -616,8 +754,8 @@ function onTouchEnd(event) {
         确认
       </view>
     </view>
-    <wd-picker-view v-model="selectCarValue" :columns="carList" @change="onChange" />
-  </wd-popup>
+    <wd-picker-view v-model="selectCarValue" label-key="vehicleName" value-key="id" :columns="carList" @change="onChange" />
+  </wd-popup> -->
   <!-- 操作提示弹窗 -->
   <fg-message v-model:show="showMessagePopup" :duration="duration" :show-cancel-btn="showCancelBtn" :show-confirm-btn="showConfirmBtn" :close-on-click-modal="closeOnClickModal" :message-id="messageId" @cancel="handleCancel" @confirm="handleConfirm" />
 </template>
@@ -645,7 +783,7 @@ function onTouchEnd(event) {
       position: relative;
       z-index: 2;
       width: 100%;
-      height: 100%;
+      height: 580rpx;
       box-sizing: border-box;
       .count {
         position: absolute;
@@ -704,7 +842,7 @@ function onTouchEnd(event) {
   }
 }
 .slider-bg {
-  transition: all 0.5s ease;
+  // transition: all 0.5s ease;
 }
 </style>
 

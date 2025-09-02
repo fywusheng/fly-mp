@@ -9,18 +9,35 @@
 </route>
 
 <script lang="ts" setup>
-const AutoSheFang = 'http://121.89.87.166/static/mine/auto-shefang.png'
-const AutoXihuo = 'http://121.89.87.166/static/mine/auto-xihuo.png'
-const MuteShefang = 'http://121.89.87.166/static/mine/mute-shefang.png'
+// const AutoSheFang = 'http://121.89.87.166/static/mine/auto-shefang.png'
+// const AutoXihuo = 'http://121.89.87.166/static/mine/auto-xihuo.png'
+// const MuteShefang = 'http://121.89.87.166/static/mine/mute-shefang.png'
+import {
+  openAndSearchAndConnect,
+} from '@/utils/EvsBikeSdk'
+import EVSBikeSDK from '@/utils/EVSBikeSDK.v1.1.0'
+
 const OverSpeed = 'http://121.89.87.166/static/mine/over-speed.png'
 const RemoteControl = 'http://121.89.87.166/static/mine/remote-control.png'
 
+// 车辆列表
 const columns = ref(['选项1', '选项2', '选项3', '选项4', '选项5', '选项6', '选项7'])
 const value = ref('选项1')
-const checked1 = ref<boolean>(true)
-const checked2 = ref<boolean>(true)
-const checked3 = ref<boolean>(true)
-const checked4 = ref<boolean>(true)
+// 超速报警开启标志
+const overSpeed = ref<boolean>(true)
+
+// 车辆状态
+const carState = ref({
+  isOverspeedOn: false, // 超速报警功能是否开启。  - `true`：超速  - `false`：未超速
+  isStarted: false, // 车辆是否已启动。`true`：已启动  - `false`：未启动
+  isLocked: true, // 车辆是否处于锁车状态。  - `true`：已锁车  - `false`：未锁车
+  isArmed: false, // 车辆是否已设防（防盗报警激活）。  - `true`：已设防  - `false`：未设防
+  isMuteArmOn: false, // 车辆是否已开启静音设防。  - `true`：已开启  - `false`：未开启
+  isKeylessOn: false, // 感应启动功能是否开启。  - `true`：开启  - `false`：关闭
+  keylessType: 1, // 感应启动类型。  - `1`：感应启动  - `2`：震动启动  - `3`：一键启动
+  keylessRange: 1, // 感应启动距离。 - `1`：一档，信号强度最高 - `2`：二档，信号强度中等  - `3`：表示三档，信号强度最低。
+})
+
 // message弹窗
 const showMessagePopup = ref(false) // 控制弹窗显示
 const messageId = ref<number>(0) // 弹窗ID
@@ -30,6 +47,97 @@ const confirmText = ref<string>('确定') // 确认按钮文本
 const showCancelBtn = ref(true) // 是否显示取消按钮
 const showConfirmBtn = ref(true) // 是否显示确认按钮
 const closeOnClickModal = ref(true) // 是否点击蒙层关闭弹窗
+
+onLoad(() => {
+  connectBle()
+})
+
+onHide(() => {
+  EVSBikeSDK.unsubscribe(onStateChange)
+})
+onUnload(() => {
+  EVSBikeSDK.unsubscribe(onStateChange)
+})
+
+// 连接蓝牙
+async function connectBle() {
+  try {
+    // 统一入口：传name或deviceId
+    const device = await openAndSearchAndConnect({
+      name: 'EV10C-154928',
+    }) as { deviceId: string }
+    const res = await EVSBikeSDK.connect({
+      deviceId: device.deviceId,
+      type: 'at', // 设备类型
+    })
+    console.log('连接成功', res)
+    EVSBikeSDK.subscribe(onStateChange)
+    // 发送指令
+    EVSBikeSDK.bleCommandsApi.sendBindOwnerCommand('4F7A126E')
+  }
+  catch (err) {
+    console.log(err)
+    wx.showToast({
+      title: err.message || '连接失败',
+      icon: 'none',
+      duration: 500,
+    })
+  }
+}
+
+// 蓝牙状态变化事件
+function onStateChange(data) {
+  console.log('设备状态变化:', data)
+  const {
+    operType,
+    message,
+    success,
+    state,
+  } = data
+  switch (operType) {
+    // 绑定用户
+    case 'BIND_USER':
+      // 查询车辆状态和取设备设置参数，感应启动相关
+      EVSBikeSDK.bleCommandsApi.sendGetVehicleStatusCommand()
+      // EVSBikeSDK.bleCommandsApi.sendGetEcuConfigCommand()
+      break
+      // 复制遥控器
+    case 'LEARN_REMOTE':
+      if (success) {
+        // 复制遥控器成功
+        messageId.value = 2
+        duration.value = 1000
+        showCancelBtn.value = false
+        showConfirmBtn.value = false
+        closeOnClickModal.value = true
+        // confirmText.value = '立即删除'
+        message.value = `复制成功!`
+        showMessagePopup.value = true
+      }
+      else {
+        // 复制遥控器失败
+        uni.showToast({
+          title: message || '复制失败',
+          icon: 'none',
+          duration: 2000,
+        })
+      }
+      break
+    default:
+
+      break
+  }
+
+  if (!state)
+    return
+
+  carState.value = {
+    ...carState.value,
+    ...state,
+  }
+
+  overSpeed.value = carState.value.isOverspeedOn
+}
 
 function handleCancel() {
   showMessagePopup.value = false
@@ -44,8 +152,10 @@ function handleOnConfirm({ value }) {
   value.value = value
 }
 
+// 自动熄火
 function beforeChange({ value, resolve }) {
-  console.log('切换前的值:', value)
+  console.log('要改变的值:', value)
+  EVSBikeSDK.bleCommandsApi.sendSetOverspeedAlarmCommand(value ? 1 : 2)
   setTimeout(() => {
     resolve(true)
     messageId.value = 1
@@ -54,9 +164,14 @@ function beforeChange({ value, resolve }) {
     showConfirmBtn.value = false
     closeOnClickModal.value = true
     // confirmText.value = '立即删除'
-    message.value = '自动锁车成功!'
+    message.value = `超速报警提示音已${value ? '开启' : '关闭'}!`
     showMessagePopup.value = true
-  }, 1000)
+  }, 500)
+}
+
+// 复制遥控器
+function copyKeys() {
+  EVSBikeSDK.bleCommandsApi.sendLearnRemoteControlCommand()
 }
 </script>
 
@@ -69,7 +184,7 @@ function beforeChange({ value, resolve }) {
       </view>
     </wd-picker>
 
-    <view class="mt-53rpx rounded-[10rpx] bg-white text-24rpx">
+    <!-- <view class="mt-53rpx rounded-[10rpx] bg-white text-24rpx">
       <view class="flex items-center justify-between px-30rpx py-10rpx">
         <view class="flex items-center justify-center">
           <image
@@ -85,8 +200,8 @@ function beforeChange({ value, resolve }) {
       <view class="relative box-border w-711rpx px-30rpx py-30rpx">
         功能开启后，车辆设防状态下，无喇叭报警提示音
       </view>
-    </view>
-    <view class="mt-53rpx rounded-[10rpx] bg-white text-24rpx">
+    </view> -->
+    <!-- <view class="mt-53rpx rounded-[10rpx] bg-white text-24rpx">
       <view class="flex items-center justify-between px-30rpx py-10rpx">
         <view class="flex items-center justify-center">
           <image
@@ -102,8 +217,8 @@ function beforeChange({ value, resolve }) {
       <view class="relative box-border w-711rpx px-30rpx py-30rpx">
         功能开启后，车辆忘记熄火，车辆在5分钟后自动熄火
       </view>
-    </view>
-    <view class="mt-53rpx rounded-[10rpx] bg-white text-24rpx">
+    </view> -->
+    <!-- <view class="mt-53rpx rounded-[10rpx] bg-white text-24rpx">
       <view class="flex items-center justify-between px-30rpx py-10rpx">
         <view class="flex items-center justify-center">
           <image
@@ -119,7 +234,7 @@ function beforeChange({ value, resolve }) {
       <view class="relative box-border w-711rpx px-30rpx py-30rpx">
         功能开启后，车辆熄火后5秒未启动，将自动进入设防状态
       </view>
-    </view>
+    </view> -->
     <view class="mt-53rpx rounded-[10rpx] bg-white text-24rpx">
       <view class="flex items-center justify-between px-30rpx py-10rpx">
         <view class="flex items-center justify-center">
@@ -130,7 +245,7 @@ function beforeChange({ value, resolve }) {
           />
           <view>超速报警提示音</view>
         </view>
-        <wd-switch v-model="checked4" active-color="#2CBD7C" :before-change="beforeChange" />
+        <wd-switch v-model="overSpeed" :active-value="true" :inactive-value="false" active-color="#2CBD7C" :before-change="beforeChange" />
       </view>
       <view class="h-2rpx w-100% bg-[#E6E6E6]" />
       <view class="relative box-border w-711rpx px-30rpx py-30rpx">
@@ -148,7 +263,7 @@ function beforeChange({ value, resolve }) {
           />
           <view>复制遥控器</view>
         </view>
-        <wd-button size="medium">
+        <wd-button size="medium" @click="copyKeys">
           复 制
         </wd-button>
       </view>
@@ -169,10 +284,7 @@ function beforeChange({ value, resolve }) {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  // justify-content: center;
   align-items: center;
-  // padding: 16px;
-  // border-radius: 8px;
   .unbind-btn {
     width: 160rpx;
     height: 50rpx;

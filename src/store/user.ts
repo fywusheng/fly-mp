@@ -12,10 +12,16 @@ import { toast } from '@/utils/toast'
 
 // 初始化状态
 const userInfoState: IUserInfoVo = {
-  id: 0,
-  username: '',
-  avatar: '/static/images/default-avatar.png',
+  userId: 0,
+  nickname: '',
+  avatar: '',
   token: '',
+  gender: 0,
+  lastLoginTime: '',
+  mobile: '',
+  openId: null,
+  status: 1,
+  userType: 0,
 }
 
 export const useUserStore = defineStore(
@@ -24,9 +30,9 @@ export const useUserStore = defineStore(
     // 定义用户信息
     const userInfo = ref<IUserInfoVo>({ ...userInfoState })
     // 设置用户信息
-    const setUserInfo = (val: IUserInfoVo, token: string) => {
-      console.log('设置用户信息', val, token)
-      val.token = token || uni.getStorageSync('token')
+    const setUserInfo = (val: IUserInfoVo) => {
+      // console.log('设置用户信息', val)
+      // val.token = token || uni.getStorageSync('token')
       // // 若头像为空 则使用默认头像
       // if (!val.avatar) {
       //   val.avatar = userInfoState.avatar
@@ -50,12 +56,13 @@ export const useUserStore = defineStore(
     /**
      * 获取用户信息
      */
-    const getUserInfo = async (id, token) => {
-      const res = await _getUserInfo(id)
-      const userInfo = res.data
-      setUserInfo(userInfo, token)
-      uni.setStorageSync('userInfo', userInfo)
-      uni.setStorageSync('token', userInfo.token)
+    const getUserInfo = async () => {
+      const res = await _getUserInfo()
+      // 设置token
+      res.data.token = uni.getStorageSync('token')
+      // 设置用户信息
+      setUserInfo(res.data)
+      uni.setStorageSync('userInfo', res.data)
       // TODO 这里可以增加获取用户路由的方法 根据用户的角色动态生成路由
       return res
     }
@@ -90,10 +97,12 @@ export const useUserStore = defineStore(
     const wxLogin = async ({ phoneCode }) => {
       // 获取微信小程序登录的code
       const data = await getWxCode()
-      console.log('微信登录code', data)
-
       const res = await _wxLogin({ code: data.code, phoneCode })
-      await getUserInfo(res.data.userId, res.data.token)
+      // 设置token
+      userInfo.value.token = (res.data as IUserInfoVo).token
+      uni.setStorageSync('token', (res.data as IUserInfoVo).token)
+      // 获取用户信息
+      await getUserInfo()
       return res
     }
 

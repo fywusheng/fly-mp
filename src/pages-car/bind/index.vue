@@ -9,6 +9,7 @@
 </route>
 
 <script lang="ts" setup>
+import { getColorImg } from '@/utils'
 import { httpGet } from '@/utils/http'
 
 const ScanDescIcon = 'http://121.89.87.166/static/car/scan-desc.png'
@@ -65,13 +66,13 @@ function onScanClick() {
 }
 
 function onSubmitClick() {
-  if (!code.value || !name.value || !color.value) {
-    uni.showToast({
-      title: '请填写完整信息',
-      icon: 'none',
-    })
-    return
-  }
+  // if (!code.value || !name.value || !color.value) {
+  //   uni.showToast({
+  //     title: '请填写完整信息',
+  //     icon: 'none',
+  //   })
+  //   return
+  // }
 
   // 进行页面跳转传递数据
   uni.navigateTo({
@@ -83,6 +84,11 @@ function onSubmitClick() {
         code: code.value,
       }),
     )}`,
+    success: (res) => {
+      // 通过eventChannel向被打开页面传送数据
+      res.eventChannel.emit('formData', { name: name.value, brand: brand.value, colorCode: colorCode.value, code: code.value })
+    },
+
   })
 }
 
@@ -97,7 +103,7 @@ function onGoMenuClick() {
   <view class="bind-car">
     <image
       class="mt-30rpx h-465rpx w-663rpx"
-      :src="ScanDescIcon"
+      :src="colorCode ? getColorImg(colorCode, 'bindCar') : ScanDescIcon"
       mode="scaleToFill"
     />
     <view class="mt-62rpx h-80rpx w-400rpx flex items-center justify-center rounded-[40rpx] bg-[#239AF6] color-white" @click="onScanClick">

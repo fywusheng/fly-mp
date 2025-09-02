@@ -9,17 +9,19 @@
 </route>
 
 <script lang="ts" setup>
+import { httpGet, httpPost } from '@/utils/http'
+
 const GreenCar = 'http://121.89.87.166/static/mine/car-green.png'
 const RedCar = 'http://121.89.87.166/static/mine/car-red.png'
 const White = 'http://121.89.87.166/static/mine/car-white.png'
 const EditIcon = 'http://121.89.87.166/static/mine/edit.png'
 const rightIcon = 'http://121.89.87.166/static/mine/right.png'
 
-const columns = ref(['选项1', '选项2', '选项3', '选项4', '选项5', '选项6', '选项7'])
-const value = ref('选项1')
+const carList = ref([]) // 车辆列表
+const selectCarId = ref('') // 选中的车辆
 
 // message弹窗
-const showMessagePopup = ref(true) // 控制弹窗显示
+const showMessagePopup = ref(false) // 控制弹窗显示
 const messageId = ref<number>(0) // 弹窗ID
 const message = ref<string>('<view >删除该成员后，</view> <view >他将不能使用此设备。</view>') // 弹窗内容
 const duration = ref(0) // 弹窗持续时间
@@ -27,6 +29,49 @@ const confirmText = ref<string>('确定') // 确认按钮文本
 const showCancelBtn = ref(true) // 是否显示取消按钮
 const showConfirmBtn = ref(true) // 是否显示确认按钮
 const closeOnClickModal = ref(true) // 是否点击蒙层关闭弹窗
+
+const deviceNo = computed(() => {
+  const selectedCar = carList.value.find(car => car.id === selectCarId.value)
+  return selectedCar ? selectedCar.deviceNo : ''
+})
+
+onShow(() => {
+  getCarList()
+})
+
+// 获取车辆颜色对应的图片
+function getColorImg(colorCode) {
+  switch (colorCode) {
+    // 星黛蓝
+    case 'STAR_BLUE':
+      return 'http://121.89.87.166/static/color/E75-blue-card.png'
+    // 漫步白
+    case 'WALK_WHITE':
+      return 'http://121.89.87.166/static/color/E75-white-card.png'
+      // 青竹绿
+    case 'BAMBOO_GREEN':
+      return 'http://121.89.87.166/static/color/E75-green-card.png'
+    // 樱花粉
+    case 'CHERRY_PINK':
+      return 'http://121.89.87.166/static/color/E75-pink-card.png'
+    default:
+      return ''
+  }
+}
+
+// 获取车辆列表
+function getCarList() {
+  httpGet('/device/vehicle/user/complete').then((res) => {
+    carList.value = (res.data as any).resultList
+    selectCarId.value = carList.value[0]?.id || ''
+  }).catch((err) => {
+    console.error('获取车辆列表失败:', err)
+    uni.showToast({
+      title: '获取车辆列表失败',
+      icon: 'none',
+    })
+  })
+}
 
 function handleCancel() {
   showMessagePopup.value = false
@@ -39,14 +84,18 @@ function handleConfirm() {
 }
 
 function handleOnConfirm({ value }) {
-  value.value = value
+  // value.value = value
+  console.log('选中的车辆ID:', value, selectCarId.value)
 }
 
 // 车主信息编辑
-function onEditClick() {
+function onEditClick(item) {
   // Handle edit click
   uni.navigateTo({
     url: '/pages-car/editCar/index',
+    success: (res) => {
+      res.eventChannel.emit('editCar', item)
+    },
   })
 }
 
@@ -85,9 +134,9 @@ function onDelClick() {
 
 <template>
   <view class="bind-car">
-    <wd-picker v-model="value" :columns="columns" :z-index="110" use-default-slot @confirm="handleOnConfirm">
+    <wd-picker v-model="selectCarId" :columns="carList" label-key="vehicleName" value-key="id" :z-index="110" use-default-slot @confirm="handleOnConfirm">
       <view class="mt-20rpx box-border h-80rpx w-711rpx flex items-center justify-between rounded-[10rpx] bg-white px-29rpx text-24rpx">
-        <view>123456SFEER</view>
+        <view>{{ deviceNo }}</view>
         <wd-icon name="arrow-right" size="18px" />
       </view>
     </wd-picker>

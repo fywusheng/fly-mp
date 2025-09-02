@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+const MapWait = 'http://121.89.87.166/static/home/map-wait.png'
 const MapArrow = 'http://121.89.87.166/static/home/map-arrow.png'
 // 使用ref定义响应式数据
 const scale = ref(16.5)
@@ -12,7 +13,7 @@ const markers = ref([{
   longitude: 116.274968,
   width: 44,
   height: 44,
-  // iconPath: MapArrow ,
+  // iconPath: MapArrow,
   iconPath: 'https://mapapi.qq.com/web/lbs/javascriptGL/demo/img/car.png',
   anchor: {
     x: 0.5,

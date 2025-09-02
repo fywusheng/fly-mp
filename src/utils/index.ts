@@ -179,3 +179,6 @@ export function getLocation(): Promise<UniApp.GetLocationSuccess> {
     })
   })
 }
+
+// 导出防抖和节流函数
+export { debounce, getColorImg, throttle } from './common'

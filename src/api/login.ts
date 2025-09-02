@@ -30,8 +30,8 @@ export function login(loginForm: ILoginForm) {
 /**
  * 获取用户信息
  */
-export function getUserInfo(id) {
-  return http.get<IUserInfoVo>(`/user/mini/user/info/${id}`)
+export function getUserInfo() {
+  return http.get<IUserInfoVo>(`/user/mini/user/info`)
 }
 
 /**
