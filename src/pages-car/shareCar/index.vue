@@ -9,7 +9,8 @@
 </route>
 
 <script lang="ts" setup>
-import { httpGet, httpPost } from '@/utils/http'
+import { getColorImg } from '@/utils'
+import { httpDelete, httpGet, httpPost } from '@/utils/http'
 
 const GreenCar = 'http://121.89.87.166/static/mine/car-green.png'
 const RedCar = 'http://121.89.87.166/static/mine/car-red.png'
@@ -19,6 +20,8 @@ const rightIcon = 'http://121.89.87.166/static/mine/right.png'
 
 const carList = ref([]) // 车辆列表
 const selectCarId = ref('') // 选中的车辆
+const pageList = ref([]) // 共享车辆列表
+let deleteCar = { id: '', vehicleId: '' } // 要删除的成员
 
 // message弹窗
 const showMessagePopup = ref(false) // 控制弹窗显示
@@ -35,28 +38,37 @@ const deviceNo = computed(() => {
   return selectedCar ? selectedCar.deviceNo : ''
 })
 
+const selectedCar = computed(() => {
+  return carList.value.find(car => car.id === selectCarId.value)
+})
+
+watchEffect(() => {
+  if (selectCarId.value) {
+    getPageList(selectCarId.value)
+  }
+})
+
 onShow(() => {
   getCarList()
 })
 
-// 获取车辆颜色对应的图片
-function getColorImg(colorCode) {
-  switch (colorCode) {
-    // 星黛蓝
-    case 'STAR_BLUE':
-      return 'http://121.89.87.166/static/color/E75-blue-card.png'
-    // 漫步白
-    case 'WALK_WHITE':
-      return 'http://121.89.87.166/static/color/E75-white-card.png'
-      // 青竹绿
-    case 'BAMBOO_GREEN':
-      return 'http://121.89.87.166/static/color/E75-green-card.png'
-    // 樱花粉
-    case 'CHERRY_PINK':
-      return 'http://121.89.87.166/static/color/E75-pink-card.png'
-    default:
-      return ''
-  }
+onMounted(() => {
+  uni.$on('refreshMember', (reload: boolean) => {
+    if (reload && selectCarId.value) {
+      getPageList(selectCarId.value)
+    }
+  })
+})
+onUnload(() => {
+  uni.$off('refreshMember')
+})
+
+// 获取共享车辆列表
+async function getPageList(vehicleId) {
+  uni.showLoading()
+  const res = await httpGet(`/user/mini/vehicle-share/info/${vehicleId}`)
+  pageList.value = [selectedCar.value].concat(res.data.members)
+  uni.hideLoading()
 }
 
 // 获取车辆列表
@@ -78,8 +90,28 @@ function handleCancel() {
   console.log('取消操作')
 }
 
-function handleConfirm() {
+async function handleConfirm() {
   showMessagePopup.value = false
+  if (messageId.value === 1 && deleteCar) {
+    // 删除成员
+    const res = await httpDelete('/user/mini/vehicle-share/members', {
+      memberId: deleteCar.id,
+      vehicleId: deleteCar.vehicleId,
+    })
+    if (res.code === '200') {
+      uni.showToast({
+        title: '删除成功',
+        icon: 'success',
+      })
+      getPageList(selectCarId.value)
+    }
+    else {
+      uni.showToast({
+        title: res.message || '删除失败',
+        icon: 'none',
+      })
+    }
+  }
   console.log('确认操作')
 }
 
@@ -90,7 +122,6 @@ function handleOnConfirm({ value }) {
 
 // 车主信息编辑
 function onEditClick(item) {
-  // Handle edit click
   uni.navigateTo({
     url: '/pages-car/editCar/index',
     success: (res) => {
@@ -99,16 +130,21 @@ function onEditClick(item) {
   })
 }
 
-function onMemberEditClick(info) {
-  // Handle member edit click
+// 成员编辑
+function onMemberEditClick(item?: any) {
   uni.navigateTo({
-    url: `/pages-car/addMember/index?info=${JSON.stringify(info)}`,
+    url: `/pages-car/addMember/index`,
+    success: (res) => {
+      if (item)
+        res.eventChannel.emit('editMember', { ...item, vehicleName: selectedCar.value.vehicleName })
+      else
+        res.eventChannel.emit('addMember', selectedCar)
+    },
   })
 }
-
+// 解绑车辆
 function onUnbindClick() {
-  // Handle delete click
-  messageId.value = 1
+  messageId.value = 2
   duration.value = 0
   showCancelBtn.value = false
   showConfirmBtn.value = true
@@ -118,16 +154,17 @@ function onUnbindClick() {
   showMessagePopup.value = true
 }
 
-function onDelClick() {
-  // Handle delete click
+// 删除成员
+function onDelClick(item) {
+  deleteCar = item
   messageId.value = 1
   duration.value = 0
   showCancelBtn.value = true
   showConfirmBtn.value = true
   closeOnClickModal.value = true
   confirmText.value = '立即删除'
-  message.value = '<div style="color: red;">该成员正在骑行中</div> <div >删除该成员后，他将不能使用此设备。</div>'
-  // message.value = '<div >删除该成员后，</div> <div >他将不能使用此设备。</div>'
+  // message.value = '<div style="color: red;">该成员正在骑行中</div> <div >删除该成员后，他将不能使用此设备。</div>'
+  message.value = '<div >删除该成员后，</div> <div >他将不能使用此设备。</div>'
   showMessagePopup.value = true
 }
 </script>
@@ -141,105 +178,107 @@ function onDelClick() {
       </view>
     </wd-picker>
 
-    <!-- 车主信息 -->
-    <view class="mt-53rpx rounded-[10rpx] bg-white">
-      <view class="flex items-center justify-between px-30rpx py-10rpx">
-        <view class="h-60rpx w-60rpx flex items-center justify-center rounded-30rpx bg-[#DB6477] text-24rpx text-white">
-          车主
+    <view v-for="item in pageList" :key="item.id" class="mt-20rpx">
+      <!-- 车主信息 -->
+      <view v-if="item.ownerType === 1" class=" rounded-[10rpx] bg-white">
+        <view class="flex items-center justify-between px-30rpx py-10rpx">
+          <view class="h-60rpx w-60rpx flex items-center justify-center rounded-30rpx bg-[#DB6477] text-24rpx text-white">
+            车主
+          </view>
+          <view class="unbind-btn" @click="onUnbindClick">
+            解绑
+          </view>
         </view>
-        <view class="unbind-btn" @click="onUnbindClick">
-          解绑
+        <view class="relative box-border h-260rpx w-711rpx py-30rpx pl-240rpx">
+          <view class="relative z-100 mb-20rpx flex items-center text-24rpx text-[#333333]">
+            <view class="w-96rpx">
+              我的车辆
+            </view>
+            <view class="ml-28rpx">
+              {{ item.vehicleName }}
+            </view>
+          </view>
+          <view class="relative z-100 mb-20rpx flex items-center text-24rpx text-[#333333]">
+            <view class="w-96rpx">
+              品牌
+            </view>
+            <view class="ml-28rpx">
+              {{ item.brand }}
+            </view>
+          </view>
+          <view class="relative z-100 mb-20rpx flex items-center text-24rpx text-[#333333]">
+            <view class="w-96rpx">
+              颜色
+            </view>
+            <view class="ml-28rpx">
+              {{ item.color }}
+            </view>
+          </view>
+          <view class="relative z-100 flex items-center text-24rpx text-[#333333]">
+            <view class="w-96rpx">
+              设备编号
+            </view>
+            <view class="ml-28rpx">
+              {{ item.deviceNo }}
+            </view>
+          </view>
+          <image
+            class="absolute left-0 top-0 z-10 h-100% w-100%"
+            :src="getColorImg(item.colorCode, 'carList')"
+            mode="scaleToFill"
+          />
+          <image
+            class="absolute right-32rpx top-31rpx z-100 h-50rpx w-51rpx"
+            :src="EditIcon"
+            mode="scaleToFill"
+            @click="onEditClick(item)"
+          />
+          <view class="line-height-22rrpx absolute bottom-46rpx right-32rpx z-100 text-right text-18rpx text-[#6E6E6E]">
+            <view>添加时间</view>
+            <view>{{ item.createTimeStr }}</view>
+          </view>
         </view>
       </view>
-      <view class="relative box-border h-260rpx w-711rpx py-30rpx pl-240rpx">
-        <view class="relative z-100 mb-20rpx flex items-center text-24rpx text-[#333333]">
-          <view class="w-96rpx">
-            我的车辆
-          </view>
-          <view class="ml-28rpx">
-            12312312
-          </view>
-        </view>
-        <view class="relative z-100 mb-20rpx flex items-center text-24rpx text-[#333333]">
-          <view class="w-96rpx">
-            品牌
-          </view>
-          <view class="ml-28rpx">
-            12312312
-          </view>
-        </view>
-        <view class="relative z-100 mb-20rpx flex items-center text-24rpx text-[#333333]">
-          <view class="w-96rpx">
-            颜色
-          </view>
-          <view class="ml-28rpx">
-            12312312
-          </view>
-        </view>
-        <view class="relative z-100 flex items-center text-24rpx text-[#333333]">
-          <view class="w-96rpx">
-            设备编号
-          </view>
-          <view class="ml-28rpx">
-            12312312
-          </view>
-        </view>
-        <image
-          class="absolute left-0 top-0 z-10 h-100% w-100%"
-          :src="GreenCar"
-          mode="scaleToFill"
-        />
-        <image
-          class="absolute right-32rpx top-31rpx z-100 h-50rpx w-51rpx"
-          :src="EditIcon"
-          mode="scaleToFill"
-          @click="onEditClick"
-        />
-        <view class="line-height-22rrpx absolute bottom-46rpx right-32rpx z-100 text-right text-18rpx text-[#6E6E6E]">
-          <view>添加时间</view>
-          <view>2022-01-01</view>
-        </view>
-      </view>
-    </view>
 
-    <!-- 成员信息 -->
-    <view class="mt-53rpx rounded-[10rpx] bg-white">
-      <view class="flex items-center justify-between px-30rpx py-10rpx">
-        <view class="h-60rpx w-60rpx flex items-center justify-center rounded-30rpx bg-[#F7B154] text-24rpx text-white">
-          成员
-        </view>
-        <view class="del-btn" @click="onDelClick">
-          删除
-        </view>
-      </view>
-      <view class="relative box-border w-711rpx px-30rpx py-30rpx">
-        <view class="relative z-100 mb-20rpx flex items-center text-24rpx text-[#333333]">
-          <view class="w-96rpx">
-            姓名
+      <!-- 成员信息 -->
+      <view v-else class=" rounded-[10rpx] bg-white">
+        <view class="flex items-center justify-between px-30rpx py-10rpx">
+          <view class="h-60rpx w-60rpx flex items-center justify-center rounded-30rpx bg-[#F7B154] text-24rpx text-white">
+            成员
           </view>
-          <view class="ml-28rpx">
-            12312312
+          <view class="del-btn" @click="onDelClick(item)">
+            删除
           </view>
         </view>
-        <view class="relative z-100 mb-20rpx flex items-center text-24rpx text-[#333333]">
-          <view class="w-96rpx">
-            电话
+        <view class="relative box-border w-711rpx px-30rpx py-30rpx">
+          <view class="relative z-100 mb-20rpx flex items-center text-24rpx text-[#333333]">
+            <view class="w-96rpx">
+              姓名
+            </view>
+            <view class="ml-28rpx">
+              {{ item.memberName }}
+            </view>
           </view>
-          <view class="ml-28rpx">
-            12312312
+          <view class="relative z-100 mb-20rpx flex items-center text-24rpx text-[#333333]">
+            <view class="w-96rpx">
+              电话
+            </view>
+            <view class="ml-28rpx">
+              {{ item.mobile }}
+            </view>
           </view>
+          <view class="flex items-center justify-between text-18rpx text-[#6E6E6E]">
+            <view>骑行次数：{{ item.ridingCount }} 次</view>
+            <view>添加时间：{{ item.createTimeStr }}</view>
+          </view>
+          <view class="absolute left-0 top-0 h-2rpx w-100% bg-[#E6E6E6]" />
+          <image
+            class="absolute right-32rpx top-31rpx z-100 h-50rpx w-51rpx"
+            :src="EditIcon"
+            mode="scaleToFill"
+            @click="onMemberEditClick(item)"
+          />
         </view>
-        <view class="flex items-center justify-between text-18rpx text-[#6E6E6E]">
-          <view>骑行次数：55次</view>
-          <view>添加时间：2025-03-03</view>
-        </view>
-        <view class="absolute left-0 top-0 h-2rpx w-100% bg-[#E6E6E6]" />
-        <image
-          class="absolute right-32rpx top-31rpx z-100 h-50rpx w-51rpx"
-          :src="EditIcon"
-          mode="scaleToFill"
-          @click="onMemberEditClick({ name: '123123' })"
-        />
       </view>
     </view>
 
@@ -253,7 +292,7 @@ function onDelClick() {
       *车主解绑前需要删除所有成员。
     </view>
     <view class="submit-btn" @click="onMemberEditClick(null)">
-      添加成员（2/5）
+      添加成员（{{ pageList.length }}/5）
     </view>
   </view>
 </template>
@@ -261,13 +300,10 @@ function onDelClick() {
 <style lang="scss" scoped>
 .bind-car {
   background-color: #DDE3EC;
-  height: 100vh;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  // justify-content: center;
   align-items: center;
-  // padding: 16px;
-  // border-radius: 8px;
   .unbind-btn {
     width: 160rpx;
     height: 50rpx;

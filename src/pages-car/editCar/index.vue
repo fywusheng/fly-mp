@@ -89,6 +89,7 @@ async function onSubmitClick() {
     })
     // 返回上一页
     setTimeout(() => {
+      uni.$emit('refreshMember', true)
       uni.navigateBack()
     }, 1000)
   }
@@ -113,7 +114,7 @@ async function onSubmitClick() {
       <view>
         <wd-cell-group border title="车辆信息">
           <wd-input v-model="name" label-width="30%" type="text" label="车辆名字" placeholder="请输入车辆名称" />
-          <wd-input v-model="brand" label-width="30%" type="text" label="品牌" placeholder="请输入品牌" :disabled="true" />
+          <wd-input v-model="brand" label-width="30%" type="text" label="品牌" placeholder="请输入品牌" :readonly="true" />
           <wd-cell value="内容">
             <template #title>
               <view class="text-24rpx">

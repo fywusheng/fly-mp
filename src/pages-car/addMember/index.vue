@@ -9,20 +9,21 @@
 </route>
 
 <script lang="ts" setup>
-import { httpGet } from '@/utils/http'
+import { httpGet, httpPost, httpPut } from '@/utils/http'
 
 const ScanDescIcon = 'http://121.89.87.166/static/car/scan-desc.png'
 const SuccessDefault = 'http://121.89.87.166/static/mine/success-default.png'
 const YellowTips = 'http://121.89.87.166/static/mine/yellow-tips.png'
 
-const code = ref('')
-const name = ref('')
-const brand = ref('')
-const color = ref('')
-const phone = ref('')
-// const columns = ref(['朋友', '夫妻', '父母', '子女', '情侣', '亲戚']) // 关系列表
-const addFlag = ref(false)
-const showShare = ref(false)
+const name = ref('') // 车辆名称
+const memberName = ref('') // 姓名
+const mobile = ref('') // 手机号
+const relationship = ref('') // 关系
+const vehicleId = ref('') // 车辆id
+const memberId = ref('') // 成员id
+
+const addFlag = ref(false) // 添加成功标志
+const showShare = ref(false) // 分享弹窗
 
 // 定义columns的类型
 interface Column {
@@ -30,9 +31,40 @@ interface Column {
   dictName: string
 }
 const columns = ref<Column[]>([]) // 关系列表
+const relationshipName = computed(() => {
+  const selected = columns.value.find(item => item.dictCode === relationship.value)
+  return selected ? selected.dictName : ''
+})
 
-onLoad(() => {
+onMounted(() => {
+  const instance = getCurrentInstance()?.proxy as { getOpenerEventChannel?: () => UniApp.EventChannel }
+  if (instance?.getOpenerEventChannel) {
+    const eventChannel = instance.getOpenerEventChannel()
+    eventChannel.on('addMember', (info: any) => {
+      console.log(info, '接收到的车辆信息:')
+      name.value = info.value.vehicleName || ''
+      vehicleId.value = info.value.id || ''
+    })
+    eventChannel.on('editMember', (info: any) => {
+      console.log(info, '接收到的成员信息:')
+      name.value = info.vehicleName || ''
+      vehicleId.value = info.vehicleId || ''
+      memberId.value = info.id || ''
+      memberName.value = info.memberName || ''
+      mobile.value = info.mobile || ''
+      relationship.value = info.relationship || ''
+    })
+  }
   getRelationship()
+})
+
+// 分享好友
+onShareAppMessage(() => {
+  return {
+    title: '飞鸽畅行', // 分享标题
+    path: `/pages/index/index`, // 分享链接
+    imageUrl: ScanDescIcon, // 分享图片
+  }
 })
 
 function getRelationship() {
@@ -46,80 +78,85 @@ function getRelationship() {
   })
 }
 
-function onSubmitClick() {
-  // showShare.value = true
-  // return
-  addFlag.value = true
-  if (!code.value || !name.value || !phone.value) {
+// 提交信息
+async function onSubmitClick() {
+  if (!memberName.value || !mobile.value || !relationship.value) {
     uni.showToast({
       title: '请填写完整信息',
       icon: 'none',
     })
-    return
   }
-
-  // 提交绑定信息
-  uni.showLoading({
-    title: '提交中...',
+  if (memberId.value) {
+    // 编辑成员信息
+    await updateCarInfo()
+  }
+  else {
+    // 添加成员信息
+    await addMemberInfo()
+  }
+}
+ // 添加车辆
+async function addMemberInfo() {
+  const res = await httpPost('/user/mini/vehicle-share/members', {
+    vehicleId: vehicleId.value,
+    memberId: memberId.value,
+    memberName: memberName.value,
+    mobile: mobile.value,
+    relationship: relationship.value,
   })
 
-  // 模拟提交成功
-  setTimeout(() => {
-    uni.hideLoading()
+  if (res.code === '200') {
+    addFlag.value = true
+  }
+  else {
     uni.showToast({
-      title: '绑定成功',
-      icon: 'success',
+      title: res.message || '添加失败',
+      icon: 'none',
     })
-    // 跳转到菜单页面
-    uni.navigateTo({
-      url: '/pages-car/menu/index',
-    })
-  }, 1000)
+  }
 }
 
+// 更新车辆信息
+async function updateCarInfo() {
+  const res = await httpPut('/user/mini/vehicle-share/members/edit', {
+    vehicleId: vehicleId.value,
+    memberId: memberId.value,
+    memberName: memberName.value,
+    mobile: mobile.value,
+    relationship: relationship.value,
+  })
+
+  if (res.code === '200') {
+    uni.showToast({
+      title: '更新成功',
+      icon: 'success',
+      duration: 1000
+    })
+    setTimeout(() => {
+      onCompleteClick()
+    }, 1000)
+  }
+  else {
+    uni.showToast({
+      title: res.message || '更新失败',
+      icon: 'none',
+    })
+  }
+}
+
+// 完成
 function onCompleteClick() {
+  uni.$emit('refreshMember', true)
   uni.navigateBack()
 }
-function onNoticeClick() {
-  // uni.navigateBack()
-  uni.showToast({
-    title: '通知成员',
-    icon: 'none',
-  })
-}
 
+// 短信通知
 function onMessageClick() {
   uni.showToast({
     title: '短信通知',
     icon: 'none',
   })
 }
-
-// 处理页面加载参数
-onLoad((option: Record<string, string>) => {
-  // 初始化标签栏
-  if (option.info && option.info !== 'null') {
-    const info = JSON.parse(option.info)
-    name.value = info.name || ''
-    brand.value = info.brand || '飞鸽'
-    color.value = info.color || ''
-  }
-  console.log(option, 'open:')
-})
-
-// 分享好友
-onShareAppMessage(() => {
-  return {
-    title: '成员信息',
-    path: `/pages-car/addMember/index?info=${JSON.stringify({
-      name: name.value,
-      brand: brand.value,
-      color: color.value,
-      phone: phone.value,
-    })}`,
-    imageUrl: ScanDescIcon,
-  }
-})
 </script>
 
 <template>
@@ -129,8 +166,8 @@ onShareAppMessage(() => {
         <view class="mt-8rpx">
           <wd-cell-group border>
             <wd-input v-model="name" custom-style="text-align:left" label-width="15%" type="text" label="车辆名字" placeholder="请输入车辆名称" />
-            <wd-input v-model="brand" custom-style="text-align:right" label-width="30%" type="text" label="姓名" placeholder="请输入姓名" />
-            <wd-input v-model="phone" custom-style="text-align:right" label-width="30%" type="text" label="手机号" placeholder="请输入手机号" />
+            <wd-input v-model="memberName" custom-style="text-align:right" label-width="30%" type="text" label="姓名" placeholder="请输入姓名" />
+            <wd-input v-model="mobile" custom-style="text-align:right" label-width="30%" type="text" label="手机号" placeholder="请输入手机号" />
             <wd-cell value="与车主关系">
               <template #title>
                 <view class="text-24rpx">
@@ -138,10 +175,10 @@ onShareAppMessage(() => {
                 </view>
               </template>
 
-              <wd-picker v-model="color" :columns="columns" use-default-slot>
+              <wd-picker v-model="relationship" label-key="dictName" value-key="dictCode" :columns="columns" use-default-slot>
                 <view class="flex items-center justify-end">
-                  <view v-if="color" class="mr-15rpx text-24rpx">
-                    {{ color }}
+                  <view v-if="relationship" class="mr-15rpx text-24rpx">
+                    {{ relationshipName }}
                   </view>
                   <view v-else class="mr-15rpx text-24rpx color-[#C8C8C8]">
                     请选择
@@ -178,7 +215,7 @@ onShareAppMessage(() => {
               去提醒朋友查收 一下吧！
             </view>
           </view>
-          <view class="notice-btn" @click="onNoticeClick">
+          <view class="notice-btn" @click="showShare = true">
             通知成员
           </view>
         </view>
