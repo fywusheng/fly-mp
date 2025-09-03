@@ -95,7 +95,7 @@ async function onSubmitClick() {
     await addMemberInfo()
   }
 }
- // 添加车辆
+// 添加车辆
 async function addMemberInfo() {
   const res = await httpPost('/user/mini/vehicle-share/members', {
     vehicleId: vehicleId.value,
@@ -130,7 +130,7 @@ async function updateCarInfo() {
     uni.showToast({
       title: '更新成功',
       icon: 'success',
-      duration: 1000
+      duration: 1000,
     })
     setTimeout(() => {
       onCompleteClick()
@@ -148,14 +148,6 @@ async function updateCarInfo() {
 function onCompleteClick() {
   uni.$emit('refreshMember', true)
   uni.navigateBack()
-}
-
-// 短信通知
-function onMessageClick() {
-  uni.showToast({
-    title: '短信通知',
-    icon: 'none',
-  })
 }
 </script>
 
@@ -221,7 +213,7 @@ function onMessageClick() {
         </view>
       </view>
     </template>
-    <fg-share v-model:show="showShare" @message="onMessageClick" />
+    <fg-share v-model:show="showShare" />
   </view>
 </template>
 

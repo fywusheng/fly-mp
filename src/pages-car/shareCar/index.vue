@@ -12,16 +12,12 @@
 import { getColorImg } from '@/utils'
 import { httpDelete, httpGet, httpPost } from '@/utils/http'
 
-const GreenCar = 'http://121.89.87.166/static/mine/car-green.png'
-const RedCar = 'http://121.89.87.166/static/mine/car-red.png'
-const White = 'http://121.89.87.166/static/mine/car-white.png'
 const EditIcon = 'http://121.89.87.166/static/mine/edit.png'
-const rightIcon = 'http://121.89.87.166/static/mine/right.png'
 
 const carList = ref([]) // 车辆列表
 const selectCarId = ref('') // 选中的车辆
 const pageList = ref([]) // 共享车辆列表
-let deleteCar = { id: '', vehicleId: '' } // 要删除的成员
+let operateCar = { id: '', vehicleId: '' } // 要删除的成员
 
 // message弹窗
 const showMessagePopup = ref(false) // 控制弹窗显示
@@ -67,7 +63,7 @@ onUnload(() => {
 async function getPageList(vehicleId) {
   uni.showLoading()
   const res = await httpGet(`/user/mini/vehicle-share/info/${vehicleId}`)
-  pageList.value = [selectedCar.value].concat(res.data.members)
+  pageList.value = [selectedCar.value].concat((res.data as any).members)
   uni.hideLoading()
 }
 
@@ -89,28 +85,16 @@ function handleCancel() {
   showMessagePopup.value = false
   console.log('取消操作')
 }
-
-async function handleConfirm() {
+// 弹窗确认操作
+function handleConfirm() {
   showMessagePopup.value = false
-  if (messageId.value === 1 && deleteCar) {
+  if (messageId.value === 1 && operateCar) {
     // 删除成员
-    const res = await httpDelete('/user/mini/vehicle-share/members', {
-      memberId: deleteCar.id,
-      vehicleId: deleteCar.vehicleId,
-    })
-    if (res.code === '200') {
-      uni.showToast({
-        title: '删除成功',
-        icon: 'success',
-      })
-      getPageList(selectCarId.value)
-    }
-    else {
-      uni.showToast({
-        title: res.message || '删除失败',
-        icon: 'none',
-      })
-    }
+    deleteMember(operateCar)
+  }
+  else if (messageId.value === 4 && operateCar) {
+    // 解绑车辆
+    unbindCar(operateCar)
   }
   console.log('确认操作')
 }
@@ -130,8 +114,37 @@ function onEditClick(item) {
   })
 }
 
+// 删除成员
+async function deleteMember(operateCar) {
+  const res = await httpDelete(`/user/mini/vehicle-share/members/${operateCar.vehicleId}/${operateCar.id}`)
+  if (res.code === '200') {
+    uni.showToast({
+      title: '删除成功',
+      icon: 'success',
+    })
+    getPageList(selectCarId.value)
+  }
+  else {
+    uni.showToast({
+      title: res.message || '删除失败',
+      icon: 'none',
+    })
+  }
+}
+
 // 成员编辑
 function onMemberEditClick(item?: any) {
+  if (!item && pageList.value.length >= 5) {
+    messageId.value = 3
+    duration.value = 0
+    showCancelBtn.value = false
+    showConfirmBtn.value = true
+    closeOnClickModal.value = true
+    confirmText.value = '知道了'
+    message.value = '该车辆分享成员已满，请删除成员后操作'
+    showMessagePopup.value = true
+    return
+  }
   uni.navigateTo({
     url: `/pages-car/addMember/index`,
     success: (res) => {
@@ -143,20 +156,51 @@ function onMemberEditClick(item?: any) {
   })
 }
 // 解绑车辆
-function onUnbindClick() {
-  messageId.value = 2
-  duration.value = 0
-  showCancelBtn.value = false
-  showConfirmBtn.value = true
-  closeOnClickModal.value = true
-  confirmText.value = '确定'
-  message.value = '解绑前需要删除所有成员'
-  showMessagePopup.value = true
+async function unbindCar(operateCar) {
+  const res = await httpPost(`/device/vehicle/unbind`, { deviceNo: operateCar.deviceNo })
+  if (res.code === '200') {
+    uni.showToast({
+      title: '解绑成功',
+      icon: 'success',
+    })
+    getCarList()
+  }
+  else {
+    uni.showToast({
+      title: res.message || '解绑失败',
+      icon: 'none',
+    })
+  }
+}
+// 解绑车辆弹窗
+function onUnbindClick(item) {
+  operateCar = item
+  if (pageList.value.length > 1) {
+    messageId.value = 2
+    duration.value = 0
+    showCancelBtn.value = false
+    showConfirmBtn.value = true
+    closeOnClickModal.value = true
+    confirmText.value = '知道了'
+    message.value = '解绑前需要删除所有成员'
+    showMessagePopup.value = true
+  }
+  else {
+    messageId.value = 4
+    duration.value = 0
+    showCancelBtn.value = true
+    showConfirmBtn.value = true
+    closeOnClickModal.value = true
+    confirmText.value = '立即解绑'
+    message.value = '解绑后，您将不能使用此设备。'
+    showMessagePopup.value = true
+  }
 }
 
 // 删除成员
 function onDelClick(item) {
-  deleteCar = item
+  operateCar = item
+  console.log('删除成员:', item)
   messageId.value = 1
   duration.value = 0
   showCancelBtn.value = true
@@ -180,12 +224,12 @@ function onDelClick(item) {
 
     <view v-for="item in pageList" :key="item.id" class="mt-20rpx">
       <!-- 车主信息 -->
-      <view v-if="item.ownerType === 1" class=" rounded-[10rpx] bg-white">
+      <view v-if="item.ownerType === 1" class="rounded-[10rpx] bg-white">
         <view class="flex items-center justify-between px-30rpx py-10rpx">
           <view class="h-60rpx w-60rpx flex items-center justify-center rounded-30rpx bg-[#DB6477] text-24rpx text-white">
             车主
           </view>
-          <view class="unbind-btn" @click="onUnbindClick">
+          <view class="unbind-btn" @click="onUnbindClick(item)">
             解绑
           </view>
         </view>
@@ -241,7 +285,7 @@ function onDelClick(item) {
       </view>
 
       <!-- 成员信息 -->
-      <view v-else class=" rounded-[10rpx] bg-white">
+      <view v-else class="rounded-[10rpx] bg-white">
         <view class="flex items-center justify-between px-30rpx py-10rpx">
           <view class="h-60rpx w-60rpx flex items-center justify-center rounded-30rpx bg-[#F7B154] text-24rpx text-white">
             成员

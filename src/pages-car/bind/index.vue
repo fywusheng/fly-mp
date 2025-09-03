@@ -52,6 +52,7 @@ function onConfirm({ value, selectedItems }) {
 function onScanClick() {
   uni.scanCode({
     success: (res) => {
+      console.log('扫码结果:', res)
       code.value = res.result
       // 根据code获取车辆信息
     },
@@ -66,13 +67,13 @@ function onScanClick() {
 }
 
 function onSubmitClick() {
-  // if (!code.value || !name.value || !color.value) {
-  //   uni.showToast({
-  //     title: '请填写完整信息',
-  //     icon: 'none',
-  //   })
-  //   return
-  // }
+  if (!code.value || !name.value || !color.value) {
+    uni.showToast({
+      title: '请填写完整信息',
+      icon: 'none',
+    })
+    return
+  }
 
   // 进行页面跳转传递数据
   uni.navigateTo({
@@ -116,22 +117,22 @@ function onGoMenuClick() {
     </view>
 
     <view class="mt-60rpx w-711rpx">
-      <view class="">
+      <view class="overflow-hidden rounded-10rpx">
         <wd-cell-group border>
           <wd-input v-model="code" label-width="30%" type="text" label="车辆编码" required placeholder="输入电动车的SN编码" />
         </wd-cell-group>
       </view>
     </view>
-    <view class="font-24rpx mt-28rpx" @click="onGoMenuClick">
+    <!-- <view class="font-24rpx mt-28rpx" @click="onGoMenuClick">
       <text class="color-[#6E6E6E]">
         没有二维码？
       </text>
       <text class="color-[#239AF6]">
         请点击此处进行按钮绑定
       </text>
-    </view>
+    </view> -->
     <view class="mt-28rpx w-711rpx">
-      <view class="mt-8rpx">
+      <view class="mt-8rpx overflow-hidden rounded-10rpx">
         <wd-cell-group border>
           <wd-input v-model="name" label-width="30%" type="text" label="车辆名字" placeholder="请输入车辆名称" />
           <wd-input v-model="brand" label-width="30%" type="text" label="品牌" placeholder="请输入品牌" :readonly="true" />

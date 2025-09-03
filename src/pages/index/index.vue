@@ -110,9 +110,9 @@ onLoad((option: Record<string, string>) => {
     <Infor v-show="tabbar === 'infor'" />
     <Mine v-show="tabbar === 'mine'" />
 
-    <HomeBlue v-show="tabbar === 'HomeBlue'" />
-    <InforBlue v-show="tabbar === 'InforBlue'" />
-    <MineBlue v-show="tabbar === 'MineBlue'" />
+    <HomeBlue v-if="tabbar === 'HomeBlue'" />
+    <InforBlue v-if="tabbar === 'InforBlue'" />
+    <MineBlue v-if="tabbar === 'MineBlue'" />
 
     <!-- 底部导航栏 -->
     <wd-tabbar v-model="tabbar" placeholder safe-area-inset-bottom fixed>

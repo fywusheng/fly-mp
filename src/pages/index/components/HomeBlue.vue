@@ -472,6 +472,8 @@ async function connectBle() {
     EVSBikeSDK.subscribe(onStateChange)
     // 发送密码验证指令
     EVSBikeSDK.bleCommandsApi.sendBindOwnerCommand('4F7A126E')
+    // 查询车辆状态和取设备设置参数，感应启动相关
+    // EVSBikeSDK.bleCommandsApi.sendGetVehicleStatusCommand()
   }
   catch (err) {
     console.log(err)

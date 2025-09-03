@@ -39,13 +39,13 @@ function handleMessageClick() {
           />
           <text>微信好友</text>
         </button>
-        <button class="item flex flex-col items-center justify-center" @click="handleMessageClick">
+        <!-- <button class="item flex flex-col items-center justify-center" @click="handleMessageClick">
           <image
             src="https://ggllstatic.hpgjzlinfo.com/static/common/icon-message.png"
             mode="scaleToFill"
           />
           <text>短信</text>
-        </button>
+        </button> -->
         <!-- #ifdef MP-ALIPAY -->
         <button class="item flex flex-col items-center justify-center" open-type="share">
           <image

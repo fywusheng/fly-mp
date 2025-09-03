@@ -87,11 +87,11 @@ function handleListItemClick(item) {
     <!-- 设置图标 -->
     <wd-navbar custom-class="navbar" safe-area-inset-top fixed custom-style="background-color: transparent !important;">
       <template #left>
-        <image
+        <!-- <image
           class="h-40rpx w-40rpx"
           :src="SettingIcon"
           mode="scaleToFill"
-        />
+        /> -->
       </template>
     </wd-navbar>
     <!-- 头像和用户名 -->
