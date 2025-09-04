@@ -1,4 +1,4 @@
-import { useUserStore } from '@/store'
+// import { useUserStore } from '@/store'
 import { getEnvBaseUrl } from '@/utils'
 import { platform } from '@/utils/platform'
 import { stringifyQuery } from '@/utils/queryString'
@@ -52,8 +52,9 @@ const httpInterceptor = {
       ...options.header,
     }
     // 3. 添加 token 请求头标识
-    const userStore = useUserStore()
-    const { token } = userStore.userInfo as unknown as IUserInfo
+    // const userStore = useUserStore()
+    // const { token } = userStore.userInfo as unknown as IUserInfo
+    const token = uni.getStorageSync('token')
     if (token) {
       options.header.Authorization = `Bearer ${token}`
     }

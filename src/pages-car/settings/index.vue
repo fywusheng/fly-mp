@@ -12,30 +12,36 @@
 // const AutoSheFang = 'http://121.89.87.166/static/mine/auto-shefang.png'
 // const AutoXihuo = 'http://121.89.87.166/static/mine/auto-xihuo.png'
 // const MuteShefang = 'http://121.89.87.166/static/mine/mute-shefang.png'
-import {
-  openAndSearchAndConnect,
-} from '@/utils/EvsBikeSdk'
+import { openAndSearchAndConnect } from '@/utils/EvsBikeSdk'
 import EVSBikeSDK from '@/utils/EVSBikeSDK.v1.1.0'
+import { httpGet, httpPost } from '@/utils/http'
 
 const OverSpeed = 'http://121.89.87.166/static/mine/over-speed.png'
 const RemoteControl = 'http://121.89.87.166/static/mine/remote-control.png'
 
-// 车辆列表
-const columns = ref(['选项1', '选项2', '选项3', '选项4', '选项5', '选项6', '选项7'])
-const value = ref('选项1')
-// 超速报警开启标志
-const overSpeed = ref<boolean>(true)
+const carList = ref([]) // 车辆列表
+const selectCarId = ref('') // 选中的车辆
+const deviceNo = computed(() => {
+  const selectedCar = carList.value.find(car => car.id === selectCarId.value)
+  return selectedCar ? selectedCar.deviceNo : ''
+})
 
+const setId = ref('') // 设置车辆id
+
+// 超速报警开启标志
+const overSpeed = ref<boolean>(false)
+// 蓝牙状态 0:未连接 1:连接中 2:已连接
+const status = ref(0)
 // 车辆状态
 const carState = ref({
   isOverspeedOn: false, // 超速报警功能是否开启。  - `true`：超速  - `false`：未超速
-  isStarted: false, // 车辆是否已启动。`true`：已启动  - `false`：未启动
-  isLocked: true, // 车辆是否处于锁车状态。  - `true`：已锁车  - `false`：未锁车
-  isArmed: false, // 车辆是否已设防（防盗报警激活）。  - `true`：已设防  - `false`：未设防
-  isMuteArmOn: false, // 车辆是否已开启静音设防。  - `true`：已开启  - `false`：未开启
-  isKeylessOn: false, // 感应启动功能是否开启。  - `true`：开启  - `false`：关闭
-  keylessType: 1, // 感应启动类型。  - `1`：感应启动  - `2`：震动启动  - `3`：一键启动
-  keylessRange: 1, // 感应启动距离。 - `1`：一档，信号强度最高 - `2`：二档，信号强度中等  - `3`：表示三档，信号强度最低。
+  // isStarted: false, // 车辆是否已启动。`true`：已启动  - `false`：未启动
+  // isLocked: true, // 车辆是否处于锁车状态。  - `true`：已锁车  - `false`：未锁车
+  // isArmed: false, // 车辆是否已设防（防盗报警激活）。  - `true`：已设防  - `false`：未设防
+  // isMuteArmOn: false, // 车辆是否已开启静音设防。  - `true`：已开启  - `false`：未开启
+  // isKeylessOn: false, // 感应启动功能是否开启。  - `true`：开启  - `false`：关闭
+  // keylessType: 1, // 感应启动类型。  - `1`：感应启动  - `2`：震动启动  - `3`：一键启动
+  // keylessRange: 1, // 感应启动距离。 - `1`：一档，信号强度最高 - `2`：二档，信号强度中等  - `3`：表示三档，信号强度最低。
 })
 
 // message弹窗
@@ -49,7 +55,8 @@ const showConfirmBtn = ref(true) // 是否显示确认按钮
 const closeOnClickModal = ref(true) // 是否点击蒙层关闭弹窗
 
 onLoad(() => {
-  connectBle()
+  // connectBle()
+  getCarList()
 })
 
 onHide(() => {
@@ -59,9 +66,20 @@ onUnload(() => {
   EVSBikeSDK.unsubscribe(onStateChange)
 })
 
+watchEffect(async () => {
+  if (selectCarId.value) {
+    const selectCar = carList.value.find(car => car.id === selectCarId.value)
+    // 获取车辆设置
+    await getCarSetings(selectCar.deviceNo)
+    // 连接蓝牙
+    await connectBle()
+  }
+})
+
 // 连接蓝牙
 async function connectBle() {
   try {
+    status.value = 1
     // 统一入口：传name或deviceId
     const device = await openAndSearchAndConnect({
       name: 'EV10C-154928',
@@ -71,12 +89,14 @@ async function connectBle() {
       type: 'at', // 设备类型
     })
     console.log('连接成功', res)
+    status.value = 2
     EVSBikeSDK.subscribe(onStateChange)
     // 发送指令
     EVSBikeSDK.bleCommandsApi.sendBindOwnerCommand('4F7A126E')
   }
   catch (err) {
     console.log(err)
+    status.value = 0
     wx.showToast({
       title: err.message || '连接失败',
       icon: 'none',
@@ -137,6 +157,62 @@ function onStateChange(data) {
   }
 
   overSpeed.value = carState.value.isOverspeedOn
+
+  updateCarSettings()
+}
+
+// 获取车辆设置,没有则初始化设置
+async function getCarSetings(deviceNo: string) {
+  try {
+    const res = await httpGet(`/device/vehicle/settings/get/${deviceNo}`)
+    if (res.code === '200' && res.data) {
+      overSpeed.value = (res.data as any).overspeedAlarm === 1
+      setId.value = (res.data as any).id
+      carState.value = {
+        ...carState.value,
+        isOverspeedOn: overSpeed.value,
+      }
+    }
+    else {
+      // 初始化车辆设置
+      httpPost(`/device/vehicle/settings/create`, {
+        deviceNo,
+        overspeedAlarm: 0, // 超速报警开启标志 0 关闭 1 开启
+      })
+    }
+  }
+  catch (error) {
+    console.error('获取车辆设置失败:', error)
+  }
+}
+
+// 更新车辆设置
+async function updateCarSettings() {
+  const res = await httpPost(`/device/vehicle/settings/update`, {
+    id: setId.value, // 车辆设置id
+    deviceNo: selectCarId.value,
+    overspeedAlarm: overSpeed.value ? 1 : 0,
+  })
+  if (res.code === '200') {
+    console.log('更新车辆设置成功')
+  }
+  else {
+    console.error('更新车辆设置失败:', res)
+  }
+}
+
+// 获取车辆列表
+function getCarList() {
+  httpGet('/device/vehicle/user/complete').then((res) => {
+    carList.value = (res.data as any).resultList
+    selectCarId.value = carList.value[0]?.id || ''
+  }).catch((err) => {
+    console.error('获取车辆列表失败:', err)
+    uni.showToast({
+      title: '获取车辆列表失败',
+      icon: 'none',
+    })
+  })
 }
 
 function handleCancel() {
@@ -149,11 +225,19 @@ function handleConfirm() {
   console.log('确认操作')
 }
 function handleOnConfirm({ value }) {
-  value.value = value
+  // value.value = value
 }
 
 // 自动熄火
 function beforeChange({ value, resolve }) {
+  if (status.value !== 2) {
+    uni.showToast({
+      title: '请先连接蓝牙',
+      icon: 'none',
+      duration: 1000,
+    })
+    return
+  }
   console.log('要改变的值:', value)
   EVSBikeSDK.bleCommandsApi.sendSetOverspeedAlarmCommand(value ? 1 : 2)
   setTimeout(() => {
@@ -171,15 +255,23 @@ function beforeChange({ value, resolve }) {
 
 // 复制遥控器
 function copyKeys() {
+  if (status.value !== 2) {
+    uni.showToast({
+      title: '请先连接蓝牙',
+      icon: 'none',
+      duration: 1000,
+    })
+    return
+  }
   EVSBikeSDK.bleCommandsApi.sendLearnRemoteControlCommand()
 }
 </script>
 
 <template>
   <view class="bind-car">
-    <wd-picker v-model="value" :columns="columns" :z-index="110" use-default-slot @confirm="handleOnConfirm">
+    <wd-picker v-model="selectCarId" :columns="carList" label-key="vehicleName" value-key="id" :z-index="110" use-default-slot @confirm="handleOnConfirm">
       <view class="mt-20rpx box-border h-80rpx w-711rpx flex items-center justify-between rounded-[10rpx] bg-white px-29rpx text-24rpx">
-        <view>123456SFEER</view>
+        <view>{{ deviceNo }}</view>
         <wd-icon name="arrow-right" size="18px" />
       </view>
     </wd-picker>

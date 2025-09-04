@@ -1,16 +1,15 @@
 <script setup lang="ts">
 import { useUserStore } from '@/store'
 import { debounce, getLocation } from '@/utils'
-import {
-  openAndSearchAndConnect,
-} from '@/utils/EvsBikeSdk'
+import { openAndSearchAndConnect } from '@/utils/EvsBikeSdk'
 import EVSBikeSDK from '@/utils/EVSBikeSDK.v1.1.0'
-import { httpGet, httpPost } from '@/utils/http'
+import { httpGet } from '@/utils/http'
 import HomeMap from './HomeMap.vue'
 
 defineOptions({
   name: 'HomeBlue',
 })
+
 const ArrowIcon = 'http://121.89.87.166/static/home/arrow.png'
 const BlueConnect = 'http://121.89.87.166/static/home/blue-connect.png'
 const BLueDisconnect = 'http://121.89.87.166/static/home/blue-disconnect.png'
@@ -32,9 +31,9 @@ const TopIcon = 'http://121.89.87.166/static/home/top-bg.png'
 const WarnNoticeIcon = 'http://121.89.87.166/static/home/warn-icon.png'
 const WarningIcon = 'http://121.89.87.166/static/home/warning.png'
 const WhistleOpenIcon = 'http://121.89.87.166/static/home/whistle-open.png'
-
 const WhistleIcon = 'http://121.89.87.166/static/home/whistle.png'
 
+// 用户信息
 const userStore = useUserStore()
 // 获取胶囊位置信息
 const menuButtonInfo = uni.getMenuButtonBoundingClientRect()
@@ -214,10 +213,16 @@ onMounted(() => {
   }
 })
 
+onUnmounted(() => {
+  // 清理工作
+  disconnect()
+  console.log('组件卸载onUnmounted')
+})
+
 onHide(() => {
   // 清理工作
-  EVSBikeSDK.unsubscribe(onStateChange)
-  console.log('组件卸载')
+  disconnect()
+  console.log('onHide() {}')
 })
 
 // 监听位置变化
@@ -268,7 +273,7 @@ function stopLocationTracking() {
   // 取消位置监听
   wx.offLocationChange()
 }
-
+// 获取滑块最大宽度
 function getMaxSliderWidth() {
   uni.createSelectorQuery()
     .in(getCurrentInstance().proxy)
@@ -280,6 +285,7 @@ function getMaxSliderWidth() {
     })
     .exec()
 }
+// 设置滑块状态
 function setSliderStatus(open) {
   // 设置车辆锁定状态
   if (open) {
@@ -422,6 +428,9 @@ function onItemClick(item) {
 // 刷新
 function reloadLocation() {
   EVSBikeSDK.bleCommandsApi.sendGetVehicleStatusCommand()
+    .then((res) => {
+      console.log('获取车辆状态成功:', res)
+    })
 }
 
 // 获取位置信息和天气
@@ -479,7 +488,7 @@ async function connectBle() {
     console.log(err)
     status.value = 0
     wx.showToast({
-      title: '请开启蓝牙',
+      title: err.errMsg || '连接蓝牙失败',
       icon: 'error',
       duration: 600,
     })
@@ -499,6 +508,9 @@ function onStateChange(data) {
     case 'BIND_USER':
       // 查询车辆状态和取设备设置参数，感应启动相关
       EVSBikeSDK.bleCommandsApi.sendGetVehicleStatusCommand()
+        .then((res) => {
+          console.log('获取车辆状态111:', res)
+        })
       setTimeout(() => {
         EVSBikeSDK.bleCommandsApi.sendGetEcuConfigCommand()
       }, 500)
@@ -546,24 +558,32 @@ function updateCarStatus() {
   isUnlocked.value = !carState.value.isLocked
   setSliderStatus(isUnlocked.value)
 }
-
+// 断开蓝牙
 function disconnect() {
   EVSBikeSDK.disconnect()
     .then((res) => {
       console.log(res)
       status.value = 0
-      wx.showToast({
-        title: '断开连接成功',
-      })
+      // wx.showToast({
+      //   title: '断开连接成功',
+      // })
       EVSBikeSDK.unsubscribe(onStateChange)
     })
     .catch((err) => {
       console.log(err)
     })
 }
+// 切换车辆
+async function handleConfirmCar({ value, selectedItems }) {
+  console.log('选中车辆:', value, selectedItems)
+  const params = {
+    ...userStore.userInfo,
+    defaultVehicleId: value,
+  }
+  delete params.token
 
-function handleConfirmCar({ value }) {
-  console.log('选中车辆:', value)
+  // 更新用户信息,设置车辆id
+  userStore.updateInfo(params)
 }
 
 function onTouchStart(event) {
@@ -586,7 +606,7 @@ function onTouchMove(event) {
 function onTouchEnd(event) {
   const success = () => {
     // 发送解锁、开锁指令
-    carState.value.isLocked ? EVSBikeSDK.bleCommandsApi.sendPowerOnCommand() : EVSBikeSDK.bleCommandsApi.sendPowerOffCommand()
+    carState.value.isLocked ? EVSBikeSDK.bleCommandsApi.sendPowerOnCommand() : EVSBikeSDK.bleCommandsApi.sendDisarmCommand()
   }
   const fail = () => {
     // 回弹到对应位置
@@ -746,18 +766,7 @@ function onTouchEnd(event) {
       </view>
     </view>
   </view>
-  <!-- 车辆选择 -->
-  <!-- <wd-popup v-model="show" :z-index="100" position="bottom" custom-style="border-radius:32rpx;" :close-on-click-modal="false">
-    <view class="flex justify-between px-30rpx py-40rpx text-40rpx">
-      <view class="color-[#999999]" @click="show = false">
-        取消
-      </view>
-      <view class="color-[#2CBD7C]" @click="onConfirm">
-        确认
-      </view>
-    </view>
-    <wd-picker-view v-model="selectCarValue" label-key="vehicleName" value-key="id" :columns="carList" @change="onChange" />
-  </wd-popup> -->
+
   <!-- 操作提示弹窗 -->
   <fg-message v-model:show="showMessagePopup" :duration="duration" :show-cancel-btn="showCancelBtn" :show-confirm-btn="showConfirmBtn" :close-on-click-modal="closeOnClickModal" :message-id="messageId" @cancel="handleCancel" @confirm="handleConfirm" />
 </template>

@@ -12,6 +12,7 @@ export interface IUserInfoVo {
   token: string
   userId: number
   userType: number
+  defaultVehicleId: number
 }
 
 /**

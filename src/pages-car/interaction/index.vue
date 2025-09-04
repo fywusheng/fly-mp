@@ -9,9 +9,7 @@
 </route>
 
 <script lang="ts" setup>
-import {
-  openAndSearchAndConnect,
-} from '@/utils/EvsBikeSdk'
+import { openAndSearchAndConnect } from '@/utils/EvsBikeSdk'
 import EVSBikeSDK from '@/utils/EVSBikeSDK.v1.1.0'
 
 const PointIcon = 'http://121.89.87.166/static/car/point.png'

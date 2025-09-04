@@ -22,7 +22,7 @@ const relationship = ref('') // 关系
 const vehicleId = ref('') // 车辆id
 const memberId = ref('') // 成员id
 
-const addFlag = ref(false) // 添加成功标志
+const addFlag = ref(true) // 添加成功标志
 const showShare = ref(false) // 分享弹窗
 
 // 定义columns的类型

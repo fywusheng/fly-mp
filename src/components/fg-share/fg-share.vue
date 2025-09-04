@@ -12,6 +12,7 @@ const emit = defineEmits<{
 }>()
 
 const sharePop = ref(false)
+const WeiXin = 'http://121.89.87.166/static/common/weixin.png'
 
 watch(() => props.show, (newVal) => {
   sharePop.value = newVal
@@ -34,7 +35,7 @@ function handleMessageClick() {
       <view class="list flex text-36rpx">
         <button class="item flex flex-col items-center justify-center" open-type="share">
           <image
-            src="https://ggllstatic.hpgjzlinfo.com/static/common/icon-wechat.png"
+            :src="WeiXin"
             mode="scaleToFill"
           />
           <text>微信好友</text>
@@ -92,23 +93,15 @@ function handleMessageClick() {
       line-height: 50rpx;
     }
     .list {
-      // #ifdef MP-ALIPAY
-      justify-content: flex-start;
-      // #endif
-
-      // #ifdef MP-WEIXIN
       justify-content: center;
-      // #endif
-
       align-items: center;
-
       padding: 24rpx 74rpx;
       flex-wrap: wrap;
       .item {
         height: 192rpx;
         flex-shrink: 0;
         width: 33.3%;
-        margin-bottom: 28rpx;
+        background: none;
         image {
           flex-shrink: 0;
           width: 134rpx;

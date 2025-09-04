@@ -5,6 +5,7 @@ import {
   getUserInfo as _getUserInfo,
   login as _login,
   logout as _logout,
+  updateInfo as _updateInfo,
   wxLogin as _wxLogin,
   getWxCode,
 } from '@/api/login'
@@ -22,6 +23,7 @@ const userInfoState: IUserInfoVo = {
   openId: null,
   status: 1,
   userType: 0,
+  defaultVehicleId: 0,
 }
 
 export const useUserStore = defineStore(
@@ -29,10 +31,13 @@ export const useUserStore = defineStore(
   () => {
     // 定义用户信息
     const userInfo = ref<IUserInfoVo>({ ...userInfoState })
+    // 计算属性
+    const isLoggedIn = computed(() => Boolean(userInfo.value.token && userInfo.value.userId))
+
     // 设置用户信息
     const setUserInfo = (val: IUserInfoVo) => {
       // console.log('设置用户信息', val)
-      // val.token = token || uni.getStorageSync('token')
+      // val.token = uni.getStorageSync('token')
       // // 若头像为空 则使用默认头像
       // if (!val.avatar) {
       //   val.avatar = userInfoState.avatar
@@ -53,6 +58,7 @@ export const useUserStore = defineStore(
       uni.removeStorageSync('userInfo')
       uni.removeStorageSync('token')
     }
+
     /**
      * 获取用户信息
      */
@@ -64,6 +70,16 @@ export const useUserStore = defineStore(
       setUserInfo(res.data)
       uni.setStorageSync('userInfo', res.data)
       // TODO 这里可以增加获取用户路由的方法 根据用户的角色动态生成路由
+      return res
+    }
+    /**
+     * 更新用户信息
+     */
+    const updateInfo = async (data) => {
+      // 更新用户信息
+      const res = await _updateInfo(data)
+      // 获取用户信息
+      await getUserInfo()
       return res
     }
     /**
@@ -99,7 +115,6 @@ export const useUserStore = defineStore(
       const data = await getWxCode()
       const res = await _wxLogin({ code: data.code, phoneCode })
       // 设置token
-      userInfo.value.token = (res.data as IUserInfoVo).token
       uni.setStorageSync('token', (res.data as IUserInfoVo).token)
       // 获取用户信息
       await getUserInfo()
@@ -107,12 +122,19 @@ export const useUserStore = defineStore(
     }
 
     return {
+      // 状态
       userInfo,
+
+      //  计算属性
+      isLoggedIn,
+
+      // 方法
       login,
       wxLogin,
       getUserInfo,
       setUserAvatar,
       logout,
+      updateInfo,
     }
   },
   {
