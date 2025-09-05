@@ -9,9 +9,12 @@
 </route>
 
 <script lang="ts" setup>
+// const ShareIcon = 'http://121.89.87.166/static/common/share.png'
+import ShareIcon from '@/static/share.png'
+
+// const ScanDescIcon = 'http://121.89.87.166/static/car/scan-desc.png'
 import { httpGet, httpPost, httpPut } from '@/utils/http'
 
-const ScanDescIcon = 'http://121.89.87.166/static/car/scan-desc.png'
 const SuccessDefault = 'http://121.89.87.166/static/mine/success-default.png'
 const YellowTips = 'http://121.89.87.166/static/mine/yellow-tips.png'
 
@@ -63,7 +66,7 @@ onShareAppMessage(() => {
   return {
     title: '飞鸽畅行', // 分享标题
     path: `/pages/index/index`, // 分享链接
-    imageUrl: ScanDescIcon, // 分享图片
+    imageUrl: ShareIcon, // 分享图片
   }
 })
 

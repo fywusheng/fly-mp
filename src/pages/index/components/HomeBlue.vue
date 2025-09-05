@@ -114,6 +114,13 @@ const currentCarName = computed(() => {
 let rideId = null
 // 上次上传时间
 let lastUploadTime = 0
+// 骑行info
+const currentRidingInfo = ref<any>({
+  address: '',
+  ridingName: '',
+  ridingStatus: '',
+  ridingTrack: [],
+})
 
 // 监听解锁状态上报骑行轨迹
 watch(isUnlocked, (newVal) => {
@@ -528,10 +535,15 @@ function onItemClick(item) {
 
 // 刷新
 function reloadLocation() {
-  EVSBikeSDK.bleCommandsApi.sendGetVehicleStatusCommand()
-    .then((res) => {
-      console.log('获取车辆状态成功:', res)
-    })
+  getCurrentRidingInfo()
+}
+
+// 获取当前骑行信息
+async function getCurrentRidingInfo(vehicleId = selectCar.value) {
+  if (!vehicleId)
+    return
+  const res = await httpGet(`/riding/ride/homepage/vehicle/${vehicleId}`)
+  currentRidingInfo.value = (res.data as any)
 }
 
 // 获取位置信息和天气
@@ -572,6 +584,7 @@ async function getCarList() {
   else {
     // 有车辆，默认选中车辆
     setDefaultVehicleId(carList.value)
+    getCurrentRidingInfo()
     // 自动连接蓝牙
     connectBle()
   }
@@ -630,7 +643,7 @@ async function connectBle() {
     wx.onBLEConnectionStateChange((res) => {
       // 该方法回调中可以用于处理连接意外断开等异常情况
       console.log(`device ${res.deviceId} state has changed, connected: ${res.connected}`)
-      if(!res.connected) {
+      if (!res.connected) {
         status.value = 0
         wx.showToast({
           title: '蓝牙连接已断开',
@@ -893,17 +906,18 @@ function onTouchEnd(event) {
                 刷新
               </view>
             </view>
-            <view>行驶中</view>
+            <view>{{ currentRidingInfo.ridingStatus }}</view>
           </view>
           <view class="mt-20rpx flex items-center justify-between color-[#666666]">
             <view class="text-20rpx">
-              广东省广州市珠海区广东省 广州市珠海区
+              {{ currentRidingInfo.address }}
             </view>
             <view class="text-16rpx">
-              骑行人：张三
+              骑行人：{{ currentRidingInfo.ridingName }}
             </view>
           </view>
-          <HomeMap />
+          <!-- 轨迹地图 -->
+          <HomeMap :riding-track="currentRidingInfo.ridingTrack" />
         </view>
       </view>
     </view>

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import dayjs from 'dayjs'
 import { getLocation } from '@/utils'
-import { httpGet } from '@/utils/http'
+import { httpDelete, httpGet, httpPost } from '@/utils/http'
 
 defineOptions({
   name: 'InforBlue',
@@ -110,11 +110,46 @@ function getNextDayTimestamp(): void {
   date.value = dayjs(date.value).add(1, 'day').valueOf()
 }
 
-function goDetail(): void {
+// 查看轨迹详情
+function goDetail(item): void {
   console.log('Navigating to track detail page')
   uni.navigateTo({
-    url: '/pages-car/trackDetail/index',
+    url: `/pages-car/trackDetail/index?rideId=${item.rideId}`,
+    success: (success) => {
+      success.eventChannel.emit('rideData', item)
+    },
   })
+}
+// 删除骑行记录
+async function deleteRidingRecord(item): Promise<void> {
+  const confirm = await uni.showModal({
+    title: '删除骑行记录',
+    content: '确定要删除该骑行记录吗？此操作不可撤销。',
+    confirmText: '删除',
+    cancelText: '取消',
+    confirmColor: '#EB3D59',
+    cancelColor: '#666666',
+  })
+  if (confirm.confirm) {
+    // 用户点击了确认按钮，执行删除操作
+    const res = await httpDelete(`/riding/ride/delete/${item.rideId}`)
+    if (res.code === '200') {
+      uni.showToast({
+        title: '删除成功',
+        icon: 'success',
+        duration: 2000,
+      })
+      // 删除成功后，刷新骑行数据
+      getRidingData()
+    }
+    else {
+      uni.showToast({
+        title: res.message || '删除失败',
+        icon: 'error',
+        duration: 2000,
+      })
+    }
+  }
 }
 </script>
 
@@ -236,9 +271,9 @@ function goDetail(): void {
         </view>
       </view>
 
-      <view @click="goDetail">
+      <view v-for="item in ridingRecords" :key="item.rideId">
         <wd-swipe-action>
-          <view class="ml-20rpx mt-20rpx box-border w-710rpx rounded-8rpx bg-white py-30rpx" @click="goDetail">
+          <view class="ml-20rpx mt-20rpx box-border w-710rpx rounded-8rpx bg-white py-30rpx" @click="goDetail(item)">
             <wd-steps :active="3" vertical>
               <wd-step :icon-slot="true">
                 <template #icon>
@@ -248,11 +283,14 @@ function goDetail(): void {
                 </template>
                 <template #title>
                   <view class="text-[#666666]">
-                    <span v-if="true">广东省广州市珠海区广东省 广州市珠海区 </span>
-                    <span>(</span>
-                    <span class="text-[#239AF6]">7:08</span>
-                    <span>)</span>
-                    <text v-if="false" class="text-[#DB6477]">
+                    <template v-if="item.startTime">
+                      <span>{{ item.start }} </span>
+                      <span>(</span>
+                      <span class="text-[#239AF6]">{{ item.startTime }}</span>
+                      <span>)</span>
+                    </template>
+
+                    <text v-else class="text-[#DB6477]">
                       未获取位置信息，请打开手机定位
                     </text>
                   </view>
@@ -266,11 +304,14 @@ function goDetail(): void {
                 </template>
                 <template #title>
                   <view class="text-[#333333]">
-                    <span v-if="true">广东省广州市珠海区广东省 广州市珠海区 </span>
-                    <span>(</span>
-                    <span class="text-[#239AF6]">7:08</span>
-                    <span>)</span>
-                    <text v-if="false" class="text-[#DB6477]">
+                    <template v-if="item.endTime">
+                      <span>{{ item.end }} </span>
+                      <span>(</span>
+                      <span class="text-[#239AF6]">{{ item.endTime }}</span>
+                      <span>)</span>
+                    </template>
+
+                    <text v-else class="text-[#DB6477]">
                       未获取位置信息，请打开手机定位
                     </text>
                   </view>
@@ -279,14 +320,14 @@ function goDetail(): void {
             </wd-steps>
             <view class="h-2rpx w-100% bg-[#E6E6E6]" />
             <view class="mt-22rpx flex items-center justify-between px-29rpx text-20rpx color-[#666666]">
-              <view>骑行时间：34分钟</view>
-              <view>最高时速：34分钟</view>
-              <view>骑行人：34分钟</view>
+              <view>骑行时间：{{ item.ridingTime }}</view>
+              <view>最高时速：{{ item.maxSpeed }}km/h</view>
+              <view>骑行人：{{ item.rideName }}</view>
             </view>
           </view>
           <template #right>
             <view class="action">
-              <view class="button" @click="handleAction('操作3')">
+              <view class="button" @click="deleteRidingRecord(item)">
                 删除
               </view>
             </view>
@@ -299,12 +340,10 @@ function goDetail(): void {
 
 <style lang="scss" scoped>
 .infor {
-  height: calc(100vh - 88rpx);
+  min-height: calc(100vh - 88rpx);
   background: #F2F4F6;
   position: relative;
-  // display: flex;
-  // flex-direction: column;
-  // align-items: center;
+  padding-bottom: 88rpx;
   .car-label {
     position: absolute;
     bottom: 0;

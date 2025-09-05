@@ -89,10 +89,6 @@ const BluetoothTabbarItems: TabbarItem[] = [
   },
 ]
 
-watch(tabbar, (newVal) => {
-  console.log('newVal', newVal)
-})
-
 // 处理页面加载参数
 onLoad((option: Record<string, string>) => {
   // 初始化标签栏

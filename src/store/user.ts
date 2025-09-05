@@ -104,8 +104,11 @@ export const useUserStore = defineStore(
      * 退出登录 并 删除用户信息
      */
     const logout = async () => {
-      _logout()
-      removeUserInfo()
+      const res = await _logout()
+      if (res.code === '200') {
+        removeUserInfo()
+      }
+      return res
     }
     /**
      * 微信登录
