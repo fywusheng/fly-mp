@@ -1,13 +1,18 @@
 <script setup lang="ts">
 import { useUserStore } from '@/store'
-import { debounce, getLocation } from '@/utils'
+import { debounce, generateUUID, getLocation } from '@/utils'
 import { openAndSearchAndConnect } from '@/utils/EvsBikeSdk'
 import EVSBikeSDK from '@/utils/EVSBikeSDK.v1.1.0'
-import { httpGet } from '@/utils/http'
+import { httpGet, httpPost } from '@/utils/http'
 import HomeMap from './HomeMap.vue'
 
 defineOptions({
   name: 'HomeBlue',
+})
+const props = defineProps({
+  tabName: {
+    type: String,
+  },
 })
 
 const ArrowIcon = 'http://121.89.87.166/static/home/arrow.png'
@@ -91,7 +96,7 @@ const updateCarStatusDebounced = debounce(updateCarStatus, 500)
 
 // 弹出框相关
 const carList = ref([])
-const selectCar = ref<number>(4)
+const selectCar = ref<number>() // 选中车辆ID
 
 // message弹窗
 const showMessagePopup = ref(false) // 控制弹窗显示
@@ -100,6 +105,77 @@ const duration = ref(0) // 弹窗持续时间
 const showCancelBtn = ref(true) // 是否显示取消按钮
 const showConfirmBtn = ref(true) // 是否显示确认按钮
 const closeOnClickModal = ref(true) // 是否点击蒙层关闭弹窗
+// 获取选中车辆名称
+const currentCarName = computed(() => {
+  const car = carList.value.find(item => item.id === selectCar.value)
+  return car ? car.vehicleName : '我的车辆'
+})
+// 当前骑行ID,用于标识一次完整的骑行过程，上传骑行数据
+let rideId = null
+// 上次上传时间
+let lastUploadTime = 0
+
+// 监听解锁状态上报骑行轨迹
+watch(isUnlocked, (newVal) => {
+  console.log('当前解锁状态:', newVal)
+
+  getLocation().then((res) => {
+    console.log('当前位置:', res)
+    if (newVal) {
+      // 开始状态上报
+      uploadRideStartToServer(res)
+      // 上报骑行轨迹
+      reportRidingTrack()
+    }
+    else {
+      // 结束状态上报
+      uploadRideEndToServer(res)
+      // 停止定位
+      stopLocationTracking()
+    }
+  }).catch((err) => {
+    console.error('获取位置失败:', err)
+  })
+})
+
+// 监听多个数据：tabName 和 用户登录状态
+watch([() => props.tabName, () => userStore.isLoggedIn], ([newTabName, isLoggedIn], [oldTabName, oldIsLoggedIn]) => {
+  if (newTabName === 'HomeBlue' && isLoggedIn) {
+    // 获取车辆列表
+    getCarList()
+  }
+}, {
+  immediate: true, // 立即执行一次
+  deep: true, // 深度监听
+})
+
+onMounted(() => {
+  // 获取滑块最大宽度
+  getMaxSliderWidth()
+  // 获取位置和蓝牙权限
+  getLocationAndBlueAuth()
+})
+
+onUnmounted(() => {
+  // 清理工作
+  disconnect()
+  console.log('组件卸载onUnmounted')
+})
+
+onShow(() => {
+  if (props.tabName === 'HomeBlue') {
+    // 获取位置和蓝牙权限
+    getLocationAndBlueAuth()
+    // 获取车辆列表
+    getCarList()
+  }
+})
+
+onHide(() => {
+  // 清理工作
+  // disconnect()
+  console.log('onHide() {}')
+})
 
 function handleCancel() {
   showMessagePopup.value = false
@@ -111,119 +187,143 @@ function handleConfirm() {
   console.log('确认操作')
 }
 
-// 获取选中车辆名称
-const currentCarName = computed(() => {
-  const car = carList.value.find(item => item.id === selectCar.value)
-  return car ? car.vehicleName : '我的车辆'
-})
-
-onMounted(() => {
-  // 获取后台定位权限
-  // wx.getSetting({
-  //   success(res) {
-  //     if (!res.authSetting['scope.userLocationBackground']) {
-  //       wx.authorize({
-  //         scope: 'scope.userLocationBackground',
-  //         success() {
-  //           // 用户同意授权后台定位
-  //           // getLocationAndBlueAuth()
-
-  //           // 开启后台定位
-  //           // wx.startLocationUpdateBackground({
-  //           //   success: (res) => {
-  //           //     console.log('开启后台定位成功', res)
-  //           //     // 成功后可开始监听位置变化
-  //           //     startListeningLocation()
-  //           //   },
-  //           //   fail: (err) => {
-  //           //     console.error('开启后台定位失败', err)
-  //           //     // this.handleLocationError(err)
-  //           //   },
-  //           // })
-  //         },
-  //         fail(err) {
-  //           console.log(err)
-  //           // 用户拒绝授权后台定位
-  //           uni.showModal({
-  //             title: '提示',
-  //             content: '需要获取您的后台定位权限',
-  //             showCancel: true,
-  //             success: ({ confirm, cancel }) => {
-  //               console.log('用户点击了', confirm ? '确认' : '取消')
-  //               if (confirm) {
-  //                 uni.openSetting(
-  //                   {
-  //                     success(res) {
-  //                       if (res.authSetting['scope.userLocationBackground']) {
-  //                         // 用户同意授权后台定位
-  //                         console.log('用户同意授权后台定位')
-  //                         getLocationAndBlueAuth()
-  //                         // 开启后台定位
-  //                         wx.startLocationUpdateBackground({
-  //                           success: (res) => {
-  //                             console.log('开启后台定位成功', res)
-  //                             // 成功后可开始监听位置变化
-  //                             startListeningLocation()
-  //                           },
-  //                           fail: (err) => {
-  //                             console.error('开启后台定位失败', err)
-  //                             // this.handleLocationError(err)
-  //                           },
-  //                         })
-  //                       }
-  //                     },
-  //                     fail(err) {
-  //                       console.log('openSetting fail', err)
-  //                     },
-  //                   },
-  //                 )
-  //               }
-  //             },
-  //           })
-  //         },
-  //       })
-  //     }
-  //     else {
-  //       // 已经授权，可以获取位置信息
-  //       getLocationAndBlueAuth()
-
-  //       // 开启后台定位
-  //       wx.startLocationUpdateBackground({
-  //         success: (res) => {
-  //           console.log('开启后台定位成功', res)
-  //           // 成功后可开始监听位置变化
-  //           startListeningLocation()
-  //         },
-  //         fail: (err) => {
-  //           console.error('开启后台定位失败', err)
-  //           // this.handleLocationError(err)
-  //         },
-  //       })
-  //     }
-  //   },
-  // })
-  // 获取滑块最大宽度
-  getMaxSliderWidth()
-  // 获取位置信息和蓝牙权限
-  getLocationAndBlueAuth()
-  // 已经登录
-  if (userStore.userInfo.userId) {
-    // 获取车辆列表
-    getCarList()
+// 骑行开始状态上报
+async function uploadRideStartToServer(location) {
+  // 生成骑行ID
+  rideId = generateUUID()
+  const res = await httpPost('/riding/ride/start', {
+    bikeId: selectCar.value,
+    latitude: location.latitude,
+    longitude: location.longitude,
+    rideId,
+    timestamp: Date.now(),
+  })
+  if (res.code === '200') {
+    console.log('上传骑行开始状态成功', res)
   }
-})
+  else {
+    console.error('上传骑行开始状态失败', res)
+  }
+}
+// 骑行中上传位置到服务器
+async function uploadLocationToServer(location) {
+  const res = await httpPost('/riding/ride/location', {
+    accuracy: location.accuracy,
+    latitude: location.latitude,
+    longitude: location.longitude,
+    rideId,
+    speed: location.speed,
+    timestamp: Date.now(),
+  })
+  if (res.code === '200') {
+    console.log('上传骑行中状态成功', res)
+  }
+  else {
+    console.error('上传骑行中状态失败', res)
+  }
+}
 
-onUnmounted(() => {
-  // 清理工作
-  disconnect()
-  console.log('组件卸载onUnmounted')
-})
+// 骑行结束状态上报
+async function uploadRideEndToServer(location) {
+  const res = await httpPost('/riding/ride/end', {
+    bikeId: selectCar.value,
+    latitude: location.latitude,
+    longitude: location.longitude,
+    rideId,
+    timestamp: Date.now(),
+  })
+  // 重置骑行ID
+  rideId = null
+  if (res.code === '200') {
+    console.log('上传骑行结束状态成功', res)
+  }
+  else {
+    console.error('上传骑行结束状态失败', res)
+  }
+}
 
-onHide(() => {
-  // 清理工作
-  disconnect()
-  console.log('onHide() {}')
-})
+// 上报骑行轨迹
+async function reportRidingTrack() {
+  try {
+    const res = await initLocationAuth()
+    console.log('开启后台定位权限成功', res)
+    // 成功后可开始监听位置变化
+    // 开启后台定位
+    wx.startLocationUpdateBackground({
+      success: (res) => {
+        console.log('开启后台定位成功', res)
+        // 成功后可开始监听位置变化
+        startListeningLocation()
+      },
+      fail: (err) => {
+        console.error('开启后台定位失败', err)
+        // this.handleLocationError(err)
+      },
+    })
+  }
+  catch (err) {
+    console.error('开启后台定位失败', err)
+  }
+}
+// 初始化位置权限
+function initLocationAuth() {
+  return new Promise((resolve, reject) => {
+    wx.getSetting({
+      success(res) {
+        if (!res.authSetting['scope.userLocationBackground']) {
+          wx.authorize({
+            scope: 'scope.userLocationBackground',
+            success() {
+              resolve(true)
+            },
+            fail(err) {
+              console.log(err)
+              // 用户拒绝授权后台定位
+              uni.showModal({
+                title: '提示',
+                content: '需要获取您的后台定位权限',
+                showCancel: true,
+                success: ({ confirm, cancel }) => {
+                  console.log('用户点击了', confirm ? '确认' : '取消')
+                  if (confirm) {
+                    uni.openSetting(
+                      {
+                        success(res) {
+                          if (res.authSetting['scope.userLocationBackground']) {
+                          // 用户同意授权后台定位
+                            console.log('用户同意授权后台定位')
+                            resolve(true)
+                          }
+                          else {
+                            reject(err)
+                          }
+                        },
+                        fail(err) {
+                          reject(err)
+                          console.log('openSetting fail', err)
+                        },
+                      },
+                    )
+                  }
+                  else {
+                    reject(new Error('用户取消授权'))
+                  }
+                },
+              })
+            },
+          })
+        }
+        else {
+          // 已经授权，可以获取位置信息
+          resolve(true)
+        }
+      },
+      fail(err) {
+        reject(err)
+      },
+    })
+  })
+}
 
 // 监听位置变化
 function startListeningLocation() {
@@ -235,7 +335,7 @@ function startListeningLocation() {
 }
 
 // 处理新的位置信息
-// let lastUploadTime = Date.now() // 上次上传时间
+
 function processNewLocation(location) {
   // 获取位置详细信息
   const {
@@ -248,14 +348,15 @@ function processNewLocation(location) {
     horizontalAccuracy, // 水平精度
   } = location
 
-  // 示例：每5分钟上传一次位置信息
-  // const currentTime = Date.now()
-  // const lastUploadTime = lastUploadTime || 0
+  // 示例：每5秒上传一次位置信息
+  const currentTime = Date.now()
+  lastUploadTime = lastUploadTime || 0
 
-  // if (currentTime - lastUploadTime > 5 * 60 * 1000) {
-  //   // uploadLocationToServer(location)
-  //   lastUploadTime = currentTime
-  // }
+  if (currentTime - lastUploadTime > 5 * 1000) {
+    uploadLocationToServer(location)
+    console.log('上传位置信息到服务器', location)
+    lastUploadTime = currentTime
+  }
   console.log('处理新的位置信息', location, carState.value)
 }
 
@@ -302,18 +403,18 @@ function setSliderStatus(open) {
 function getLocationAndBlueAuth() {
   uni.getSetting({
     success(res) {
-      console.log('蓝牙权限', res)
+      console.log('检测地理位置权限', res)
       // 检测地理位置权限
-      if (!res.authSetting['scope.userLocation']) {
+      if (!res.authSetting['scope.userLocationBackground']) {
         uni.showModal({
           title: '请求权限',
-          content: '需要获取您的地理位置',
+          content: '需要获取您的后台定位权限',
           success(res) {
             if (res.confirm) {
               uni.openSetting({
                 success(res) {
                   console.log('openSetting success', res.authSetting)
-                  if (res.authSetting['scope.userLocation']) {
+                  if (res.authSetting['scope.userLocationBackground']) {
                     // 用户同意授权地理位置
                     console.log('用户同意授权地理位置')
                     getLocationAndWeather()
@@ -435,10 +536,10 @@ function reloadLocation() {
 
 // 获取位置信息和天气
 function getLocationAndWeather() {
-  getLocation().then((res) => {
+  getLocation().then((res: UniApp.GetLocationSuccess) => {
     // 根据当前位置获取天气信息
     const { latitude, longitude } = res
-    httpGet(`/device/weather/location?latitude=${latitude}&longitude=${longitude}`).then((weatherRes) => {
+    httpGet(`/device/weather/location`, { latitude, longitude }).then((weatherRes) => {
       weatherInfo.value = weatherRes.data as any
     }).catch((err) => {
       console.error('获取天气信息失败:', err)
@@ -449,16 +550,58 @@ function getLocationAndWeather() {
 }
 
 // 获取车辆列表
-function getCarList() {
-  httpGet('/device/vehicle/user/complete').then((res) => {
-    carList.value = (res.data as any).resultList
-  }).catch((err) => {
-    console.error('获取车辆列表失败:', err)
-    uni.showToast({
-      title: '获取车辆列表失败',
-      icon: 'none',
+async function getCarList() {
+  const res = await httpGet('/device/vehicle/user/complete')
+  carList.value = (res.data as any).resultList
+  // 没有车辆，提示去绑定
+  if (carList.value.length === 0) {
+    uni.showModal({
+      title: '提示',
+      content: '您还没有绑定车辆，是否前往绑定？',
+      showCancel: true,
+      success: ({ confirm, cancel }) => {
+        console.log('用户点击了', confirm ? '确认' : '取消')
+        if (confirm) {
+          uni.navigateTo({
+            url: '/pages-car/bind/index',
+          })
+        }
+      },
     })
-  })
+  }
+  else {
+    // 有车辆，默认选中车辆
+    setDefaultVehicleId(carList.value)
+    // 自动连接蓝牙
+    connectBle()
+  }
+}
+// 默认选中车辆
+function setDefaultVehicleId(carsList) {
+  if (!userStore.userInfo.defaultVehicleId) {
+    // 未设置默认车辆，选中第一辆
+    if (carsList.length > 0) {
+      selectCar.value = carsList[0].id
+      // 更新用户信息,设置默认车辆id
+      const params = {
+        ...userStore.userInfo,
+        defaultVehicleId: carsList[0].id,
+      }
+      delete params.token
+
+      userStore.updateInfo(params)
+    }
+    return
+  }
+  if (carsList.length > 0) {
+    const findCar = carsList.find(item => item.id === userStore.userInfo.defaultVehicleId)
+    if (findCar) {
+      selectCar.value = findCar.id
+    }
+    else {
+      selectCar.value = carsList[0].id
+    }
+  }
 }
 
 // 连接蓝牙
@@ -468,7 +611,7 @@ async function connectBle() {
 
     // 统一入口：传name或deviceId
     const device = await openAndSearchAndConnect({
-      name: 'EV10C-154928',
+      name: 'EV10C-15B6C6',
     }) as { deviceId: string }
     const res = await EVSBikeSDK.connect({
       deviceId: device.deviceId,
@@ -480,18 +623,32 @@ async function connectBle() {
 
     EVSBikeSDK.subscribe(onStateChange)
     // 发送密码验证指令
-    EVSBikeSDK.bleCommandsApi.sendBindOwnerCommand('4F7A126E')
-    // 查询车辆状态和取设备设置参数，感应启动相关
-    // EVSBikeSDK.bleCommandsApi.sendGetVehicleStatusCommand()
+    // EVSBikeSDK.bleCommandsApi.sendBindOwnerCommand('4F7A126E')
+    EVSBikeSDK.bleCommandsApi.sendBindOwnerCommand('166A5F83')
+
+    // 监听蓝牙状态
+    wx.onBLEConnectionStateChange((res) => {
+      // 该方法回调中可以用于处理连接意外断开等异常情况
+      console.log(`device ${res.deviceId} state has changed, connected: ${res.connected}`)
+      if(!res.connected) {
+        status.value = 0
+        wx.showToast({
+          title: '蓝牙连接已断开',
+          icon: 'error',
+          duration: 600,
+        })
+        EVSBikeSDK.unsubscribe(onStateChange)
+      }
+    })
   }
   catch (err) {
     console.log(err)
     status.value = 0
-    wx.showToast({
-      title: err.errMsg || '连接蓝牙失败',
-      icon: 'error',
-      duration: 600,
-    })
+    // wx.showToast({
+    //   title: err.errMsg || '连接蓝牙失败',
+    //   icon: 'error',
+    //   duration: 600,
+    // })
   }
 }
 
@@ -508,26 +665,9 @@ function onStateChange(data) {
     case 'BIND_USER':
       // 查询车辆状态和取设备设置参数，感应启动相关
       EVSBikeSDK.bleCommandsApi.sendGetVehicleStatusCommand()
-        .then((res) => {
-          console.log('获取车辆状态111:', res)
-        })
       setTimeout(() => {
         EVSBikeSDK.bleCommandsApi.sendGetEcuConfigCommand()
-      }, 500)
-      break
-    // 获取车辆状态
-    case 'GET_CAR_STATUS':
-      // isUnlocked.value = state.isLocked // 车辆锁定状态
-      // setSliderStatus(state.isLocked)
-      // list.value[0].active = state.isArmed // 车辆设防
-      // list.value[1].active = state.isArmed // 一键静音
-      break
-      // 取设备设置参数，感应启动相关
-    case 'GET_ECU_STATUS':
-      // 设备状态变化: {"state": {"keylessRange": 2, "isKeylessOn": true}, "operType": "GET_ECU_STATUS", "success": true, "message": "获取车辆设置参数成功"}
-      // list.value[2].active = state.isKeylessOn // 感应控车
-      // 感应启动距离。 - `1`：一档，信号强度最高 - `2`：二档，信号强度中等  - `3`：表示三档，信号强度最低。
-      // state.keylessRange
+      }, 100)
       break
     default:
       break
@@ -603,8 +743,10 @@ function onTouchMove(event) {
   sliderX.value = moveX
   sliderStyle.value = `transform: translateX(${moveX}px)`
 }
+// 开锁、关锁
 function onTouchEnd(event) {
   const success = () => {
+    // isUnlocked.value = !isUnlocked.value
     // 发送解锁、开锁指令
     carState.value.isLocked ? EVSBikeSDK.bleCommandsApi.sendPowerOnCommand() : EVSBikeSDK.bleCommandsApi.sendDisarmCommand()
   }

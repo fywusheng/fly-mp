@@ -43,7 +43,7 @@ async function connectBle() {
   try {
     // 统一入口：传name或deviceId
     const device = await openAndSearchAndConnect({
-      name: 'EV10C-154928',
+      name: 'EV10C-15B6C6',
     }) as { deviceId: string }
     const res = await EVSBikeSDK.connect({
       deviceId: device.deviceId,

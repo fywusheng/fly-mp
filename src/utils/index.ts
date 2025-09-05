@@ -166,7 +166,7 @@ export function getEnvBaseUploadUrl() {
  * 获取当前位置
  * @returns {Promise<uni.GetLocationSuccessRes>} 当前位置
  */
-export function getLocation(): Promise<UniApp.GetLocationSuccess> {
+export function getLocation() {
   return new Promise((resolve, reject) => {
     uni.getLocation({
       type: 'wgs84',
@@ -181,4 +181,4 @@ export function getLocation(): Promise<UniApp.GetLocationSuccess> {
 }
 
 // 导出防抖和节流函数
-export { debounce, getColorImg, throttle } from './common'
+export { debounce, generateUUID, getColorImg, throttle } from './common'

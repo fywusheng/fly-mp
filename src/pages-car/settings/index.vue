@@ -9,6 +9,7 @@
 </route>
 
 <script lang="ts" setup>
+import { useUserStore } from '@/store/user'
 // const AutoSheFang = 'http://121.89.87.166/static/mine/auto-shefang.png'
 // const AutoXihuo = 'http://121.89.87.166/static/mine/auto-xihuo.png'
 // const MuteShefang = 'http://121.89.87.166/static/mine/mute-shefang.png'
@@ -53,6 +54,7 @@ const confirmText = ref<string>('确定') // 确认按钮文本
 const showCancelBtn = ref(true) // 是否显示取消按钮
 const showConfirmBtn = ref(true) // 是否显示确认按钮
 const closeOnClickModal = ref(true) // 是否点击蒙层关闭弹窗
+const userStore = useUserStore()
 
 onLoad(() => {
   // connectBle()
@@ -82,7 +84,7 @@ async function connectBle() {
     status.value = 1
     // 统一入口：传name或deviceId
     const device = await openAndSearchAndConnect({
-      name: 'EV10C-154928',
+      name: 'EV10C-15B6C6',
     }) as { deviceId: string }
     const res = await EVSBikeSDK.connect({
       deviceId: device.deviceId,
@@ -205,7 +207,7 @@ async function updateCarSettings() {
 function getCarList() {
   httpGet('/device/vehicle/user/complete').then((res) => {
     carList.value = (res.data as any).resultList
-    selectCarId.value = carList.value[0]?.id || ''
+    setDefaultVehicleId(carList.value)
   }).catch((err) => {
     console.error('获取车辆列表失败:', err)
     uni.showToast({
@@ -213,6 +215,26 @@ function getCarList() {
       icon: 'none',
     })
   })
+}
+
+// 默认选中车辆
+function setDefaultVehicleId(carsList) {
+  if (!userStore.userInfo.defaultVehicleId) {
+    // 未设置默认车辆，选中第一辆
+    if (carsList.length > 0) {
+      selectCarId.value = carsList[0].id
+    }
+    return
+  }
+  if (carsList.length > 0) {
+    const findCar = carsList.find(item => item.id === userStore.userInfo.defaultVehicleId)
+    if (findCar) {
+      selectCarId.value = findCar.id
+    }
+    else {
+      selectCarId.value = carsList[0].id
+    }
+  }
 }
 
 function handleCancel() {

@@ -89,6 +89,10 @@ const BluetoothTabbarItems: TabbarItem[] = [
   },
 ]
 
+watch(tabbar, (newVal) => {
+  console.log('newVal', newVal)
+})
+
 // 处理页面加载参数
 onLoad((option: Record<string, string>) => {
   // 初始化标签栏
@@ -110,7 +114,7 @@ onLoad((option: Record<string, string>) => {
     <Infor v-show="tabbar === 'infor'" />
     <Mine v-show="tabbar === 'mine'" />
 
-    <HomeBlue v-if="tabbar === 'HomeBlue'" />
+    <HomeBlue v-show="tabbar === 'HomeBlue'" :tab-name="tabbar" />
     <InforBlue v-if="tabbar === 'InforBlue'" />
     <MineBlue v-if="tabbar === 'MineBlue'" />
 

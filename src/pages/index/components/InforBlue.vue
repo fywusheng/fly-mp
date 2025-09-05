@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import dayjs from 'dayjs'
+import { getLocation } from '@/utils'
+import { httpGet } from '@/utils/http'
 
 defineOptions({
   name: 'InforBlue',
@@ -14,6 +16,80 @@ const RightArrow = 'http://121.89.87.166/static/infor/right-arrow.png'
 // 获取胶囊位置信息
 const menuButtonInfo = uni.getMenuButtonBoundingClientRect()
 const date = ref<number>(Date.now())
+const address = ref<string>('广东省广州市珠海区广东省 广州市珠海区')
+
+const cumulativeStats = ref<any>({
+  ageLabel: '我今年15岁了',
+  companionshipDays: 0,
+  totalRidingMinutes: 0,
+  totalTrips: 1,
+  vehicleImageUrl: '/images/vehicle-default.png',
+})
+
+const currentLocation = ref<any>({
+  detailedAddress: '广东省广州市珠海区广东省广州市珠海区',
+  latitude: 40.22077,
+  locationDescription: '广东省广州市珠海区',
+  longitude: 116.23128,
+})
+
+const dailyStats = ref<any>({
+  maxSpeed: 25.5,
+  totalRidingTime: 0,
+  tripSegments: 3,
+})
+
+const ridingRecords = ref<any[]>([])
+const ridingSummary = ref<any>({
+  maxSpeed: 25.5,
+  riderName: '骑行人',
+  ridingTime: 0,
+})
+
+watch(date, (newDate) => {
+  console.log('Selected date changed to:', newDate)
+  getRidingData()
+})
+
+onMounted(() => {
+  console.log('menuButtonInfo', menuButtonInfo)
+  // getCurrentLocation()
+  getRidingData()
+})
+// 获取当前位置
+function getCurrentLocation() {
+  getLocation().then((res) => {
+    // 处理位置信息
+    httpGet('/riding/dashboard/current-location').then((locationRes: any) => {
+      if (locationRes.code === '200') {
+        address.value = locationRes.data.detailedAddress
+      }
+    }).catch((err) => {
+      console.error('获取位置信息失败', err)
+    })
+  }).catch((err) => {
+    console.error('获取位置失败', err)
+  })
+}
+// 获取骑行数据
+async function getRidingData() {
+  uni.showLoading({
+    title: '加载中...',
+  })
+  const res = await httpGet('/riding/dashboard/riding', { date: dayjs(date.value).format('YYYY-MM-DD') })
+  uni.hideLoading()
+  if (res.code === '200') {
+    cumulativeStats.value = (res.data as any).cumulativeStats
+    currentLocation.value = (res.data as any).currentLocation
+    dailyStats.value = (res.data as any).dailyStats
+    ridingRecords.value = (res.data as any).ridingRecords
+    ridingSummary.value = (res.data as any).ridingSummary
+    // address.value = currentLocation.value.detailedAddress
+  }
+  else {
+    console.error('获取骑行数据失败', res.message)
+  }
+}
 
 // 处理日期选择确认
 function handleConfirm(selectedDate: any) {
@@ -58,21 +134,16 @@ function goDetail(): void {
           mode="scaleToFill"
         />
         <view class="car-label">
-          我今年15岁了
+          {{ cumulativeStats.ageLabel }}
         </view>
       </view>
-      <!-- <image
-        class="h-136rpx w-128rpx"
-        :src="CarIcon"
-        mode="scaleToFill"
-      /> -->
 
       <view class="flex flex-col items-center justify-center pt-41rpx">
         <view class="text-24rpx text-[#333333] font-bold">
           累计出行(次)
         </view>
         <view class="text-50rpx text-white font-bold">
-          44
+          {{ cumulativeStats.totalTrips }}
         </view>
       </view>
       <view class="flex flex-col items-center justify-center pt-41rpx">
@@ -80,7 +151,7 @@ function goDetail(): void {
           累计骑行(分钟)
         </view>
         <view class="text-50rpx text-white font-bold">
-          44
+          {{ cumulativeStats.totalRidingMinutes }}
         </view>
       </view>
       <view class="flex flex-col items-center justify-center pt-41rpx">
@@ -88,7 +159,7 @@ function goDetail(): void {
           陪伴时间(天)
         </view>
         <view class="text-50rpx text-white font-bold">
-          44
+          {{ cumulativeStats.companionshipDays }}
         </view>
       </view>
     </view>
@@ -101,7 +172,7 @@ function goDetail(): void {
           mode="scaleToFill"
         />
         <view class="ml-20rpx text-20rpx text-[#666666]">
-          广东省广州市珠海区广东省 广州市珠海区
+          {{ currentLocation.detailedAddress }}
         </view>
       </view>
       <!-- 时间选择 -->
@@ -135,7 +206,7 @@ function goDetail(): void {
         <view class="w-100% flex justify-around">
           <view class="w-235rpx flex flex-col items-center justify-center">
             <view class="mb-12rpx text-48rpx color-[#239AF6]">
-              3
+              {{ dailyStats.tripSegments }}
             </view>
             <view class="text-18rpx color-[#666666]">
               出行轨迹(段)
@@ -145,7 +216,7 @@ function goDetail(): void {
           <view class="bg-[#E6E6E6]] mt-15rpx h-90rpx w-2rpx" />
           <view class="w-235rpx flex flex-col items-center justify-center">
             <view class="mb-12rpx text-48rpx color-[#2CBC7B]">
-              3
+              {{ dailyStats.totalRidingTime }}
             </view>
             <view class="text-18rpx color-[#666666]">
               总骑行时间(分钟)
@@ -155,7 +226,7 @@ function goDetail(): void {
           <view class="bg-[#E6E6E6]] mt-15rpx h-90rpx w-2rpx" />
           <view class="w-235rpx flex flex-col items-center justify-center">
             <view class="mb-12rpx text-48rpx color-[#DB6477]">
-              3
+              {{ dailyStats.maxSpeed }}
             </view>
             <view class="text-18rpx color-[#666666]">
               最高时速(km/h)
