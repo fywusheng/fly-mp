@@ -1,12 +1,15 @@
 <script lang="ts" setup>
 const props = defineProps<{
   ridingTrack: Array<{ latitude: number, longitude: number }>
+  location: { latitude: number, longitude: number }
 }>()
 const MapWait = 'http://121.89.87.166/static/home/map-wait.png'
 const MapArrow = 'http://121.89.87.166/static/home/map-arrow.png'
 
+// 缓存地图上下文
+let mapCtx: any = null
 // 使用ref定义响应式数据
-const scale = ref(16.5)
+const scale = ref(17)
 const location = ref({
   latitude: 40.0370140,
   longitude: 116.271214,
@@ -49,6 +52,11 @@ const polyline = ref([
   },
 ])
 
+onMounted(() => {
+  const instance = getCurrentInstance() // 获取组件实
+  mapCtx = uni.createMapContext('map', instance)
+})
+
 watch(() => props.ridingTrack, (newTrack) => {
   if (newTrack && newTrack.length > 0) {
     polyline.value[0].points = newTrack
@@ -64,8 +72,6 @@ watch(() => props.ridingTrack, (newTrack) => {
       longitude: lastPoint.longitude,
     }
     // 更新地图视野
-    const instance = getCurrentInstance() // 获取组件实
-    const mapCtx = uni.createMapContext('map', instance)
     mapCtx.includePoints({
       points: newTrack,
       padding: [10, 10, 10, 10],
@@ -73,35 +79,29 @@ watch(() => props.ridingTrack, (newTrack) => {
     mapCtx.moveAlong({
       markerId: 1,
       path: polyline.value[0].points,
-      duration: 1000,
+      duration: 10,
       autoRotate: true,
-
       success: (res) => {
-        console.log(res)
+        console.log('moveAlong success:', res)
+      },
+      fail: (err) => {
+        console.error('moveAlong failed:', err)
       },
     })
   }
+  else {
+    // 初始化地图位置为用户当前位置
+    location.value = props.location
+    markers.value[0] = {
+      ...markers.value[0],
+      latitude: props.location.latitude,
+      longitude: props.location.longitude,
+    }
+    setTimeout(() => {
+      mapCtx.moveToLocation()
+    }, 1000)
+  }
 }, { immediate: true })
-
-onMounted(() => {
-  // const instance = getCurrentInstance() // 获取组件实
-  // const mapCtx = uni.createMapContext('map', instance)
-  // // 缩放视野展示所有点
-  // mapCtx.includePoints({
-  //   points: polyline.value[0].points,
-  //   padding: [10, 10, 10, 10],
-  // })
-  // mapCtx.moveAlong({
-  //   markerId: 1,
-  //   path: polyline.value[0].points,
-  //   duration: 1000,
-  //   autoRotate: true,
-
-  //   success: (res) => {
-  //     console.log(res)
-  //   },
-  // })
-})
 </script>
 
 <template>

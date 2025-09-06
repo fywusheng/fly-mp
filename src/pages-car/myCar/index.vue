@@ -103,7 +103,7 @@ function onEditClick(item) {
         />
         <view class="line-height-22rrpx absolute bottom-46rpx right-32rpx z-100 text-right text-14rpx text-[#6E6E6E]">
           <view>添加时间</view>
-          <view>{{ item.createTime ? item.createTime : '暂无字段' }}</view>
+          <view>{{ item.createTimeStr }}</view>
         </view>
       </view>
     </view>

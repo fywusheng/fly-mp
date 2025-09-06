@@ -9,12 +9,8 @@
 </route>
 
 <script lang="ts" setup>
-// const ShareIcon = 'http://121.89.87.166/static/common/share.png'
-import ShareIcon from '@/static/share.png'
-
-// const ScanDescIcon = 'http://121.89.87.166/static/car/scan-desc.png'
 import { httpGet, httpPost, httpPut } from '@/utils/http'
-
+const ShareIcon = 'http://121.89.87.166/static/common/share.png'
 const SuccessDefault = 'http://121.89.87.166/static/mine/success-default.png'
 const YellowTips = 'http://121.89.87.166/static/mine/yellow-tips.png'
 

@@ -180,5 +180,94 @@ export function getLocation() {
   })
 }
 
+/**
+ * 获取位置权限
+ * @returns {Promise<void>}
+ */
+export function initLocationAuth() {
+  return new Promise((resolve, reject) => {
+    uni.getSetting({
+      success(res) {
+        // 检测地理位置权限
+        if (!res.authSetting['scope.userLocationBackground']) {
+          uni.showModal({
+            title: '请求权限',
+            content: '需要获取您的后台定位权限',
+            success(res) {
+              if (res.confirm) {
+                uni.openSetting({
+                  success(res) {
+                    if (res.authSetting['scope.userLocationBackground']) {
+                      // 用户同意授权地理位置
+                      resolve(true)
+                    }
+                    else {
+                      reject(new Error('用户拒绝授权地理位置'))
+                    }
+                  },
+                })
+              }
+              else if (res.cancel) {
+                reject(new Error('用户拒绝授权地理位置'))
+              }
+            },
+            fail(err) {
+              reject(err)
+            },
+          })
+        }
+        else {
+          // 已经授权
+          resolve(true)
+        }
+      },
+    })
+  })
+}
+/**
+ * 获取蓝牙权限
+ * @returns {Promise<void>} 获取蓝牙权限
+ */
+export function initBLuetoothAuth() {
+  return new Promise((resolve, reject) => {
+    uni.getSetting({
+      success(res) {
+        // 检测蓝牙权限
+        if (!res.authSetting['scope.bluetooth']) {
+          uni.showModal({
+            title: '请求权限',
+            content: '需要获取您的蓝牙权限',
+            success(res) {
+              if (res.confirm) {
+                uni.openSetting({
+                  success(res) {
+                    if (res.authSetting['scope.bluetooth']) {
+                      // 用户同意授权地理位置
+                      resolve(true)
+                    }
+                    else {
+                      reject(new Error('用户拒绝授权蓝牙'))
+                    }
+                  },
+                })
+              }
+              else if (res.cancel) {
+                reject(new Error('用户拒绝授权蓝牙'))
+              }
+            },
+            fail(err) {
+              reject(err)
+            },
+          })
+        }
+        else {
+          // 已经授权
+          resolve(true)
+        }
+      },
+    })
+  })
+}
+
 // 导出防抖和节流函数
 export { debounce, generateUUID, getColorImg, throttle } from './common'

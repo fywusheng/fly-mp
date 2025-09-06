@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useUserStore } from '@/store'
-import { debounce, generateUUID, getLocation } from '@/utils'
+import { debounce, generateUUID, getLocation, initBLuetoothAuth, initLocationAuth } from '@/utils'
 import { openAndSearchAndConnect } from '@/utils/EvsBikeSdk'
 import EVSBikeSDK from '@/utils/EVSBikeSDK.v1.1.0'
 import { httpGet, httpPost } from '@/utils/http'
@@ -121,11 +121,15 @@ const currentRidingInfo = ref<any>({
   ridingStatus: '',
   ridingTrack: [],
 })
+// 定义地图位置信息
+const mapLocation = ref({
+  latitude: 0,
+  longitude: 0,
+})
 
 // 监听解锁状态上报骑行轨迹
 watch(isUnlocked, (newVal) => {
   console.log('当前解锁状态:', newVal)
-
   getLocation().then((res) => {
     console.log('当前位置:', res)
     if (newVal) {
@@ -155,12 +159,18 @@ watch([() => props.tabName, () => userStore.isLoggedIn], ([newTabName, isLoggedI
   immediate: true, // 立即执行一次
   deep: true, // 深度监听
 })
+watch(() => props.tabName, (newVal) => {
+  if (newVal === 'HomeBlue') {
+    // 获取位置和蓝牙权限
+    getLocationAndBlueAuth()
+  }
+}, { deep: true })
 
 onMounted(() => {
   // 获取滑块最大宽度
   getMaxSliderWidth()
   // 获取位置和蓝牙权限
-  getLocationAndBlueAuth()
+  // getLocationAndBlueAuth()
 })
 
 onUnmounted(() => {
@@ -170,11 +180,14 @@ onUnmounted(() => {
 })
 
 onShow(() => {
+  console.log('组件显示onShow')
   if (props.tabName === 'HomeBlue') {
     // 获取位置和蓝牙权限
     getLocationAndBlueAuth()
-    // 获取车辆列表
-    getCarList()
+    if (userStore.isLoggedIn) {
+      // 获取车辆列表
+      getCarList()
+    }
   }
 })
 
@@ -272,65 +285,6 @@ async function reportRidingTrack() {
     console.error('开启后台定位失败', err)
   }
 }
-// 初始化位置权限
-function initLocationAuth() {
-  return new Promise((resolve, reject) => {
-    wx.getSetting({
-      success(res) {
-        if (!res.authSetting['scope.userLocationBackground']) {
-          wx.authorize({
-            scope: 'scope.userLocationBackground',
-            success() {
-              resolve(true)
-            },
-            fail(err) {
-              console.log(err)
-              // 用户拒绝授权后台定位
-              uni.showModal({
-                title: '提示',
-                content: '需要获取您的后台定位权限',
-                showCancel: true,
-                success: ({ confirm, cancel }) => {
-                  console.log('用户点击了', confirm ? '确认' : '取消')
-                  if (confirm) {
-                    uni.openSetting(
-                      {
-                        success(res) {
-                          if (res.authSetting['scope.userLocationBackground']) {
-                          // 用户同意授权后台定位
-                            console.log('用户同意授权后台定位')
-                            resolve(true)
-                          }
-                          else {
-                            reject(err)
-                          }
-                        },
-                        fail(err) {
-                          reject(err)
-                          console.log('openSetting fail', err)
-                        },
-                      },
-                    )
-                  }
-                  else {
-                    reject(new Error('用户取消授权'))
-                  }
-                },
-              })
-            },
-          })
-        }
-        else {
-          // 已经授权，可以获取位置信息
-          resolve(true)
-        }
-      },
-      fail(err) {
-        reject(err)
-      },
-    })
-  })
-}
 
 // 监听位置变化
 function startListeningLocation() {
@@ -407,67 +361,28 @@ function setSliderStatus(open) {
 }
 
 // 获取位置和蓝牙权限
-function getLocationAndBlueAuth() {
-  uni.getSetting({
-    success(res) {
-      console.log('检测地理位置权限', res)
-      // 检测地理位置权限
-      if (!res.authSetting['scope.userLocationBackground']) {
-        uni.showModal({
-          title: '请求权限',
-          content: '需要获取您的后台定位权限',
-          success(res) {
-            if (res.confirm) {
-              uni.openSetting({
-                success(res) {
-                  console.log('openSetting success', res.authSetting)
-                  if (res.authSetting['scope.userLocationBackground']) {
-                    // 用户同意授权地理位置
-                    console.log('用户同意授权地理位置')
-                    getLocationAndWeather()
-                  }
-                },
-              })
-            }
-          },
-        })
-      }
-      else {
-        // 已经授权，可以获取位置信息
-        getLocationAndWeather()
-      }
-      // 检测蓝牙权限
-      if (!res.authSetting['scope.bluetooth']) {
-        uni.showModal({
-          title: '请求权限',
-          content: '需要打开您的蓝牙权限',
-          success(res) {
-            if (res.confirm) {
-              uni.openSetting({
-                success(res) {
-                  console.log('openSetting success', res.authSetting)
-                  if (res.authSetting['scope.bluetooth']) {
-                    // 用户同意授权蓝牙
-                    console.log('用户同意授权蓝牙')
-                    // connectBle()
-                  }
-                },
-              })
-            }
-          },
-        })
-      }
-      // else {
-      //   // 已经授权，可以打开蓝牙
-      //   console.log('已经授权，可以打开蓝牙')
-      //   // connectBle()
-      // }
-    },
-  })
+async function getLocationAndBlueAuth() {
+  try {
+    const loc = await initLocationAuth()
+    console.log('开启后台定位权限成功', loc)
+    // 获取位置和天气
+    getLocationAndWeather()
+  }
+  catch (err) {
+    console.error('开启后台定位权限失败', err)
+  }
 }
 
 // 蓝牙状态切换
 function toggleBluetooth() {
+  if (!userStore.isLoggedIn) {
+    uni.showToast({
+      title: '请先登录',
+      icon: 'none',
+      mask: true,
+    })
+    return
+  }
   // 蓝牙状态 0:未连接 1:连接中 2:已连接
   if (status.value === 0) {
     connectBle()
@@ -542,7 +457,12 @@ function reloadLocation() {
 async function getCurrentRidingInfo(vehicleId = selectCar.value) {
   if (!vehicleId)
     return
+  uni.showLoading({
+    title: '加载中...',
+    mask: true,
+  })
   const res = await httpGet(`/riding/ride/homepage/vehicle/${vehicleId}`)
+  uni.hideLoading()
   currentRidingInfo.value = (res.data as any)
 }
 
@@ -551,6 +471,7 @@ function getLocationAndWeather() {
   getLocation().then((res: UniApp.GetLocationSuccess) => {
     // 根据当前位置获取天气信息
     const { latitude, longitude } = res
+    mapLocation.value = { latitude, longitude }
     httpGet(`/device/weather/location`, { latitude, longitude }).then((weatherRes) => {
       weatherInfo.value = weatherRes.data as any
     }).catch((err) => {
@@ -620,6 +541,15 @@ function setDefaultVehicleId(carsList) {
 // 连接蓝牙
 async function connectBle() {
   try {
+    const blueAuth = await initBLuetoothAuth()
+    if (!blueAuth) {
+      uni.showToast({
+        title: '请开启蓝牙权限',
+        icon: 'none',
+        mask: true,
+      })
+      return
+    }
     status.value = 1
 
     // 统一入口：传name或deviceId
@@ -797,7 +727,7 @@ function onTouchEnd(event) {
       />
 
       <!-- 我的车辆&蓝牙状态 -->
-      <wd-picker v-model="selectCar" :z-index="100" label-key="vehicleName" value-key="id" :columns="carList" use-default-slot @confirm="handleConfirmCar">
+      <wd-picker v-model="selectCar" :z-index="100" label-key="vehicleName" value-key="id" :columns="carList" :disabled="!carList.length" use-default-slot @confirm="handleConfirmCar">
         <view class="car relative z-1 h-90rpx flex items-center justify-between px-29rpx" :style="{ paddingTop: `${menuButtonInfo?.top + menuButtonInfo.height + 15}px` }">
           <view>
             <span class="text-30rpx font-bold">{{ currentCarName }}</span>
@@ -917,7 +847,7 @@ function onTouchEnd(event) {
             </view>
           </view>
           <!-- 轨迹地图 -->
-          <HomeMap :riding-track="currentRidingInfo.ridingTrack" />
+          <HomeMap :location="mapLocation" :riding-track="currentRidingInfo.ridingTrack" />
         </view>
       </view>
     </view>

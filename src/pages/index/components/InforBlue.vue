@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import dayjs from 'dayjs'
 import { getLocation } from '@/utils'
-import { httpDelete, httpGet, httpPost } from '@/utils/http'
+import { httpDelete, httpGet } from '@/utils/http'
+import { useUserStore } from '@/store'
 
 defineOptions({
   name: 'InforBlue',
@@ -15,36 +16,38 @@ const RightArrow = 'http://121.89.87.166/static/infor/right-arrow.png'
 
 // 获取胶囊位置信息
 const menuButtonInfo = uni.getMenuButtonBoundingClientRect()
+const userStore = useUserStore()
 const date = ref<number>(Date.now())
 const address = ref<string>('广东省广州市珠海区广东省 广州市珠海区')
 
 const cumulativeStats = ref<any>({
-  ageLabel: '我今年15岁了',
+  ageLabel: '我今年0岁',
   companionshipDays: 0,
   totalRidingMinutes: 0,
-  totalTrips: 1,
+  totalTrips: 0,
   vehicleImageUrl: '/images/vehicle-default.png',
 })
 
 const currentLocation = ref<any>({
-  detailedAddress: '广东省广州市珠海区广东省广州市珠海区',
+  detailedAddress: '',
   latitude: 40.22077,
-  locationDescription: '广东省广州市珠海区',
+  locationDescription: '',
   longitude: 116.23128,
 })
 
 const dailyStats = ref<any>({
-  maxSpeed: 25.5,
+  maxSpeed: 0,
   totalRidingTime: 0,
-  tripSegments: 3,
+  tripSegments: 0,
 })
 
 const ridingRecords = ref<any[]>([])
 const ridingSummary = ref<any>({
-  maxSpeed: 25.5,
-  riderName: '骑行人',
+  maxSpeed: 0,
+  riderName: '',
   ridingTime: 0,
 })
+
 
 watch(date, (newDate) => {
   console.log('Selected date changed to:', newDate)
@@ -54,6 +57,7 @@ watch(date, (newDate) => {
 onMounted(() => {
   console.log('menuButtonInfo', menuButtonInfo)
   // getCurrentLocation()
+
   getRidingData()
 })
 // 获取当前位置
@@ -73,6 +77,10 @@ function getCurrentLocation() {
 }
 // 获取骑行数据
 async function getRidingData() {
+  if(!userStore.isLoggedIn) {
+    console.warn('用户未登录，无法获取骑行数据')
+    return
+  }
   uni.showLoading({
     title: '加载中...',
   })

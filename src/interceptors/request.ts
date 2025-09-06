@@ -1,4 +1,4 @@
-// import { useUserStore } from '@/store'
+import { useUserStore } from '@/store'
 import { getEnvBaseUrl } from '@/utils'
 import { platform } from '@/utils/platform'
 import { stringifyQuery } from '@/utils/queryString'
@@ -58,6 +58,18 @@ const httpInterceptor = {
     if (token) {
       options.header.Authorization = `Bearer ${token}`
     }
+  },
+  // 请求成功后触发（服务器返回状态码 200-299 都会走这里）
+  success(response: UniApp.RequestSuccessCallbackResult) {
+    // console.log('response', response.header)
+    // useUserStore 需要在函数体内调用，避免在模块加载时执行
+    const userStore = useUserStore()
+    const newToken = response.header['x-new-token']
+    if (newToken) {
+      console.log('Token已自动续期')
+      userStore.refreshToken(newToken)
+    }
+    return response
   },
 }
 

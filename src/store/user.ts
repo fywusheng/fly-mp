@@ -123,6 +123,11 @@ export const useUserStore = defineStore(
       await getUserInfo()
       return res
     }
+    // 刷新token并同步到缓存
+    const refreshToken = (token: string) => {
+      userInfo.value.token = token
+      uni.setStorageSync('token', token)
+    }
 
     return {
       // 状态
@@ -138,6 +143,7 @@ export const useUserStore = defineStore(
       setUserAvatar,
       logout,
       updateInfo,
+      refreshToken,
     }
   },
   {
