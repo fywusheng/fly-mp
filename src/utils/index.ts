@@ -233,35 +233,74 @@ export function initBLuetoothAuth() {
     uni.getSetting({
       success(res) {
         // 检测蓝牙权限
+        // if (!res.authSetting['scope.bluetooth']) {
+        //   uni.showModal({
+        //     title: '请求权限',
+        //     content: '需要获取您的蓝牙权限',
+        //     success(res) {
+        //       if (res.confirm) {
+        //         uni.openSetting({
+        //           success(res) {
+        //             if (res.authSetting['scope.bluetooth']) {
+        //               // 用户同意授权地理位置
+        //               resolve(true)
+        //             }
+        //             else {
+        //               reject(new Error('用户拒绝授权蓝牙'))
+        //             }
+        //           },
+        //         })
+        //       }
+        //       else if (res.cancel) {
+        //         reject(new Error('用户拒绝授权蓝牙'))
+        //       }
+        //     },
+        //     fail(err) {
+        //       reject(err)
+        //     },
+        //   })
+        // }
+        // else {
+        //   // 已经授权
+        //   resolve(true)
+        // }
         if (!res.authSetting['scope.bluetooth']) {
-          uni.showModal({
-            title: '请求权限',
-            content: '需要获取您的蓝牙权限',
-            success(res) {
-              if (res.confirm) {
-                uni.openSetting({
-                  success(res) {
-                    if (res.authSetting['scope.bluetooth']) {
-                      // 用户同意授权地理位置
-                      resolve(true)
-                    }
-                    else {
-                      reject(new Error('用户拒绝授权蓝牙'))
-                    }
-                  },
-                })
-              }
-              else if (res.cancel) {
-                reject(new Error('用户拒绝授权蓝牙'))
-              }
+          wx.authorize({
+            scope: 'scope.bluetooth',
+            success() {
+              resolve(true)
             },
             fail(err) {
-              reject(err)
+              console.log('authorize fail:', err)
+              uni.showModal({
+                title: '请求权限',
+                content: '已拒绝使用蓝牙功能，是否允许启用？',
+                success(res) {
+                  // if (res.confirm) {
+                  uni.openSetting({
+                    success(res) {
+                      if (res.authSetting['scope.bluetooth']) {
+                        // 用户同意授权蓝牙
+                        resolve(true)
+                      }
+                      else {
+                        reject(new Error('用户拒绝授权蓝牙'))
+                      }
+                    },
+                  })
+                  // }
+                  // else if (res.cancel) {
+                  //   reject(new Error('用户拒绝授权蓝牙'))
+                  // }
+                },
+                fail(err) {
+                  reject(err)
+                },
+              })
             },
           })
         }
         else {
-          // 已经授权
           resolve(true)
         }
       },
