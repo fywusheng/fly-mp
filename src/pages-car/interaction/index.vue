@@ -111,7 +111,7 @@ function updateCarStatus() {
 // 提交设置
 function onSubmitClick() {
   // 开启/关闭感应功能
-  isInductionCar.value ? EVSBikeSDK.bleCommandsApi.sendSetKeylessUnlockExpireCommand('251224') : EVSBikeSDK.bleCommandsApi.sendKeylessUnlockCloseCommand()
+  isInductionCar.value ? EVSBikeSDK.bleCommandsApi.sendSetKeylessUnlockExpireCommand('991231') : EVSBikeSDK.bleCommandsApi.sendKeylessUnlockCloseCommand()
 
   setTimeout(() => {
     // 设置感应距离
