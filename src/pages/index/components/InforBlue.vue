@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import dayjs from 'dayjs'
+import { useUserStore } from '@/store'
 import { getLocation } from '@/utils'
 import { httpDelete, httpGet } from '@/utils/http'
-import { useUserStore } from '@/store'
 
 defineOptions({
   name: 'InforBlue',
@@ -48,7 +48,6 @@ const ridingSummary = ref<any>({
   ridingTime: 0,
 })
 
-
 watch(date, (newDate) => {
   console.log('Selected date changed to:', newDate)
   getRidingData()
@@ -77,14 +76,14 @@ function getCurrentLocation() {
 }
 // 获取骑行数据
 async function getRidingData() {
-  if(!userStore.isLoggedIn) {
+  if (!userStore.isLoggedIn) {
     console.warn('用户未登录，无法获取骑行数据')
     return
   }
   uni.showLoading({
     title: '加载中...',
   })
-  const res = await httpGet('/riding/dashboard/riding', { date: dayjs(date.value).format('YYYY-MM-DD') })
+  const res = await httpGet('/riding/dashboard/riding', { date: dayjs(date.value).format('YYYY-MM-DD'), vehicleId: userStore.userInfo?.defaultVehicleId })
   uni.hideLoading()
   if (res.code === '200') {
     cumulativeStats.value = (res.data as any).cumulativeStats
@@ -281,11 +280,11 @@ async function deleteRidingRecord(item): Promise<void> {
 
       <view v-for="item in ridingRecords" :key="item.rideId">
         <wd-swipe-action>
-          <view class="ml-20rpx mt-20rpx box-border w-710rpx rounded-8rpx bg-white py-30rpx" @click="goDetail(item)">
+          <view :style="{ background: item.ownerType === 1 ? '#D2DFED' : '#FFFFFF' }" class="ml-20rpx mt-20rpx box-border w-710rpx rounded-8rpx py-30rpx" @click="goDetail(item)">
             <wd-steps :active="3" vertical>
               <wd-step :icon-slot="true">
                 <template #icon>
-                  <view class="h-22px w-30px flex items-center justify-center">
+                  <view :style="{ background: item.ownerType === 1 ? '#D2DFED' : '#FFFFFF' }" class="h-22px w-30px flex items-center justify-center">
                     <view class="h-20rpx w-20rpx rounded-10px bg-[#2CBC7B]" />
                   </view>
                 </template>
@@ -306,7 +305,7 @@ async function deleteRidingRecord(item): Promise<void> {
               </wd-step>
               <wd-step icon="clock">
                 <template #icon>
-                  <view class="h-22px w-30px flex items-center justify-center">
+                  <view :style="{ background: item.ownerType === 1 ? '#D2DFED' : '#FFFFFF' }" class="h-22px w-30px flex items-center justify-center">
                     <view class="h-20rpx w-20rpx rounded-10px bg-[#DB6477]" />
                   </view>
                 </template>

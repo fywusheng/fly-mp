@@ -14,7 +14,7 @@ import { useUserStore } from '@/store/user'
 // const AutoXihuo = 'http://121.89.87.166/static/mine/auto-xihuo.png'
 // const MuteShefang = 'http://121.89.87.166/static/mine/mute-shefang.png'
 import { openAndSearchAndConnect } from '@/utils/EvsBikeSdk'
-import EVSBikeSDK from '@/utils/EVSBikeSDK.v1.1.0'
+import EVSBikeSDK from '@/utils/EVSBikeSDK.v1.1.1'
 import { httpGet, httpPost } from '@/utils/http'
 
 const OverSpeed = 'http://121.89.87.166/static/mine/over-speed.png'
@@ -94,7 +94,7 @@ async function connectBle() {
     status.value = 2
     EVSBikeSDK.subscribe(onStateChange)
     // 发送指令
-    EVSBikeSDK.bleCommandsApi.sendBindOwnerCommand('4F7A126E')
+    EVSBikeSDK.bleCommandsApi.sendBindOwnerCommand('166A5F83')
   }
   catch (err) {
     console.log(err)

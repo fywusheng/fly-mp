@@ -9,8 +9,9 @@
 </route>
 
 <script lang="ts" setup>
+import { debounce } from '@/utils'
 import { openAndSearchAndConnect } from '@/utils/EvsBikeSdk'
-import EVSBikeSDK from '@/utils/EVSBikeSDK.v1.1.0'
+import EVSBikeSDK from '@/utils/EVSBikeSDK.v1.1.1'
 
 const PointIcon = 'http://121.89.87.166/static/car/point.png'
 const isInductionCar = ref(true) // 感应控车
@@ -52,7 +53,7 @@ async function connectBle() {
     console.log('连接成功', res)
     EVSBikeSDK.subscribe(onStateChange)
     // 发送指令
-    EVSBikeSDK.bleCommandsApi.sendBindOwnerCommand('4F7A126E')
+    EVSBikeSDK.bleCommandsApi.sendBindOwnerCommand('166A5F83')
   }
   catch (err) {
     console.log(err)
@@ -78,6 +79,14 @@ function onStateChange(data) {
       // 查询车辆状态和取设备设置参数，感应启动相关
       EVSBikeSDK.bleCommandsApi.sendGetEcuConfigCommand()
       break
+    case 'SET_KEYLESS_EXPIRE': // at设备设置感应启动时间后查询一下时间是否过期
+      EVSBikeSDK.bleCommandsApi.sendGetEcuConfigCommand()
+      break
+    case 'SET_KEYLESS_RANGE':
+      if (success) {
+        EVSBikeSDK.bleCommandsApi.sendGetEcuConfigCommand()
+      }
+      break
     default:
       break
   }
@@ -99,23 +108,15 @@ function updateCarStatus() {
   isInductionCar.value = carState.value.isKeylessOn
   distance.value = carState.value.keylessRange || 1
 }
-
-function debounce<T extends (...args: any[]) => void>(fn: T, delay = 500) {
-  let timer: ReturnType<typeof setTimeout> | null = null
-  return function (...args: Parameters<T>) {
-    if (timer)
-      clearTimeout(timer)
-    timer = setTimeout(() => {
-      fn(...args)
-    }, delay)
-  }
-}
-
+// 提交设置
 function onSubmitClick() {
   // 开启/关闭感应功能
   isInductionCar.value ? EVSBikeSDK.bleCommandsApi.sendSetKeylessUnlockExpireCommand('251224') : EVSBikeSDK.bleCommandsApi.sendKeylessUnlockCloseCommand()
-  // // 设置感应距离
-  EVSBikeSDK.bleCommandsApi.sendKeylessUnlockRangCommand(distance.value)
+
+  setTimeout(() => {
+    // 设置感应距离
+    EVSBikeSDK.bleCommandsApi.sendKeylessUnlockRangeCommand(distance.value)
+  }, 500)
 
   uni.showToast({
     title: '设置成功',
@@ -123,10 +124,10 @@ function onSubmitClick() {
     duration: 1000,
   })
 
-  setTimeout(() => {
-    // 返回首页
-    uni.navigateBack()
-  }, 1000)
+  // setTimeout(() => {
+  //   // 返回首页
+  //   uni.navigateBack()
+  // }, 1000)
 }
 </script>
 

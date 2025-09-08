@@ -105,7 +105,7 @@ watch(() => props.ridingTrack, (newTrack) => {
 </script>
 
 <template>
-  <view class="mt-17rpx h-140rpx w-660rpx">
+  <view class="mt-17rpx h-240rpx w-660rpx">
     <map
       id="map"
       class="map"

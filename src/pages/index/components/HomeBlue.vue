@@ -2,7 +2,7 @@
 import { useUserStore } from '@/store'
 import { debounce, generateUUID, getLocation, initBLuetoothAuth, initLocationAuth } from '@/utils'
 import { openAndSearchAndConnect } from '@/utils/EvsBikeSdk'
-import EVSBikeSDK from '@/utils/EVSBikeSDK.v1.1.0'
+import EVSBikeSDK from '@/utils/EVSBikeSDK.v1.1.1'
 import { httpGet, httpPost } from '@/utils/http'
 import HomeMap from './HomeMap.vue'
 
@@ -193,7 +193,7 @@ onShow(() => {
 
 onHide(() => {
   // 清理工作
-  // disconnect()
+  disconnect()
   console.log('onHide() {}')
 })
 
@@ -566,7 +566,6 @@ async function connectBle() {
 
     EVSBikeSDK.subscribe(onStateChange)
     // 发送密码验证指令
-    // EVSBikeSDK.bleCommandsApi.sendBindOwnerCommand('4F7A126E')
     EVSBikeSDK.bleCommandsApi.sendBindOwnerCommand('166A5F83')
 
     // 监听蓝牙状态
@@ -575,11 +574,13 @@ async function connectBle() {
       console.log(`device ${res.deviceId} state has changed, connected: ${res.connected}`)
       if (!res.connected) {
         status.value = 0
-        wx.showToast({
-          title: '蓝牙连接已断开',
-          icon: 'error',
-          duration: 600,
-        })
+        if (props.tabName === 'HomeBlue') {
+          uni.showToast({
+            title: '蓝牙连接已断开',
+            icon: 'error',
+            duration: 600,
+          })
+        }
         EVSBikeSDK.unsubscribe(onStateChange)
       }
     })
@@ -645,11 +646,8 @@ function updateCarStatus() {
 function disconnect() {
   EVSBikeSDK.disconnect()
     .then((res) => {
-      console.log(res)
+      console.log('断开蓝牙', res)
       status.value = 0
-      // wx.showToast({
-      //   title: '断开连接成功',
-      // })
       EVSBikeSDK.unsubscribe(onStateChange)
     })
     .catch((err) => {
@@ -715,6 +713,12 @@ function onTouchEnd(event) {
     fail()
   }
 }
+
+function goLogin() {
+  uni.navigateTo({
+    url: '/pages/login/login',
+  })
+}
 </script>
 
 <template>
@@ -727,7 +731,7 @@ function onTouchEnd(event) {
       />
 
       <!-- 我的车辆&蓝牙状态 -->
-      <wd-picker v-model="selectCar" :z-index="100" label-key="vehicleName" value-key="id" :columns="carList" :disabled="!carList.length" use-default-slot @confirm="handleConfirmCar">
+      <wd-picker v-if="userStore.isLoggedIn" v-model="selectCar" :z-index="100" label-key="vehicleName" value-key="id" :columns="carList" :disabled="!carList.length" use-default-slot @confirm="handleConfirmCar">
         <view class="car relative z-1 h-90rpx flex items-center justify-between px-29rpx" :style="{ paddingTop: `${menuButtonInfo?.top + menuButtonInfo.height + 15}px` }">
           <view>
             <span class="text-30rpx font-bold">{{ currentCarName }}</span>
@@ -758,6 +762,32 @@ function onTouchEnd(event) {
           </view>
         </view>
       </wd-picker>
+      <template v-else>
+        <view class="car relative z-1 h-90rpx flex items-center justify-between px-29rpx" :style="{ paddingTop: `${menuButtonInfo?.top + menuButtonInfo.height + 15}px` }">
+          <view @click="goLogin ">
+            登录
+          </view>
+
+          <view v-if="weatherInfo && weatherInfo.temperature" class="flex items-center justify-center color-[#333333]">
+            <image
+              class="h-40rpx w-34rpx"
+              :src="SunIcon"
+              mode="aspectFit"
+            />
+            <view class="slide-text flex items-center justify-center">
+              <view class="ml-16rpx text-48rpx">
+                {{ weatherInfo.temperature }}°
+              </view>
+              <view class="ml-12rpx text-20rpx">
+                <view>{{ weatherInfo.weather }}</view>
+                <view>
+                  {{ weatherInfo.temperatureDay }}°/{{ weatherInfo.temperatureNight }}°
+                </view>
+              </view>
+            </view>
+          </view>
+        </view>
+      </template>
       <view class="top-cont">
         <view class="mb-37rpx mt-53rpx flex items-center justify-center">
           <image
