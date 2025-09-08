@@ -719,6 +719,27 @@ function goLogin() {
     url: '/pages/login/login',
   })
 }
+function goDetail() {
+  if (!userStore.isLoggedIn) {
+    uni.showToast({
+      title: '请先登录',
+      icon: 'none',
+      mask: true,
+    })
+    return
+  }
+  if (!selectCar.value) {
+    uni.showToast({
+      title: '请先选择车辆',
+      icon: 'none',
+      mask: true,
+    })
+    return
+  }
+  uni.navigateTo({
+    url: `/pages-car/trackDetail/index?rideId=${currentRidingInfo.value.rideId}`,
+  })
+}
 </script>
 
 <template>
@@ -877,7 +898,9 @@ function goLogin() {
             </view>
           </view>
           <!-- 轨迹地图 -->
-          <HomeMap :location="mapLocation" :riding-track="currentRidingInfo.ridingTrack" />
+          <view>
+            <HomeMap :location="mapLocation" :riding-track="currentRidingInfo.ridingTrack" @map-click="goDetail" />
+          </view>
         </view>
       </view>
     </view>

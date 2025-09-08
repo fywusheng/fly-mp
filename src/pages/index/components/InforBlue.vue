@@ -280,11 +280,11 @@ async function deleteRidingRecord(item): Promise<void> {
 
       <view v-for="item in ridingRecords" :key="item.rideId">
         <wd-swipe-action>
-          <view :style="{ background: item.ownerType === 1 ? '#D2DFED' : '#FFFFFF' }" class="ml-20rpx mt-20rpx box-border w-710rpx rounded-8rpx py-30rpx" @click="goDetail(item)">
+          <view :style="{ background: item.ownerType === 1 ? '#FFFFFF' : '#D2DFED' }" class="ml-20rpx mt-20rpx box-border w-710rpx rounded-8rpx py-30rpx" @click="goDetail(item)">
             <wd-steps :active="3" vertical>
               <wd-step :icon-slot="true">
                 <template #icon>
-                  <view :style="{ background: item.ownerType === 1 ? '#D2DFED' : '#FFFFFF' }" class="h-22px w-30px flex items-center justify-center">
+                  <view :style="{ background: item.ownerType === 1 ? '#FFFFFF' : '#D2DFED' }" class="h-22px w-30px flex items-center justify-center">
                     <view class="h-20rpx w-20rpx rounded-10px bg-[#2CBC7B]" />
                   </view>
                 </template>
@@ -305,7 +305,7 @@ async function deleteRidingRecord(item): Promise<void> {
               </wd-step>
               <wd-step icon="clock">
                 <template #icon>
-                  <view :style="{ background: item.ownerType === 1 ? '#D2DFED' : '#FFFFFF' }" class="h-22px w-30px flex items-center justify-center">
+                  <view :style="{ background: item.ownerType === 1 ? '#FFFFFF' : '#D2DFED' }" class="h-22px w-30px flex items-center justify-center">
                     <view class="h-20rpx w-20rpx rounded-10px bg-[#DB6477]" />
                   </view>
                 </template>

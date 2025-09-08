@@ -124,10 +124,10 @@ function onSubmitClick() {
     duration: 1000,
   })
 
-  // setTimeout(() => {
-  //   // 返回首页
-  //   uni.navigateBack()
-  // }, 1000)
+  setTimeout(() => {
+    // 返回首页
+    uni.navigateBack()
+  }, 1000)
 }
 </script>
 

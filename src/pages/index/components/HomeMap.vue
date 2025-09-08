@@ -3,6 +3,9 @@ const props = defineProps<{
   ridingTrack: Array<{ latitude: number, longitude: number }>
   location: { latitude: number, longitude: number }
 }>()
+const emit = defineEmits<{
+  (e: 'mapClick'): void
+}>()
 const MapWait = 'http://121.89.87.166/static/home/map-wait.png'
 const MapArrow = 'http://121.89.87.166/static/home/map-arrow.png'
 
@@ -59,9 +62,11 @@ onMounted(() => {
 
 watch(() => props.ridingTrack, (newTrack) => {
   if (newTrack && newTrack.length > 0) {
-    polyline.value[0].points = newTrack
+    const reversedTrack = [...newTrack].reverse()
+    console.log('新的骑行轨迹:', reversedTrack)
+    polyline.value[0].points = reversedTrack
     // 取第一个点作为当前位置
-    const lastPoint = newTrack[0]
+    const lastPoint = reversedTrack[0]
     location.value = {
       latitude: lastPoint.latitude,
       longitude: lastPoint.longitude,
@@ -73,13 +78,13 @@ watch(() => props.ridingTrack, (newTrack) => {
     }
     // 更新地图视野
     mapCtx.includePoints({
-      points: newTrack,
-      padding: [10, 10, 10, 10],
+      points: reversedTrack,
+      padding: [10, 25, 10, 25],
     })
     mapCtx.moveAlong({
       markerId: 1,
-      path: polyline.value[0].points,
-      duration: 10,
+      path: reversedTrack,
+      duration: 100,
       autoRotate: true,
       success: (res) => {
         console.log('moveAlong success:', res)
@@ -102,6 +107,12 @@ watch(() => props.ridingTrack, (newTrack) => {
     }, 1000)
   }
 }, { immediate: true })
+
+function clickMap() {
+  console.log('点击了地图')
+  // 可以在这里触发父组件的方法或事件
+  emit('mapClick')
+}
 </script>
 
 <template>
@@ -114,6 +125,7 @@ watch(() => props.ridingTrack, (newTrack) => {
       :markers="markers"
       :polyline="polyline"
       :scale="scale"
+      @tap="clickMap"
     />
   </view>
 </template>

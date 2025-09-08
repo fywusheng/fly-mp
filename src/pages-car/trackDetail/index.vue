@@ -61,14 +61,15 @@ const ridingInfo = ref<any>({})
 const mapImage = ref('')
 
 onLoad((e) => {
-  const instance = getCurrentInstance()?.proxy as { getOpenerEventChannel?: () => UniApp.EventChannel }
-  if (instance?.getOpenerEventChannel) {
-    const eventChannel = instance.getOpenerEventChannel()
-    eventChannel.on('rideData', (info: any) => {
-      ridingInfo.value = info
-      getTrackInfo(info.rideId)
-    })
-  }
+  getTrackInfo(e.rideId)
+  // const instance = getCurrentInstance()?.proxy as { getOpenerEventChannel?: () => UniApp.EventChannel }
+  // if (instance?.getOpenerEventChannel) {
+  //   const eventChannel = instance.getOpenerEventChannel()
+  //   eventChannel.on('rideData', (info: any) => {
+  //     ridingInfo.value = info
+  //     getTrackInfo(info.rideId)
+  //   })
+  // }
 })
 
 // onMounted(() => {
@@ -85,6 +86,8 @@ async function getTrackInfo(rideId: string) {
   try {
     const res = await httpGet(`/riding/ride/track/detail/${rideId}`)
     if (res.code === '200') {
+      ridingInfo.value = res.data
+      console.log('轨迹详情:', res.data)
       const trackPoints = (res.data as any).trackPoints
       setMapData(trackPoints)
     }
@@ -159,7 +162,7 @@ function setMapData(trackPoints: Array<{ latitude: number, longitude: number }>)
             <template #title>
               <view class="text-[#666666]">
                 <template v-if="ridingInfo.startTime">
-                  <span>{{ ridingInfo.start }} </span>
+                  <span>{{ ridingInfo.startLocation }} </span>
                   <span>(</span>
                   <span class="text-[#239AF6]">{{ ridingInfo.startTime }}</span>
                   <span>)</span>
@@ -180,7 +183,7 @@ function setMapData(trackPoints: Array<{ latitude: number, longitude: number }>)
             <template #title>
               <view class="text-[#333333]">
                 <template v-if="ridingInfo.endTime">
-                  <span>{{ ridingInfo.end }} </span>
+                  <span>{{ ridingInfo.endLocation }} </span>
                   <span>(</span>
                   <span class="text-[#239AF6]">{{ ridingInfo.endTime }}</span>
                   <span>)</span>
@@ -197,7 +200,7 @@ function setMapData(trackPoints: Array<{ latitude: number, longitude: number }>)
         <view class="w-100% flex justify-around">
           <view class="w-235rpx flex flex-col items-center justify-center">
             <view class="mb-12rpx text-48rpx color-[#2CBC7B]">
-              {{ ridingInfo.ridingTime }}
+              {{ ridingInfo.ridingTimeMinutes }}
             </view>
             <view class="text-18rpx color-[#666666]">
               骑行时间(分钟)
