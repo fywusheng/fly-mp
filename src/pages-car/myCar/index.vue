@@ -113,7 +113,7 @@ function onEditClick(item) {
 <style lang="scss" scoped>
 .bind-car {
   background-color: #DDE3EC;
-  height: 100vh;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   // justify-content: center;

@@ -66,6 +66,30 @@ export function getColorImg(colorCode: string, type = 'carList'): string {
       CHERRY_PINK: 'http://121.89.87.166/static/color/E75-pink-card.png',
     }
   }
+  else if (type === 'home') {
+    colorImgMap = {
+      // 星黛蓝
+      STAR_BLUE: 'http://121.89.87.166/static/color/E75-blue-home.png',
+      // 漫步白
+      WALK_WHITE: 'http://121.89.87.166/static/color/E75-white-home.png',
+      // 青竹绿
+      BAMBOO_GREEN: 'http://121.89.87.166/static/color/E75-green-home.png',
+      // 樱花粉
+      CHERRY_PINK: 'http://121.89.87.166/static/color/E75-pink-home.png',
+    }
+  }
+  else if (type === 'avatar') {
+    colorImgMap = {
+      // 星黛蓝
+      STAR_BLUE: 'http://121.89.87.166/static/color/E75-blue-avatar.png',
+      // 漫步白
+      WALK_WHITE: 'http://121.89.87.166/static/color/E75-white-avatar.png',
+      // 青竹绿
+      BAMBOO_GREEN: 'http://121.89.87.166/static/color/E75-green-avatar.png',
+      // 樱花粉
+      CHERRY_PINK: 'http://121.89.87.166/static/color/E75-pink-avatar.png',
+    }
+  }
 
   return colorImgMap[colorCode] || ''
 }

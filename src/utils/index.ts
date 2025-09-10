@@ -192,7 +192,7 @@ export function initLocationAuth() {
         if (!res.authSetting['scope.userLocationBackground']) {
           uni.showModal({
             title: '请求权限',
-            content: '需要获取您的后台定位权限',
+            content: '需要获取您的后台定位权限,如已授权请点击取消',
             success(res) {
               if (res.confirm) {
                 uni.openSetting({

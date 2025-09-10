@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import dayjs from 'dayjs'
 import { useUserStore } from '@/store'
-import { getLocation } from '@/utils'
+import { getColorImg, getLocation } from '@/utils'
 import { httpDelete, httpGet } from '@/utils/http'
 
 defineOptions({
@@ -47,7 +47,8 @@ const ridingSummary = ref<any>({
   riderName: '',
   ridingTime: 0,
 })
-
+const colorCode = ref<string>(uni.getStorageSync('selectColorCode') || '') // 车辆颜色
+console.log('colorCode', colorCode.value)
 watch(date, (newDate) => {
   console.log('Selected date changed to:', newDate)
   getRidingData()
@@ -165,12 +166,21 @@ async function deleteRidingRecord(item): Promise<void> {
     <!-- top背景 -->
     <image
       class="absolute left-0 top-0 h-671rpx w-750rpx"
-      :src="BgIcon"
+      :src=" BgIcon"
     />
     <!-- 行驶数据 -->
     <view class="relative flex justify-around" :style="{ paddingTop: `${menuButtonInfo?.top + menuButtonInfo.height + 10}px` }">
       <view class="relative h-136rpx w-128rpx flex items-center justify-end">
+        <view v-if="colorCode" class="circle-ring">
+          <image
+            class="h-83rpx w-83rpx"
+            :src="getColorImg(colorCode, 'avatar') "
+            mode="scaleToFill"
+          />
+        </view>
+
         <image
+          v-else
           class="h-136rpx w-128rpx"
           :src="CarIcon"
           mode="scaleToFill"
@@ -382,6 +392,16 @@ async function deleteRidingRecord(item): Promise<void> {
   width: 200rpx;
   font-size: 30rpx;
   border-radius: 18rpx;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.circle-ring {
+  width: 128rpx; /* 设置环的宽度 */
+  height: 128rpx; /* 设置环的高度 */
+  border-radius: 50%; /* 使元素成为圆形 */
+  border: 5rpx solid #ffffff; /* 设置边框宽度和颜色 */
+  position: relative; /* 相对定位，便于后续调整 */
   display: flex;
   justify-content: center;
   align-items: center;

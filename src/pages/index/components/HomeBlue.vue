@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useUserStore } from '@/store'
-import { debounce, generateUUID, getLocation, initBLuetoothAuth, initLocationAuth } from '@/utils'
+import { debounce, generateUUID, getColorImg, getLocation, initBLuetoothAuth, initLocationAuth } from '@/utils'
 import { openAndSearchAndConnect } from '@/utils/EvsBikeSdk'
 import EVSBikeSDK from '@/utils/EVSBikeSDK.v1.1.1'
 import { httpGet, httpPost } from '@/utils/http'
@@ -109,6 +109,10 @@ const closeOnClickModal = ref(true) // 是否点击蒙层关闭弹窗
 const currentCarName = computed(() => {
   const car = carList.value.find(item => item.id === selectCar.value)
   return car ? car.vehicleName : '我的车辆'
+})
+const colorCode = computed(() => {
+  const car = carList.value.find(item => item.id === selectCar.value)
+  return car ? car.colorCode : ''
 })
 // 当前骑行ID,用于标识一次完整的骑行过程，上传骑行数据
 let rideId = null
@@ -536,6 +540,9 @@ function setDefaultVehicleId(carsList) {
       selectCar.value = carsList[0].id
     }
   }
+
+  // 存储选中车辆颜色
+  uni.setStorageSync('selectColorCode', colorCode.value)
 }
 
 // 连接蓝牙
@@ -665,6 +672,9 @@ async function handleConfirmCar({ value, selectedItems }) {
 
   // 更新用户信息,设置车辆id
   userStore.updateInfo(params)
+
+  // 存储选中车辆颜色
+  uni.setStorageSync('selectColorCode', colorCode.value)
 }
 
 function onTouchStart(event) {
@@ -747,7 +757,7 @@ function goDetail() {
     <view class="top-card">
       <image
         class="top-bg z-0"
-        :src="TopIcon"
+        :src="colorCode ? getColorImg(colorCode, 'home') : TopIcon"
         mode="scaleToFill"
       />
 
