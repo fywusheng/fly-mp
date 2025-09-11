@@ -25,7 +25,7 @@ onShow(() => {
 // 获取车辆列表
 function getCarList() {
   httpGet('/device/vehicle/user/complete').then((res) => {
-    carList.value = (res.data as any).resultList
+    carList.value = (res.data as any).resultList || []
   }).catch((err) => {
     console.error('获取车辆列表失败:', err)
     uni.showToast({
