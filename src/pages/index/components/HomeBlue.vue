@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { useUserStore } from '@/store'
 import { debounce, generateUUID, getColorImg, getLocation, initBLuetoothAuth, initLocationAuth } from '@/utils'
+import { getWeatherIcon } from '@/utils/common'
 import { openAndSearchAndConnect } from '@/utils/EvsBikeSdk'
 import EVSBikeSDK from '@/utils/EVSBikeSDK.v1.1.1'
 import { httpGet, httpPost } from '@/utils/http'
 import HomeMap from './HomeMap.vue'
+import WeatherPop from './WeatherPop.vue'
 
 defineOptions({
   name: 'HomeBlue',
@@ -37,18 +39,25 @@ const WarnNoticeIcon = 'http://121.89.87.166/static/home/warn-icon.png'
 const WarningIcon = 'http://121.89.87.166/static/home/warning.png'
 const WhistleOpenIcon = 'http://121.89.87.166/static/home/whistle-open.png'
 const WhistleIcon = 'http://121.89.87.166/static/home/whistle.png'
+const MoreBtnIcon = 'http://121.89.87.166/static/home/more-btn.png'
 
 // 用户信息
 const userStore = useUserStore()
 // 获取胶囊位置信息
 const menuButtonInfo = uni.getMenuButtonBoundingClientRect()
+
+// 天气信息
 const weatherInfo = ref<{
-  weather: string
-  temperature: number | string
-  temperatureDay: number | string
-  temperatureNight: number | string
-  weaImg: string
-}>({ weather: '', temperature: '', temperatureDay: '', temperatureNight: '', weaImg: '' }) // 天气信息
+  wea: string
+  tem: number | string
+  tem1: number | string
+  tem2: number | string
+  hours?: Array<{ hours: string, wea: string }>
+  simpleWeather?: Array<{ hours: string, wea: string }>
+}>({ wea: '', tem: '', tem1: '', tem2: '', simpleWeather: [] })
+// 天气弹窗显示
+const weatherPopVisible = ref(false)
+
 // 滑动开锁相关
 const startX = ref(0)
 const sliderX = ref(0)
@@ -476,8 +485,10 @@ function getLocationAndWeather() {
     // 根据当前位置获取天气信息
     const { latitude, longitude } = res
     mapLocation.value = { latitude, longitude }
-    httpGet(`/device/weather/location`, { latitude, longitude }).then((weatherRes) => {
+    httpGet(`/device/weather/tianqi`, { lat: latitude, lng: longitude }).then((weatherRes) => {
+      (weatherRes.data as any).simpleWeather = (weatherRes.data as any).hours.slice(0, 3)
       weatherInfo.value = weatherRes.data as any
+      console.log('获取天气信息成功:', weatherRes.data)
     }).catch((err) => {
       console.error('获取天气信息失败:', err)
     })
@@ -750,6 +761,10 @@ function goDetail() {
     url: `/pages-car/trackDetail/index?rideId=${currentRidingInfo.value.rideId}`,
   })
 }
+// 显示天气详情
+function showWeatherDetail() {
+  weatherPopVisible.value = true
+}
 </script>
 
 <template>
@@ -763,7 +778,7 @@ function goDetail() {
 
       <!-- 我的车辆&蓝牙状态 -->
       <wd-picker v-if="userStore.isLoggedIn" v-model="selectCar" :z-index="100" label-key="vehicleName" value-key="id" :columns="carList" :disabled="!carList.length" use-default-slot @confirm="handleConfirmCar">
-        <view class="car relative z-1 h-90rpx flex items-center justify-between px-29rpx" :style="{ paddingTop: `${menuButtonInfo?.top + menuButtonInfo.height + 15}px` }">
+        <view class="car relative z-3 h-90rpx flex items-center justify-between px-29rpx" :style="{ paddingTop: `${menuButtonInfo?.top + menuButtonInfo.height + 0}px` }">
           <view>
             <span class="text-30rpx font-bold">{{ currentCarName }}</span>
             <image
@@ -773,54 +788,93 @@ function goDetail() {
             />
           </view>
 
-          <view v-if="weatherInfo && weatherInfo.temperature" class="flex items-center justify-center color-[#333333]">
-            <image
-              class="h-40rpx w-34rpx"
-              :src="SunIcon"
-              mode="aspectFit"
-            />
-            <view class="slide-text flex items-center justify-center">
-              <view class="ml-16rpx text-48rpx">
-                {{ weatherInfo.temperature }}°
-              </view>
-              <view class="ml-12rpx text-20rpx">
-                <view>{{ weatherInfo.weather }}</view>
-                <view>
-                  {{ weatherInfo.temperatureDay }}°/{{ weatherInfo.temperatureNight }}°
+          <template v-if="weatherInfo && weatherInfo.wea">
+            <view class="flex items-center justify-center color-[#333333]">
+              <image
+                class="h-40rpx w-34rpx"
+                :src="getWeatherIcon(weatherInfo.wea)"
+                mode="aspectFit"
+              />
+              <view class="slide-text flex items-center justify-center">
+                <view class="ml-16rpx text-48rpx">
+                  {{ weatherInfo.tem }}°
+                </view>
+                <view class="ml-12rpx text-20rpx">
+                  <view>{{ weatherInfo.wea }}</view>
+                  <view>
+                    {{ weatherInfo.tem1 }}°/{{ weatherInfo.tem2 }}°
+                  </view>
                 </view>
               </view>
             </view>
-          </view>
+            <!-- 更多天气 -->
+            <view class="absolute bottom-[-65rpx] right-28rpx h-80rpx w-230rpx flex items-center justify-evenly rounded-[10rpx] bg-[#5DACF8]">
+              <view v-for="item in weatherInfo.simpleWeather" :key="item.hours" class="flex flex-col items-center justify-center text-16rpx">
+                <view>{{ item.hours }}</view>
+                <image
+                  class="my-6rpx h-20rpx w-20rpx"
+                  :src="getWeatherIcon(item.wea)"
+                  mode="scaleToFill"
+                />
+                <view>{{ item.wea }}</view>
+              </view>
+            </view>
+            <image
+              class="absolute bottom-[-95rpx] right-28rpx z-10 h-24rpx w-40rpx"
+              :src="MoreBtnIcon"
+              mode="scaleToFill"
+              @click.stop="showWeatherDetail"
+            />
+          </template>
         </view>
       </wd-picker>
       <template v-else>
-        <view class="car relative z-1 h-90rpx flex items-center justify-between px-29rpx" :style="{ paddingTop: `${menuButtonInfo?.top + menuButtonInfo.height + 15}px` }">
+        <view class="car relative z-3 h-90rpx flex items-center justify-between px-29rpx" :style="{ paddingTop: `${menuButtonInfo?.top + menuButtonInfo.height + 15}px` }">
           <view @click="goLogin ">
             登录
           </view>
-
-          <view v-if="weatherInfo && weatherInfo.temperature" class="flex items-center justify-center color-[#333333]">
-            <image
-              class="h-40rpx w-34rpx"
-              :src="SunIcon"
-              mode="aspectFit"
-            />
-            <view class="slide-text flex items-center justify-center">
-              <view class="ml-16rpx text-48rpx">
-                {{ weatherInfo.temperature }}°
-              </view>
-              <view class="ml-12rpx text-20rpx">
-                <view>{{ weatherInfo.weather }}</view>
-                <view>
-                  {{ weatherInfo.temperatureDay }}°/{{ weatherInfo.temperatureNight }}°
+          <template v-if="weatherInfo && weatherInfo.wea">
+            <view class="flex items-center justify-center color-[#333333]">
+              <image
+                class="h-40rpx w-34rpx"
+                :src="getWeatherIcon(weatherInfo.wea)"
+                mode="aspectFit"
+              />
+              <view class="slide-text flex items-center justify-center">
+                <view class="ml-16rpx text-48rpx">
+                  {{ weatherInfo.tem }}°
+                </view>
+                <view class="ml-12rpx text-20rpx">
+                  <view>{{ weatherInfo.wea }}</view>
+                  <view>
+                    {{ weatherInfo.tem1 }}°/{{ weatherInfo.tem2 }}°
+                  </view>
                 </view>
               </view>
             </view>
-          </view>
+            <!-- 更多天气 -->
+            <view class="absolute bottom-[-65rpx] right-28rpx h-80rpx w-230rpx flex items-center justify-evenly rounded-[10rpx] bg-[#5DACF8]">
+              <view v-for="item in weatherInfo.simpleWeather" :key="item.hours" class="flex flex-col items-center justify-center text-16rpx">
+                <view>{{ item.hours }}</view>
+                <image
+                  class="my-6rpx h-20rpx w-20rpx"
+                  :src="getWeatherIcon(item.wea)"
+                  mode="scaleToFill"
+                />
+                <view>{{ item.wea }}</view>
+              </view>
+            </view>
+            <image
+              class="absolute bottom-[-95rpx] right-28rpx z-10 h-24rpx w-40rpx"
+              :src="MoreBtnIcon"
+              mode="scaleToFill"
+              @click.stop="showWeatherDetail"
+            />
+          </template>
         </view>
       </template>
       <view class="top-cont">
-        <view class="mb-37rpx mt-53rpx flex items-center justify-center">
+        <view class="mb-37rpx mt-100rpx flex items-center justify-center">
           <image
             class="h-133rpx w-517rpx"
             :src="FlyTitleIcon"
@@ -916,6 +970,9 @@ function goDetail() {
     </view>
   </view>
 
+  <!-- 天气弹窗 -->
+  <weather-pop v-model="weatherPopVisible" :weather-info="weatherInfo" />
+
   <!-- 操作提示弹窗 -->
   <fg-message v-model:show="showMessagePopup" :duration="duration" :show-cancel-btn="showCancelBtn" :show-confirm-btn="showConfirmBtn" :close-on-click-modal="closeOnClickModal" :message-id="messageId" @cancel="handleCancel" @confirm="handleConfirm" />
 </template>
@@ -923,13 +980,14 @@ function goDetail() {
 <style lang="scss" scoped>
 .Home {
   height: 100vh;
+  padding-bottom: 100rpx;
   width: 100vw;
   overflow: hidden;
   background: #E4EBF2;
   .top-card {
     width: 100%;
     // height: 980rpx;
-    height: 880rpx;
+    height: 1000rpx;
     position: relative;
     .top-bg {
       width: 100%;
@@ -943,7 +1001,7 @@ function goDetail() {
       position: relative;
       z-index: 2;
       width: 100%;
-      height: 580rpx;
+      height: 660rpx;
       box-sizing: border-box;
       .count {
         position: absolute;

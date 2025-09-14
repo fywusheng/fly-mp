@@ -95,6 +95,42 @@ export function getColorImg(colorCode: string, type = 'carList'): string {
 }
 
 /**
+ *
+ * @param weather 天气状况
+ * @returns
+ */
+export function getWeatherIcon(weather: string): string {
+  const weatherIconMap: { [key: string]: string } = {
+    晴: 'http://121.89.87.166/static/weather/sun.png',
+    雨: 'http://121.89.87.166/static/weather/rain.png',
+    大雨: 'http://121.89.87.166/static/weather/rain.png',
+    小雨: 'http://121.89.87.166/static/weather/rain.png',
+    雪: 'http://121.89.87.166/static/weather/snow.png',
+    云: 'http://121.89.87.166/static/weather/cloudy.png',
+    多云: 'http://121.89.87.166/static/weather/cloudy.png',
+  }
+  return weatherIconMap[weather] || 'http://121.89.87.166/static/weather/sun.png'
+}
+
+/**
+ *
+ * @param weather 天气状况
+ * @returns
+ */
+export function getPopWeatherIcon(weather: string): string {
+  const weatherIconMap: { [key: string]: string } = {
+    晴: 'http://121.89.87.166/static/weather/sun-bg.png',
+    雨: 'http://121.89.87.166/static/weather/rain-bg.png',
+    大雨: 'http://121.89.87.166/static/weather/rain-bg.png',
+    小雨: 'http://121.89.87.166/static/weather/rain-bg.png',
+    雪: 'http://121.89.87.166/static/weather/snow-bg.png',
+    云: 'http://121.89.87.166/static/weather/cloudy-bg.png',
+    多云: 'http://121.89.87.166/static/weather/cloudy-bg.png',
+  }
+  return weatherIconMap[weather] || ''
+}
+
+/**
  * 生成标准UUID格式（v4）
  * @returns UUID字符串
  */

@@ -56,3 +56,17 @@ page {
     opacity: 1; /* 结束透明度 */
   }
 }
+// 隐藏滚动条
+::-webkit-scrollbar{
+	width: 0;
+	height: 0;
+	color: transparent;
+}
+scroll-view{
+	padding: 0;
+  overflow: hidden;
+}
+scroll-view ::-webkit-scrollbar {
+	width: 0;
+}
+
