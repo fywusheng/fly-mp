@@ -64,17 +64,20 @@ function handleClose() {
           </view>
         </view>
       </view>
-      <view class="flex items-center justify-between overflow-x-auto">
-        <view v-for="item in weatherInfo.hours" :key="item.hours" class="mr-40rpx flex flex-col flex-nowrap items-center justify-center text-25rpx">
-          <view>{{ item.hours }}</view>
-          <image
-            class="my-62rpx h-40rpx w-40rpx"
-            :src="getWeatherIcon(item.wea)"
-            mode="scaleToFill"
-          />
-          <view>{{ item.wea }}</view>
+
+      <scroll-view scroll-x :show-scrollbar="false" enhanced class="h-350rpx flex items-center justify-between overflow-x-auto">
+        <view class="flex items-center justify-between">
+          <view v-for="item in weatherInfo.hours" :key="item.hours" class="mr-40rpx flex flex-col flex-nowrap items-center justify-center text-25rpx">
+            <view>{{ item.hours }}</view>
+            <image
+              class="my-62rpx h-40rpx w-40rpx"
+              :src="getWeatherIcon(item.wea)"
+              mode="scaleToFill"
+            />
+            <view>{{ item.wea }}</view>
+          </view>
         </view>
-      </view>
+      </scroll-view>
     </view>
   </wd-popup>
 </template>

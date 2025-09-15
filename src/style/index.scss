@@ -68,5 +68,8 @@ scroll-view{
 }
 scroll-view ::-webkit-scrollbar {
 	width: 0;
+  height: 0;
+  -webkit-appearance: none;
+  background: transparent;
 }
 

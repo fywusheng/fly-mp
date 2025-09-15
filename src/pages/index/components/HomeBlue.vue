@@ -820,7 +820,7 @@ function showWeatherDetail() {
               </view>
             </view>
             <image
-              class="absolute bottom-[-95rpx] right-28rpx z-10 h-24rpx w-40rpx"
+              class="absolute bottom-[-95rpx] right-38rpx z-10 h-24rpx w-40rpx"
               :src="MoreBtnIcon"
               mode="scaleToFill"
               @click.stop="showWeatherDetail"
@@ -865,7 +865,7 @@ function showWeatherDetail() {
               </view>
             </view>
             <image
-              class="absolute bottom-[-95rpx] right-28rpx z-10 h-24rpx w-40rpx"
+              class="absolute bottom-[-95rpx] right-38rpx z-10 h-24rpx w-40rpx"
               :src="MoreBtnIcon"
               mode="scaleToFill"
               @click.stop="showWeatherDetail"
