@@ -43,26 +43,26 @@ const FourTabbarItems: TabbarItem[] = [
   {
     name: 'home',
     title: '骑行',
-    icon: 'http://121.89.87.166/static/tabbar/home.png',
-    activeIcon: 'http://121.89.87.166/static/tabbar/home-active.png',
+    icon: 'http://115.190.57.206/static/tabbar/home.png',
+    activeIcon: 'http://115.190.57.206/static/tabbar/home-active.png',
   },
   {
     name: 'find',
     title: '发现',
-    icon: 'http://121.89.87.166/static/tabbar/find.png',
-    activeIcon: 'http://121.89.87.166/static/tabbar/find-active.png',
+    icon: 'http://115.190.57.206/static/tabbar/find.png',
+    activeIcon: 'http://115.190.57.206/static/tabbar/find-active.png',
   },
   {
     name: 'infor',
     title: '数据',
-    icon: 'http://121.89.87.166/static/tabbar/data.png',
-    activeIcon: 'http://121.89.87.166/static/tabbar/data-active.png',
+    icon: 'http://115.190.57.206/static/tabbar/data.png',
+    activeIcon: 'http://115.190.57.206/static/tabbar/data-active.png',
   },
   {
     name: 'mine',
     title: '我的',
-    icon: 'http://121.89.87.166/static/tabbar/mine.png',
-    activeIcon: 'http://121.89.87.166/static/tabbar/mine-active.png',
+    icon: 'http://115.190.57.206/static/tabbar/mine.png',
+    activeIcon: 'http://115.190.57.206/static/tabbar/mine-active.png',
   },
 ]
 
@@ -71,21 +71,21 @@ const BluetoothTabbarItems: TabbarItem[] = [
   {
     name: 'HomeBlue',
     title: '骑行',
-    icon: 'http://121.89.87.166/static/tabbar/home.png',
-    activeIcon: 'http://121.89.87.166/static/tabbar/home-active.png',
+    icon: 'http://115.190.57.206/static/tabbar/home.png',
+    activeIcon: 'http://115.190.57.206/static/tabbar/home-active.png',
   },
 
   {
     name: 'InforBlue',
     title: '数据',
-    icon: 'http://121.89.87.166/static/tabbar/data.png',
-    activeIcon: 'http://121.89.87.166/static/tabbar/data-active.png',
+    icon: 'http://115.190.57.206/static/tabbar/data.png',
+    activeIcon: 'http://115.190.57.206/static/tabbar/data-active.png',
   },
   {
     name: 'MineBlue',
     title: '我的',
-    icon: 'http://121.89.87.166/static/tabbar/mine.png',
-    activeIcon: 'http://121.89.87.166/static/tabbar/mine-active.png',
+    icon: 'http://115.190.57.206/static/tabbar/mine.png',
+    activeIcon: 'http://115.190.57.206/static/tabbar/mine-active.png',
   },
 ]
 

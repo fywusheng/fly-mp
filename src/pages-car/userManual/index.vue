@@ -9,12 +9,12 @@
 </route>
 
 <script lang="ts" setup>
-const QuestionBind = 'http://121.89.87.166/static/mine/question-bind.png'
-const QuestionDesk = 'http://121.89.87.166/static/mine/question-desk.png'
-const QuestionOver = 'http://121.89.87.166/static/mine/question-over.png'
-const QuestionStart = 'http://121.89.87.166/static/mine/question-start.png'
-const QuestionUse = 'http://121.89.87.166/static/mine/question-use.png'
-const Question = 'http://121.89.87.166/static/mine/question.png'
+const QuestionBind = 'http://115.190.57.206/static/mine/question-bind.png'
+const QuestionDesk = 'http://115.190.57.206/static/mine/question-desk.png'
+const QuestionOver = 'http://115.190.57.206/static/mine/question-over.png'
+const QuestionStart = 'http://115.190.57.206/static/mine/question-start.png'
+const QuestionUse = 'http://115.190.57.206/static/mine/question-use.png'
+const Question = 'http://115.190.57.206/static/mine/question.png'
 
 function goPage(url: string) {
   uni.navigateTo({

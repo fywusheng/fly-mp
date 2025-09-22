@@ -45,49 +45,49 @@ export function getColorImg(colorCode: string, type = 'carList'): string {
   if (type === 'bindCar') {
     colorImgMap = {
       // 星黛蓝
-      STAR_BLUE: 'http://121.89.87.166/static/color/E75-blue.png',
+      STAR_BLUE: 'http://115.190.57.206/static/color/E75-blue.png',
       // 漫步白
-      WALK_WHITE: 'http://121.89.87.166/static/color/E75-white.png',
+      WALK_WHITE: 'http://115.190.57.206/static/color/E75-white.png',
       // 青竹绿
-      BAMBOO_GREEN: 'http://121.89.87.166/static/color/E75-green.png',
+      BAMBOO_GREEN: 'http://115.190.57.206/static/color/E75-green.png',
       // 樱花粉
-      CHERRY_PINK: 'http://121.89.87.166/static/color/E75-pink.png',
+      CHERRY_PINK: 'http://115.190.57.206/static/color/E75-pink.png',
     }
   }
   else if (type === 'carList') {
     colorImgMap = {
       // 星黛蓝
-      STAR_BLUE: 'http://121.89.87.166/static/color/E75-blue-card.png',
+      STAR_BLUE: 'http://115.190.57.206/static/color/E75-blue-card.png',
       // 漫步白
-      WALK_WHITE: 'http://121.89.87.166/static/color/E75-white-card.png',
+      WALK_WHITE: 'http://115.190.57.206/static/color/E75-white-card.png',
       // 青竹绿
-      BAMBOO_GREEN: 'http://121.89.87.166/static/color/E75-green-card.png',
+      BAMBOO_GREEN: 'http://115.190.57.206/static/color/E75-green-card.png',
       // 樱花粉
-      CHERRY_PINK: 'http://121.89.87.166/static/color/E75-pink-card.png',
+      CHERRY_PINK: 'http://115.190.57.206/static/color/E75-pink-card.png',
     }
   }
   else if (type === 'home') {
     colorImgMap = {
       // 星黛蓝
-      STAR_BLUE: 'http://121.89.87.166/static/color/E75-blue-home.png',
+      STAR_BLUE: 'http://115.190.57.206/static/color/E75-blue-home.png',
       // 漫步白
-      WALK_WHITE: 'http://121.89.87.166/static/color/E75-white-home.png',
+      WALK_WHITE: 'http://115.190.57.206/static/color/E75-white-home.png',
       // 青竹绿
-      BAMBOO_GREEN: 'http://121.89.87.166/static/color/E75-green-home.png',
+      BAMBOO_GREEN: 'http://115.190.57.206/static/color/E75-green-home.png',
       // 樱花粉
-      CHERRY_PINK: 'http://121.89.87.166/static/color/E75-pink-home.png',
+      CHERRY_PINK: 'http://115.190.57.206/static/color/E75-pink-home.png',
     }
   }
   else if (type === 'avatar') {
     colorImgMap = {
       // 星黛蓝
-      STAR_BLUE: 'http://121.89.87.166/static/color/E75-blue-avatar.png',
+      STAR_BLUE: 'http://115.190.57.206/static/color/E75-blue-avatar.png',
       // 漫步白
-      WALK_WHITE: 'http://121.89.87.166/static/color/E75-white-avatar.png',
+      WALK_WHITE: 'http://115.190.57.206/static/color/E75-white-avatar.png',
       // 青竹绿
-      BAMBOO_GREEN: 'http://121.89.87.166/static/color/E75-green-avatar.png',
+      BAMBOO_GREEN: 'http://115.190.57.206/static/color/E75-green-avatar.png',
       // 樱花粉
-      CHERRY_PINK: 'http://121.89.87.166/static/color/E75-pink-avatar.png',
+      CHERRY_PINK: 'http://115.190.57.206/static/color/E75-pink-avatar.png',
     }
   }
 
@@ -101,15 +101,16 @@ export function getColorImg(colorCode: string, type = 'carList'): string {
  */
 export function getWeatherIcon(weather: string): string {
   const weatherIconMap: { [key: string]: string } = {
-    晴: 'http://121.89.87.166/static/weather/sun.png',
-    雨: 'http://121.89.87.166/static/weather/rain.png',
-    大雨: 'http://121.89.87.166/static/weather/rain.png',
-    小雨: 'http://121.89.87.166/static/weather/rain.png',
-    雪: 'http://121.89.87.166/static/weather/snow.png',
-    云: 'http://121.89.87.166/static/weather/cloudy.png',
-    多云: 'http://121.89.87.166/static/weather/cloudy.png',
+    晴: 'http://115.190.57.206/static/weather/sun.png',
+    雨: 'http://115.190.57.206/static/weather/rain.png',
+    大雨: 'http://115.190.57.206/static/weather/rain.png',
+    小雨: 'http://115.190.57.206/static/weather/rain.png',
+    雪: 'http://115.190.57.206/static/weather/snow.png',
+    云: 'http://115.190.57.206/static/weather/cloudy.png',
+    阴: 'http://115.190.57.206/static/weather/cloudy.png',
+    多云: 'http://115.190.57.206/static/weather/cloudy.png',
   }
-  return weatherIconMap[weather] || 'http://121.89.87.166/static/weather/sun.png'
+  return weatherIconMap[weather] || 'http://115.190.57.206/static/weather/sun.png'
 }
 
 /**
@@ -119,13 +120,14 @@ export function getWeatherIcon(weather: string): string {
  */
 export function getPopWeatherIcon(weather: string): string {
   const weatherIconMap: { [key: string]: string } = {
-    晴: 'http://121.89.87.166/static/weather/sun-bg.png',
-    雨: 'http://121.89.87.166/static/weather/rain-bg.png',
-    大雨: 'http://121.89.87.166/static/weather/rain-bg.png',
-    小雨: 'http://121.89.87.166/static/weather/rain-bg.png',
-    雪: 'http://121.89.87.166/static/weather/snow-bg.png',
-    云: 'http://121.89.87.166/static/weather/cloudy-bg.png',
-    多云: 'http://121.89.87.166/static/weather/cloudy-bg.png',
+    晴: 'http://115.190.57.206/static/weather/sun-bg.png',
+    雨: 'http://115.190.57.206/static/weather/rain-bg.png',
+    大雨: 'http://115.190.57.206/static/weather/rain-bg.png',
+    小雨: 'http://115.190.57.206/static/weather/rain-bg.png',
+    雪: 'http://115.190.57.206/static/weather/snow-bg.png',
+    云: 'http://115.190.57.206/static/weather/cloudy-bg.png',
+    阴: 'http://115.190.57.206/static/weather/cloudy-bg.png',
+    多云: 'http://115.190.57.206/static/weather/cloudy-bg.png',
   }
   return weatherIconMap[weather] || ''
 }

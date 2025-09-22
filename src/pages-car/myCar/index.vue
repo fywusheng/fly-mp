@@ -12,10 +12,10 @@
 import { getColorImg } from '@/utils'
 import { httpGet } from '@/utils/http'
 
-const GreenCar = 'http://121.89.87.166/static/mine/car-green.png'
-const RedCar = 'http://121.89.87.166/static/mine/car-red.png'
-const White = 'http://121.89.87.166/static/mine/car-white.png'
-const EditIcon = 'http://121.89.87.166/static/mine/edit.png'
+const GreenCar = 'http://115.190.57.206/static/mine/car-green.png'
+const RedCar = 'http://115.190.57.206/static/mine/car-red.png'
+const White = 'http://115.190.57.206/static/mine/car-white.png'
+const EditIcon = 'http://115.190.57.206/static/mine/edit.png'
 const carList = ref([]) // 车辆列表
 
 onShow(() => {

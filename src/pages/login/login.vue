@@ -16,9 +16,9 @@ defineOptions({
 })
 const userStore = useUserStore()
 const loading = ref(false)
-const CursorIcon = 'http://121.89.87.166/static/login/cursor.png'
-const LogoIcon = 'http://121.89.87.166/static/login/logo.png'
-const ParticleIcon = 'http://121.89.87.166/static/login/particle.png'
+const CursorIcon = 'http://115.190.57.206/static/login/cursor.png'
+const LogoIcon = 'http://115.190.57.206/static/login/logo.png'
+const ParticleIcon = 'http://115.190.57.206/static/login/particle.png'
 
 async function onGetPhoneNumber(e: any) {
   // 处理获取到的手机号

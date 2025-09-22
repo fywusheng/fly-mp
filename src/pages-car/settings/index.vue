@@ -10,15 +10,15 @@
 
 <script lang="ts" setup>
 import { useUserStore } from '@/store/user'
-// const AutoSheFang = 'http://121.89.87.166/static/mine/auto-shefang.png'
-// const AutoXihuo = 'http://121.89.87.166/static/mine/auto-xihuo.png'
-// const MuteShefang = 'http://121.89.87.166/static/mine/mute-shefang.png'
+// const AutoSheFang = 'http://115.190.57.206/static/mine/auto-shefang.png'
+// const AutoXihuo = 'http://115.190.57.206/static/mine/auto-xihuo.png'
+// const MuteShefang = 'http://115.190.57.206/static/mine/mute-shefang.png'
 import { openAndSearchAndConnect } from '@/utils/EvsBikeSdk'
 import EVSBikeSDK from '@/utils/EVSBikeSDK.v1.1.1'
 import { httpGet, httpPost } from '@/utils/http'
 
-const OverSpeed = 'http://121.89.87.166/static/mine/over-speed.png'
-const RemoteControl = 'http://121.89.87.166/static/mine/remote-control.png'
+const OverSpeed = 'http://115.190.57.206/static/mine/over-speed.png'
+const RemoteControl = 'http://115.190.57.206/static/mine/remote-control.png'
 
 const carList = ref([]) // 车辆列表
 const selectCarId = ref('') // 选中的车辆

@@ -12,7 +12,7 @@
 import { getColorImg } from '@/utils'
 import { httpDelete, httpGet, httpPost } from '@/utils/http'
 
-const EditIcon = 'http://121.89.87.166/static/mine/edit.png'
+const EditIcon = 'http://115.190.57.206/static/mine/edit.png'
 
 const carList = ref([]) // 车辆列表
 const selectCarId = ref('') // 选中的车辆

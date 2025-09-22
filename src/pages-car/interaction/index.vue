@@ -13,7 +13,7 @@ import { debounce } from '@/utils'
 import { openAndSearchAndConnect } from '@/utils/EvsBikeSdk'
 import EVSBikeSDK from '@/utils/EVSBikeSDK.v1.1.1'
 
-const PointIcon = 'http://121.89.87.166/static/car/point.png'
+const PointIcon = 'http://115.190.57.206/static/car/point.png'
 const isInductionCar = ref(true) // 感应控车
 const distance = ref(1)
 const updateCarStatusDebounced = debounce(updateCarStatus, 500) // 更新车辆状态

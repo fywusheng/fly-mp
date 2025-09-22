@@ -12,7 +12,7 @@ const emit = defineEmits<{
 }>()
 
 const sharePop = ref(false)
-const WeiXin = 'http://121.89.87.166/static/common/weixin.png'
+const WeiXin = 'http://115.190.57.206/static/common/weixin.png'
 
 watch(() => props.show, (newVal) => {
   sharePop.value = newVal

@@ -29,7 +29,7 @@ const emit = defineEmits<{
   'change': [value: number | number[]]
   'changing': [value: number | number[]]
 }>()
-const CircleIcon = 'http://121.89.87.166/static/car/circle.png'
+const CircleIcon = 'http://115.190.57.206/static/car/circle.png'
 interface Props {
   modelValue?: number | number[]
   barHeight?: number | string

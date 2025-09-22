@@ -9,7 +9,7 @@
 </route>
 
 <script lang="ts" setup>
-const KeyIcon = 'http://121.89.87.166/static/mine/key.png'
+const KeyIcon = 'http://115.190.57.206/static/mine/key.png'
 // message弹窗
 const showMessagePopup = ref(false) // 控制弹窗显示
 const messageId = ref<number>(0) // 弹窗ID

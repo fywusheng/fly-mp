@@ -2,21 +2,21 @@
 defineOptions({
   name: 'Home',
 })
-const FlyTitleIcon = 'http://121.89.87.166/static/home/fly-title.png'
-const LocationIcon = 'http://121.89.87.166/static/home/location.png'
-const ReloadIcon = 'http://121.89.87.166/static/home/reload.png'
-const TopIcon = 'http://121.89.87.166/static/home/top-bg.png'
-const WarnNoticeIcon = 'http://121.89.87.166/static/home/warn-icon.png'
-const WarningIcon = 'http://121.89.87.166/static/home/warning.png'
+const FlyTitleIcon = 'http://115.190.57.206/static/home/fly-title.png'
+const LocationIcon = 'http://115.190.57.206/static/home/location.png'
+const ReloadIcon = 'http://115.190.57.206/static/home/reload.png'
+const TopIcon = 'http://115.190.57.206/static/home/top-bg.png'
+const WarnNoticeIcon = 'http://115.190.57.206/static/home/warn-icon.png'
+const WarningIcon = 'http://115.190.57.206/static/home/warning.png'
 
-const DownIcon = 'http://121.89.87.166/static/home/down.png'
+const DownIcon = 'http://115.190.57.206/static/home/down.png'
 
-const ArrowIcon = 'http://121.89.87.166/static/home/arrow.png'
-const BatteryIcon = 'http://121.89.87.166/static/home/battery.png'
-const BlueConnect = 'http://121.89.87.166/static/home/blue-connect.png'
-const BLueDisconnect = 'http://121.89.87.166/static/home/blue-disconnect.png'
-const CloseBtnIcon = 'http://121.89.87.166/static/home/close-bth.png'
-const CloseBtnBrayIcon = 'http://121.89.87.166/static/home/close-btn-gray.png'
+const ArrowIcon = 'http://115.190.57.206/static/home/arrow.png'
+const BatteryIcon = 'http://115.190.57.206/static/home/battery.png'
+const BlueConnect = 'http://115.190.57.206/static/home/blue-connect.png'
+const BLueDisconnect = 'http://115.190.57.206/static/home/blue-disconnect.png'
+const CloseBtnIcon = 'http://115.190.57.206/static/home/close-bth.png'
+const CloseBtnBrayIcon = 'http://115.190.57.206/static/home/close-btn-gray.png'
 
 // 获取胶囊位置信息
 const menuButtonInfo = uni.getMenuButtonBoundingClientRect()

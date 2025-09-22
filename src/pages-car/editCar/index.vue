@@ -12,7 +12,7 @@
 import { getColorImg } from '@/utils'
 import { httpGet, httpPost } from '@/utils/http'
 
-const CarGreenIcon = 'http://121.89.87.166/static/mine/bind-car-green.png'
+const CarGreenIcon = 'http://115.190.57.206/static/mine/bind-car-green.png'
 
 const name = ref('')
 const brand = ref('飞鸽')

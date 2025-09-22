@@ -20,8 +20,8 @@ const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
 }>()
 
-const TopIcon = 'http://121.89.87.166/static/home/top-bg.png'
-const SunIcon = 'http://121.89.87.166/static/home/sun.png'
+const TopIcon = 'http://115.190.57.206/static/home/top-bg.png'
+const SunIcon = 'http://115.190.57.206/static/home/sun.png'
 
 // 内部状态，与父组件的 v-model 同步
 const show = ref(props.modelValue)

@@ -2,13 +2,13 @@
 defineOptions({
   name: 'Infor',
 })
-const BgIcon = 'http://121.89.87.166/static/infor/bg.png'
-const DataIcon = 'http://121.89.87.166/static/infor/data.png'
-const HistoryIcon = 'http://121.89.87.166/static/infor/history.png'
-const RightIcon = 'http://121.89.87.166/static/infor/right.png'
-const RoundMileageIcon = 'http://121.89.87.166/static/infor/round-mileage.png'
-const RoundTimeIcon = 'http://121.89.87.166/static/infor/round-time.png'
-const TraceIcon = 'http://121.89.87.166/static/infor/track.png'
+const BgIcon = 'http://115.190.57.206/static/infor/bg.png'
+const DataIcon = 'http://115.190.57.206/static/infor/data.png'
+const HistoryIcon = 'http://115.190.57.206/static/infor/history.png'
+const RightIcon = 'http://115.190.57.206/static/infor/right.png'
+const RoundMileageIcon = 'http://115.190.57.206/static/infor/round-mileage.png'
+const RoundTimeIcon = 'http://115.190.57.206/static/infor/round-time.png'
+const TraceIcon = 'http://115.190.57.206/static/infor/track.png'
 </script>
 
 <template>

@@ -12,8 +12,8 @@
 import { getColorImg } from '@/utils'
 import { httpGet } from '@/utils/http'
 
-const ScanDescIcon = 'http://121.89.87.166/static/car/scan-desc.png'
-const ScanIcon = 'http://121.89.87.166/static/car/scan.png'
+const ScanDescIcon = 'http://115.190.57.206/static/car/scan-desc.png'
+const ScanIcon = 'http://115.190.57.206/static/car/scan.png'
 
 const code = ref('')
 const name = ref('')

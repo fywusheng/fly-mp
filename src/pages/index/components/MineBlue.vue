@@ -7,18 +7,18 @@ defineOptions({
 
 const userStore = useUserStore()
 
-const AvatarIcon = 'http://121.89.87.166/static/mine/avatar.png'
-const BindIcon = 'http://121.89.87.166/static/mine/bind.png'
-const BlueAvatarIcon = 'http://121.89.87.166/static/mine/blue-avatar.png'
-const CarSettingIcon = 'http://121.89.87.166/static/mine/car-setting.png'
-const CustomerServiceIcon = 'http://121.89.87.166/static/mine/customer-service.png'
-// import FamilyIcon from 'http://121.89.87.166/static/mine/family.png'
-const MyCarIcon = 'http://121.89.87.166/static/mine/my-car.png'
-const RightIcon = 'http://121.89.87.166/static/mine/right.png'
-const SettingIcon = 'http://121.89.87.166/static/mine/setting.png'
-const ShareIcon = 'http://121.89.87.166/static/mine/share.png'
-const TopBgIcon = 'http://121.89.87.166/static/mine/top-bg.png'
-const UserManualIcon = 'http://121.89.87.166/static/mine/user-manual.png'
+const AvatarIcon = 'http://115.190.57.206/static/mine/avatar.png'
+const BindIcon = 'http://115.190.57.206/static/mine/bind.png'
+const BlueAvatarIcon = 'http://115.190.57.206/static/mine/blue-avatar.png'
+const CarSettingIcon = 'http://115.190.57.206/static/mine/car-setting.png'
+const CustomerServiceIcon = 'http://115.190.57.206/static/mine/customer-service.png'
+// import FamilyIcon from 'http://115.190.57.206/static/mine/family.png'
+const MyCarIcon = 'http://115.190.57.206/static/mine/my-car.png'
+const RightIcon = 'http://115.190.57.206/static/mine/right.png'
+const SettingIcon = 'http://115.190.57.206/static/mine/setting.png'
+const ShareIcon = 'http://115.190.57.206/static/mine/share.png'
+const TopBgIcon = 'http://115.190.57.206/static/mine/top-bg.png'
+const UserManualIcon = 'http://115.190.57.206/static/mine/user-manual.png'
 
 // 功能列表
 const list = ref([

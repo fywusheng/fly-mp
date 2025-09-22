@@ -6,8 +6,8 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'mapClick'): void
 }>()
-const MapWait = 'http://121.89.87.166/static/home/map-wait.png'
-const MapArrow = 'http://121.89.87.166/static/home/map-arrow.png'
+const MapWait = 'http://115.190.57.206/static/home/map-wait.png'
+const MapArrow = 'http://115.190.57.206/static/home/map-arrow.png'
 
 // 缓存地图上下文
 let mapCtx: any = null

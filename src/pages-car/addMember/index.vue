@@ -11,9 +11,9 @@
 <script lang="ts" setup>
 import { httpGet, httpPost, httpPut } from '@/utils/http'
 
-const ShareIcon = 'http://121.89.87.166/static/common/share.png'
-const SuccessDefault = 'http://121.89.87.166/static/mine/success-default.png'
-const YellowTips = 'http://121.89.87.166/static/mine/yellow-tips.png'
+const ShareIcon = 'http://115.190.57.206/static/common/share.png'
+const SuccessDefault = 'http://115.190.57.206/static/mine/success-default.png'
+const YellowTips = 'http://115.190.57.206/static/mine/yellow-tips.png'
 
 const name = ref('') // 车辆名称
 const memberName = ref('') // 姓名

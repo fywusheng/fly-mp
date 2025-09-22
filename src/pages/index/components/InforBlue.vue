@@ -7,12 +7,12 @@ import { httpDelete, httpGet } from '@/utils/http'
 defineOptions({
   name: 'InforBlue',
 })
-const BgIcon = 'http://121.89.87.166/static/infor/blue-bg.png'
-const CarIcon = 'http://121.89.87.166/static/infor/car-icon.png'
-const DateIcon = 'http://121.89.87.166/static/infor/date.png'
-const LeftArrow = 'http://121.89.87.166/static/infor/left-arrow.png'
-const LocationIcon = 'http://121.89.87.166/static/infor/location-icon.png'
-const RightArrow = 'http://121.89.87.166/static/infor/right-arrow.png'
+const BgIcon = 'http://115.190.57.206/static/infor/blue-bg.png'
+const CarIcon = 'http://115.190.57.206/static/infor/car-icon.png'
+const DateIcon = 'http://115.190.57.206/static/infor/date.png'
+const LeftArrow = 'http://115.190.57.206/static/infor/left-arrow.png'
+const LocationIcon = 'http://115.190.57.206/static/infor/location-icon.png'
+const RightArrow = 'http://115.190.57.206/static/infor/right-arrow.png'
 
 // 获取胶囊位置信息
 const menuButtonInfo = uni.getMenuButtonBoundingClientRect()
