@@ -144,7 +144,6 @@ function goSettings() {
       <button
         class="custom-btn mb-20rpx flex items-center justify-between rounded-8rpx bg-white px-40rpx py-45rpx"
         open-type="contact"
-        bindcontact="handleContact"
       >
         <view class="flex items-center">
           <image
