@@ -117,10 +117,14 @@ export const useUserStore = defineStore(
       // 获取微信小程序登录的code
       const data = await getWxCode()
       const res = await _wxLogin({ code: data.code, phoneCode })
-      // 设置token
-      uni.setStorageSync('token', (res.data as IUserInfoVo).token)
-      // 获取用户信息
-      await getUserInfo()
+
+      if (res.code === '200') {
+        // 设置token
+        uni.setStorageSync('token', (res.data as IUserInfoVo).token)
+        // 获取用户信息
+        await getUserInfo()
+      }
+
       return res
     }
     // 刷新token并同步到缓存
