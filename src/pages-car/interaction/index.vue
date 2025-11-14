@@ -9,9 +9,17 @@
 </route>
 
 <script lang="ts" setup>
+// E车星蓝牙SDK
+// import { openAndSearchAndConnect } from '@/utils/EvsBikeSdk'
+// import EVSBikeSDK from '@/utils/EVSBikeSDK.v1.1.1'
+
+// 华慧蓝牙SDK
+import hhznBikeSDK from '@/plugin/bleSdk/HHZNBikeSDK/HHZNBikeSDK.v1.0.3.js'
+
 import { debounce } from '@/utils'
-import { openAndSearchAndConnect } from '@/utils/EvsBikeSdk'
-import EVSBikeSDK from '@/utils/EVSBikeSDK.v1.1.1'
+
+// 华慧蓝牙SDK
+const EVSBikeSDK = hhznBikeSDK
 
 const PointIcon = 'http://115.190.57.206/static/car/point.png'
 const isInductionCar = ref(true) // 感应控车
@@ -43,17 +51,25 @@ onUnload(() => {
 async function connectBle() {
   try {
     // 统一入口：传name或deviceId
-    const device = await openAndSearchAndConnect({
-      name: 'EV10C-15B6C6',
-    }) as { deviceId: string }
+    // const device = await openAndSearchAndConnect({
+    //   name: 'EV10C-15B6C6',
+    // }) as { deviceId: string }
+    // const res = await EVSBikeSDK.connect({
+    //   deviceId: device.deviceId,
+    //   type: 'at', // 设备类型
+    // })
+    // 华慧蓝牙SDK连接方式
     const res = await EVSBikeSDK.connect({
-      deviceId: device.deviceId,
+      deviceId: '205091606',
       type: 'at', // 设备类型
     })
     console.log('连接成功', res)
     EVSBikeSDK.subscribe(onStateChange)
-    // 发送指令
-    EVSBikeSDK.bleCommandsApi.sendBindOwnerCommand('166A5F83')
+    // E车星SDK发送密码验证指令
+    // EVSBikeSDK.bleCommandsApi.sendBindOwnerCommand('166A5F83')
+
+    // 华慧SDK发送密码验证指令
+    EVSBikeSDK.bleCommandsApi.sendBindOwnerCommand('10 82 8D 54 AA B7 82 85 15 69 5D AE AF F2 D9 C9 9E 30 47 E4 FD 8F AF 25 87 7D 59 21 E9 E6 5B 69 ')
   }
   catch (err) {
     console.log(err)

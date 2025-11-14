@@ -77,6 +77,14 @@
           }
         },
         {
+          "path": "blueDemo/index",
+          "type": "page",
+          "layout": "default",
+          "style": {
+            "navigationBarTitleText": "蓝牙调试"
+          }
+        },
+        {
           "path": "editCar/index",
           "type": "page",
           "style": {

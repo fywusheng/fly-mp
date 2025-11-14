@@ -54,8 +54,11 @@ function handleListItemClick(item) {
   }
   switch (item.name) {
     case '我的车辆':
+      // uni.navigateTo({
+      //   url: '/pages-car/myCar/index',
+      // })
       uni.navigateTo({
-        url: '/pages-car/myCar/index',
+        url: '/pages-car/blueDemo/index',
       })
       break
     case '分享与解绑':

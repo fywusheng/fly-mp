@@ -1,9 +1,14 @@
 <script setup lang="ts">
+// E车星蓝牙SDK
+// import { openAndSearchAndConnect } from '@/utils/EvsBikeSdk'
+// import EVSBikeSDK from '@/utils/EVSBikeSDK.v1.1.1'
+
+// 华慧蓝牙SDK
+import hhznBikeSDK from '@/plugin/bleSdk/HHZNBikeSDK/HHZNBikeSDK.v1.0.3.js'
 import { useUserStore } from '@/store'
 import { debounce, generateUUID, getColorImg, getLocation, initBLuetoothAuth, initLocationAuth } from '@/utils'
+
 import { getWeatherIcon } from '@/utils/common'
-import { openAndSearchAndConnect } from '@/utils/EvsBikeSdk'
-import EVSBikeSDK from '@/utils/EVSBikeSDK.v1.1.1'
 import { httpGet, httpPost } from '@/utils/http'
 import HomeMap from './HomeMap.vue'
 import WeatherPop from './WeatherPop.vue'
@@ -11,11 +16,14 @@ import WeatherPop from './WeatherPop.vue'
 defineOptions({
   name: 'HomeBlue',
 })
+
 const props = defineProps({
   tabName: {
     type: String,
   },
 })
+// 华慧蓝牙SDK
+const EVSBikeSDK = hhznBikeSDK
 
 const ArrowIcon = 'http://115.190.57.206/static/home/arrow.png'
 const BlueConnect = 'http://115.190.57.206/static/home/blue-connect.png'
@@ -571,20 +579,30 @@ async function connectBle() {
     status.value = 1
 
     // 统一入口：传name或deviceId
-    const device = await openAndSearchAndConnect({
-      name: 'EV10C-15B6C6',
-    }) as { deviceId: string }
-    const res = await EVSBikeSDK.connect({
-      deviceId: device.deviceId,
+    // E车星SDK连接方式
+    // const device = await openAndSearchAndConnect({
+    //   name: 'EV10C-15B6C6',
+    // }) as { deviceId: string }
+    // const res = await EVSBikeSDK.connect({
+    //   deviceId: device.deviceId,
+    //   type: 'at', // 设备类型
+    // })
+
+    // 华慧蓝牙SDK连接方式
+    await EVSBikeSDK.connect({
+      deviceId: '205091606',
       type: 'at', // 设备类型
     })
-    console.log(res)
+    // console.log(res)
 
     status.value = 2
 
     EVSBikeSDK.subscribe(onStateChange)
-    // 发送密码验证指令
-    EVSBikeSDK.bleCommandsApi.sendBindOwnerCommand('166A5F83')
+    // E车星SDK发送密码验证指令
+    // EVSBikeSDK.bleCommandsApi.sendBindOwnerCommand('166A5F83')
+
+    // 华慧SDK发送密码验证指令
+    EVSBikeSDK.bleCommandsApi.sendBindOwnerCommand('10 82 8D 54 AA B7 82 85 15 69 5D AE AF F2 D9 C9 9E 30 47 E4 FD 8F AF 25 87 7D 59 21 E9 E6 5B 69 ')
 
     // 监听蓝牙状态
     wx.onBLEConnectionStateChange((res) => {
@@ -627,9 +645,13 @@ function onStateChange(data) {
     case 'BIND_USER':
       // 查询车辆状态和取设备设置参数，感应启动相关
       EVSBikeSDK.bleCommandsApi.sendGetVehicleStatusCommand()
-      setTimeout(() => {
-        EVSBikeSDK.bleCommandsApi.sendGetEcuConfigCommand()
-      }, 100)
+      // setTimeout(() => {
+      //   EVSBikeSDK.bleCommandsApi.sendGetEcuConfigCommand()
+      // }, 100)
+      break
+    // 获取车辆状态成功后发送获取ECU
+    case 'GET_CAR_STATUS':
+      EVSBikeSDK.bleCommandsApi.sendGetEcuConfigCommand()
       break
     default:
       break
@@ -709,8 +731,10 @@ function onTouchMove(event) {
 function onTouchEnd(event) {
   const success = () => {
     // isUnlocked.value = !isUnlocked.value
-    // 发送解锁、开锁指令
-    carState.value.isLocked ? EVSBikeSDK.bleCommandsApi.sendPowerOnCommand() : EVSBikeSDK.bleCommandsApi.sendDisarmCommand()
+    // E车星蓝牙SDK发送开关车指令
+    // carState.value.isLocked ? EVSBikeSDK.bleCommandsApi.sendPowerOnCommand() : EVSBikeSDK.bleCommandsApi.sendDisarmCommand()
+    // 华慧蓝牙SDK发送开关车指令
+    carState.value.isLocked ? EVSBikeSDK.bleCommandsApi.sendPowerOnCommand() : EVSBikeSDK.bleCommandsApi.sendPowerOffCommand()
   }
   const fail = () => {
     // 回弹到对应位置
