@@ -9,6 +9,24 @@ const RightIcon = 'http://115.190.57.206/static/infor/right.png'
 const RoundMileageIcon = 'http://115.190.57.206/static/infor/round-mileage.png'
 const RoundTimeIcon = 'http://115.190.57.206/static/infor/round-time.png'
 const TraceIcon = 'http://115.190.57.206/static/infor/track.png'
+
+function goHistory() {
+  uni.navigateTo({
+    url: '/pages-network/history/index',
+  })
+}
+
+function goTrace() {
+  uni.navigateTo({
+    url: '/pages-network/ride-trace/index',
+  })
+}
+
+function goDrive() {
+  uni.navigateTo({
+    url: '/pages-network/drive-data/index',
+  })
+}
 </script>
 
 <template>
@@ -46,7 +64,7 @@ const TraceIcon = 'http://115.190.57.206/static/infor/track.png'
       </view>
     </view>
     <!-- bottom -->
-    <view class="ml-20rpx mt-20rpx box-border h-160rpx w-710rpx flex items-center justify-between rounded-8rpx bg-white pl-20rpx pr-40rpx">
+    <view class="ml-20rpx mt-20rpx box-border h-160rpx w-710rpx flex items-center justify-between rounded-8rpx bg-white pl-20rpx pr-40rpx" @click="goTrace">
       <view class="flex items-center">
         <image
           class="h-80rpx w-80rpx"
@@ -68,7 +86,7 @@ const TraceIcon = 'http://115.190.57.206/static/infor/track.png'
         mode="scaleToFill"
       />
     </view>
-    <view class="ml-20rpx mt-20rpx box-border h-160rpx w-710rpx flex items-center justify-between rounded-8rpx bg-white pl-20rpx pr-40rpx">
+    <view class="ml-20rpx mt-20rpx box-border h-160rpx w-710rpx flex items-center justify-between rounded-8rpx bg-white pl-20rpx pr-40rpx" @click="goHistory">
       <view class="flex items-center">
         <image
           class="h-80rpx w-80rpx"
@@ -90,7 +108,7 @@ const TraceIcon = 'http://115.190.57.206/static/infor/track.png'
         mode="scaleToFill"
       />
     </view>
-    <view class="ml-20rpx mt-20rpx box-border h-160rpx w-710rpx flex items-center justify-between rounded-8rpx bg-white pl-20rpx pr-40rpx">
+    <view class="ml-20rpx mt-20rpx box-border h-160rpx w-710rpx flex items-center justify-between rounded-8rpx bg-white pl-20rpx pr-40rpx" @click="goDrive">
       <view class="flex items-center">
         <image
           class="h-80rpx w-80rpx"

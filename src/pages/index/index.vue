@@ -3,7 +3,6 @@
 {
   layout: 'tabbar',
   style: {
-    // 'custom' 表示开启自定义导航栏，默认 'default'
     navigationStyle: 'custom',
     navigationBarTitleText: '首页',
     "backgroundColor": "#6EA6F6",
@@ -12,15 +11,15 @@
 </route>
 
 <script lang="ts" setup>
+import { useCarStore } from '@/store'
 // 4G+蓝牙
 import Find from './components/Find.vue'
 import Home from './components/Home.vue'
 // 蓝牙版本
-import HomeBlue from './components/HomeBlue.vue'
 import Infor from './components/Infor.vue'
 import InforBlue from './components/InforBlue.vue'
+
 import Mine from './components/Mine.vue'
-import MineBlue from './components/MineBlue.vue'
 
 // 类型定义
 interface TabbarItem {
@@ -34,8 +33,9 @@ defineOptions({
   name: 'Home',
 })
 
+const carStore = useCarStore()
+
 const tabbar = ref<string>('home') // 页面状态
-const status = ref<string>('blue') // 车辆版本
 const tabbarItems = ref<TabbarItem[]>([])
 
 // 4G+蓝牙标签栏配置
@@ -69,7 +69,7 @@ const FourTabbarItems: TabbarItem[] = [
 // 蓝牙版标签栏配置
 const BluetoothTabbarItems: TabbarItem[] = [
   {
-    name: 'HomeBlue',
+    name: 'home',
     title: '骑行',
     icon: 'http://115.190.57.206/static/tabbar/home.png',
     activeIcon: 'http://115.190.57.206/static/tabbar/home-active.png',
@@ -82,7 +82,7 @@ const BluetoothTabbarItems: TabbarItem[] = [
     activeIcon: 'http://115.190.57.206/static/tabbar/data-active.png',
   },
   {
-    name: 'MineBlue',
+    name: 'mine',
     title: '我的',
     icon: 'http://115.190.57.206/static/tabbar/mine.png',
     activeIcon: 'http://115.190.57.206/static/tabbar/mine-active.png',
@@ -100,10 +100,10 @@ watch(tabbar, (newVal) => {
 // 处理页面加载参数
 onLoad((option: Record<string, string>) => {
   // 初始化标签栏
-  tabbarItems.value = status.value === 'blue' ? BluetoothTabbarItems : FourTabbarItems
+  tabbarItems.value = carStore.network ? FourTabbarItems : BluetoothTabbarItems
   // 验证选项卡是否有效
   const validTab = option?.name && tabbarItems.value.some(item => item.name === option.name)
-  tabbar.value = validTab ? option.name : 'HomeBlue'
+  tabbar.value = validTab ? option.name : 'home'
 })
 </script>
 
@@ -113,14 +113,11 @@ onLoad((option: Record<string, string>) => {
     <privacyPopup />
 
     <!-- 内容区 -->
-    <Home v-show="tabbar === 'home'" />
+    <Home v-show="tabbar === 'home'" :tab-name="tabbar" />
     <Find v-show="tabbar === 'find'" />
     <Infor v-show="tabbar === 'infor'" />
-    <Mine v-show="tabbar === 'mine'" />
-
-    <HomeBlue v-show="tabbar === 'HomeBlue'" :tab-name="tabbar" />
     <InforBlue v-if="tabbar === 'InforBlue'" />
-    <MineBlue v-if="tabbar === 'MineBlue'" />
+    <Mine v-if="tabbar === 'mine'" />
 
     <!-- 底部导航栏 -->
     <wd-tabbar v-model="tabbar" placeholder safe-area-inset-bottom fixed>

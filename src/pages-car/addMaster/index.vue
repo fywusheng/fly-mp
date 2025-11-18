@@ -96,7 +96,7 @@ async function onSubmitClick() {
     setTimeout(() => {
       // 跳转到菜单页面
       uni.reLaunch({
-        url: '/pages/index/index?name=HomeBlue',
+        url: '/pages/index/index',
       })
     }, 1000)
   }

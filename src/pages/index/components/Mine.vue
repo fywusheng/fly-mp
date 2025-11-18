@@ -1,15 +1,22 @@
 <script setup lang="ts">
+import { useUserStore } from '@/store'
+
 defineOptions({
-  name: 'Mine',
+  name: 'MineBlue',
 })
+
+const userStore = useUserStore()
+
 const AvatarIcon = 'http://115.190.57.206/static/mine/avatar.png'
 const BindIcon = 'http://115.190.57.206/static/mine/bind.png'
+const BlueAvatarIcon = 'http://115.190.57.206/static/mine/blue-avatar.png'
 const CarSettingIcon = 'http://115.190.57.206/static/mine/car-setting.png'
 const CustomerServiceIcon = 'http://115.190.57.206/static/mine/customer-service.png'
-const FamilyIcon = 'http://115.190.57.206/static/mine/family.png'
+// import FamilyIcon from 'http://115.190.57.206/static/mine/family.png'
 const MyCarIcon = 'http://115.190.57.206/static/mine/my-car.png'
 const RightIcon = 'http://115.190.57.206/static/mine/right.png'
 const SettingIcon = 'http://115.190.57.206/static/mine/setting.png'
+const ShareIcon = 'http://115.190.57.206/static/mine/share.png'
 const TopBgIcon = 'http://115.190.57.206/static/mine/top-bg.png'
 const UserManualIcon = 'http://115.190.57.206/static/mine/user-manual.png'
 
@@ -20,35 +27,66 @@ const list = ref([
     icon: MyCarIcon,
   },
   {
-    name: '家庭成员',
-    icon: FamilyIcon,
+    name: '分享与解绑',
+    icon: ShareIcon,
   },
   {
     name: '绑定设备',
     icon: BindIcon,
   },
   {
-    name: '使用手册',
-    icon: UserManualIcon,
-  },
-  {
     name: '车辆设置',
     icon: CarSettingIcon,
   },
+  {
+    name: '使用手册',
+    icon: UserManualIcon,
+  },
+
 ])
 
 function handleListItemClick(item) {
-  uni.showToast({
-    title: `点击了 ${item.name}`,
-    icon: 'none',
-  })
+  if (!userStore.userInfo.token) {
+    uni.navigateTo({
+      url: '/pages/login/login',
+    })
+    return
+  }
+  switch (item.name) {
+    case '我的车辆':
+      uni.navigateTo({
+        url: '/pages-car/myCar/index',
+      })
+      // uni.navigateTo({
+      //   url: '/pages-car/blueDemo/index',
+      // })
+      break
+    case '分享与解绑':
+      uni.navigateTo({
+        url: '/pages-car/shareCar/index',
+      })
+      break
+    case '绑定设备':
+      uni.navigateTo({
+        url: '/pages-car/bind/index',
+      })
+      break
+    case '车辆设置':
+      uni.navigateTo({
+        url: '/pages-car/settings/index',
+      })
+      break
+    case '使用手册':
+      uni.navigateTo({
+        url: '/pages-car/userManual/index',
+      })
+      break
+  }
 }
 
-function handleContact(e) {
-  console.log('用户点击了联系按钮', e.detail)
-  uni.showToast({
-    title: '感谢您的联系！',
-    icon: 'none',
+function goSettings() {
+  uni.navigateTo({
+    url: '/pages/settings/index',
   })
 }
 </script>
@@ -62,6 +100,7 @@ function handleContact(e) {
           class="h-40rpx w-40rpx"
           :src="SettingIcon"
           mode="scaleToFill"
+          @click="goSettings"
         />
       </template>
     </wd-navbar>
@@ -71,14 +110,14 @@ function handleContact(e) {
       :src="TopBgIcon"
       mode="widthFix"
     />
-    <view class="absolute left-288rpx top-210rpx">
+    <view class="absolute left-0 top-210rpx w-100% flex flex-col items-center justify-center">
       <image
         class="mb-18rpx h-173rpx w-173rpx"
-        :src="AvatarIcon"
+        :src="BlueAvatarIcon"
         mode="scaleToFill"
       />
-      <view class="w-173rpx text-center text-36rpx text-white">
-        用户名
+      <view class="whitespace-nowrap text-center text-36rpx text-white">
+        {{ userStore.userInfo && userStore.userInfo.nickname ? userStore.userInfo.nickname : '--' }}
       </view>
     </view>
     <!-- 功能列表 -->
@@ -108,7 +147,6 @@ function handleContact(e) {
       <button
         class="custom-btn mb-20rpx flex items-center justify-between rounded-8rpx bg-white px-40rpx py-45rpx"
         open-type="contact"
-        bindcontact="handleContact"
       >
         <view class="flex items-center">
           <image

@@ -212,6 +212,71 @@
           }
         }
       ]
+    },
+    {
+      "root": "pages-network",
+      "pages": [
+        {
+          "path": "drive-data/index",
+          "type": "page",
+          "layout": "default",
+          "style": {
+            "navigationStyle": "default",
+            "navigationBarTitleText": "行驶数据",
+            "navigationBarBackgroundColor": "#ffffff"
+          }
+        },
+        {
+          "path": "history/index",
+          "type": "page",
+          "layout": "default",
+          "style": {
+            "navigationStyle": "default",
+            "navigationBarTitleText": "历史停留",
+            "navigationBarBackgroundColor": "#ffffff"
+          }
+        },
+        {
+          "path": "history-info/index",
+          "type": "page",
+          "layout": "default",
+          "style": {
+            "navigationStyle": "default",
+            "navigationBarTitleText": "查看历史停留",
+            "navigationBarBackgroundColor": "#ffffff"
+          }
+        },
+        {
+          "path": "localtion/index",
+          "type": "page",
+          "layout": "default",
+          "style": {
+            "navigationStyle": "default",
+            "navigationBarTitleText": "车辆位置",
+            "navigationBarBackgroundColor": "#ffffff"
+          }
+        },
+        {
+          "path": "ride-trace/index",
+          "type": "page",
+          "layout": "default",
+          "style": {
+            "navigationStyle": "default",
+            "navigationBarTitleText": "骑行轨迹",
+            "navigationBarBackgroundColor": "#ffffff"
+          }
+        },
+        {
+          "path": "ride-trace-info/index",
+          "type": "page",
+          "layout": "default",
+          "style": {
+            "navigationStyle": "default",
+            "navigationBarTitleText": "查看轨迹",
+            "navigationBarBackgroundColor": "#ffffff"
+          }
+        }
+      ]
     }
   ]
 }
