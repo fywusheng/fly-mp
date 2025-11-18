@@ -14,7 +14,7 @@ import HomeMap from './HomeMap.vue'
 import WeatherPop from './WeatherPop.vue'
 
 defineOptions({
-  name: 'HomeBlue',
+  name: 'Home',
 })
 
 const props = defineProps({
@@ -184,7 +184,7 @@ watch(isUnlocked, (newVal) => {
 
 // 监听多个数据：tabName 和 用户登录状态
 watch([() => props.tabName, () => userStore.isLoggedIn], ([newTabName, isLoggedIn], [oldTabName, oldIsLoggedIn]) => {
-  if (newTabName === 'HomeBlue' && isLoggedIn) {
+  if (newTabName === 'home' && isLoggedIn) {
     // 获取车辆列表
     getCarList()
   }
@@ -193,7 +193,7 @@ watch([() => props.tabName, () => userStore.isLoggedIn], ([newTabName, isLoggedI
   deep: true, // 深度监听
 })
 watch(() => props.tabName, (newVal) => {
-  if (newVal === 'HomeBlue') {
+  if (newVal === 'home') {
     // 获取位置和蓝牙权限
     getLocationAndBlueAuth()
   }
@@ -214,7 +214,7 @@ onUnmounted(() => {
 
 onShow(() => {
   console.log('组件显示onShow')
-  if (props.tabName === 'HomeBlue') {
+  if (props.tabName === 'home') {
     // 获取位置和蓝牙权限
     getLocationAndBlueAuth()
     if (userStore.isLoggedIn) {
@@ -622,7 +622,7 @@ async function connectBle() {
       console.log(`device ${res.deviceId} state has changed, connected: ${res.connected}`)
       if (!res.connected) {
         status.value = 0
-        if (props.tabName === 'HomeBlue') {
+        if (props.tabName === 'home') {
           uni.showToast({
             title: '蓝牙连接已断开',
             icon: 'error',
