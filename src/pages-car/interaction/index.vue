@@ -16,10 +16,13 @@
 // 华慧蓝牙SDK
 import hhznBikeSDK from '@/plugin/bleSdk/HHZNBikeSDK/HHZNBikeSDK.v1.0.3.js'
 
+import { useCarStore } from '@/store'
 import { debounce } from '@/utils'
+import { httpGet, httpPost } from '@/utils/http'
 
 // 华慧蓝牙SDK
 const EVSBikeSDK = hhznBikeSDK
+const carStore = useCarStore()
 
 const PointIcon = 'http://115.190.57.206/static/car/point.png'
 const isInductionCar = ref(true) // 感应控车
@@ -33,10 +36,18 @@ const carState = ref({
   isMuteArmOn: false, // 车辆是否已开启静音设防。  - `true`：已开启  - `false`：未开启
   isKeylessOn: false, // 感应启动功能是否开启。  - `true`：开启  - `false`：关闭
   keylessType: 1, // 感应启动类型。  - `1`：感应启动  - `2`：震动启动  - `3`：一键启动
-  keylessRange: 1, // 感应启动距离。 - `1`：一档，信号强度最高 - `2`：二档，信号强度中等  - `3`：表示三档，信号强度最低。
+  keylessRange: 2, // 感应启动距离。 - `1`：一档，信号强度最高 - `2`：二档，信号强度中等  - `3`：表示三档，信号强度最低。
 })
+// 车辆信息
+let carInfo = {} as any
 
-onLoad(() => {
+onLoad((e) => {
+  carInfo = JSON.parse(decodeURIComponent(e.info))
+  console.log('解析后的车辆信息', carInfo)
+  if (carStore.network) {
+    // 4G车辆状态获取
+    getCarInfo(carInfo.deviceNo)
+  }
   connectBle()
 })
 
@@ -46,6 +57,39 @@ onHide(() => {
 onUnload(() => {
   EVSBikeSDK.unsubscribe(onStateChange)
 })
+
+// 获取车辆状态信息
+function getCarInfo(deviceNo?: string) {
+  httpGet(`/device/v2/devices/${deviceNo}/status`).then((res) => {
+    console.log('获取车辆状态信息成功:', res)
+    carState.value = {
+      ...carState.value,
+      ...res.data as any,
+    }
+    // 更新车辆状态
+    updateCarStatus()
+  }).catch((err) => {
+    console.error('获取车辆状态信息失败:', err)
+  })
+}
+// 4g控车指令
+function controlBike(commandType: string) {
+  uni.showLoading({
+    title: '指令发送中...',
+    mask: true,
+  })
+  const deviceNo = carInfo.deviceNo
+  return new Promise((resolve, reject) => {
+    httpPost(`/device/v2/devices/${deviceNo}/commands`, { commandType }).then((res) => {
+      uni.hideLoading()
+
+      resolve(res)
+    }).catch((err) => {
+      uni.hideLoading()
+      reject(err)
+    })
+  })
+}
 
 // 连接蓝牙
 async function connectBle() {
@@ -118,32 +162,98 @@ function onStateChange(data) {
   // 防抖
   updateCarStatusDebounced()
 }
-
+// 更新数据
 function updateCarStatus() {
-  // 更新数据
   isInductionCar.value = carState.value.isKeylessOn
   distance.value = carState.value.keylessRange || 1
 }
+// 设置感应控车状态改变
+function setKeyless(e: any) {
+  if (carStore.network) {
+    controlBike(e.value ? 'keylessOn' : 'keylessOff').then((res) => {
+      if (res.code !== '200') {
+        uni.showModal({
+          title: '设置失败',
+          content: res.message || '请稍后重试',
+          showCancel: false,
+        })
+        nextTick(() => {
+          isInductionCar.value = !e.value
+        })
+      }
+    })
+  }
+  else {
+    // 开启/关闭感应功能
+    e ? EVSBikeSDK.bleCommandsApi.sendSetKeylessUnlockExpireCommand('991231') : EVSBikeSDK.bleCommandsApi.sendKeylessUnlockCloseCommand()
+  }
+}
+
+// 设置感应控车距离改变
+function setKeylessRange(range: number) {
+  let commandType = ''
+  switch (range) {
+    case 1:
+      commandType = 'keylesslevel1'
+      break
+    case 2:
+      commandType = 'keylesslevel2'
+      break
+    case 3:
+      commandType = 'keylesslevel3'
+      break
+    default:
+      commandType = 'keylesslevel1'
+      break
+  }
+  if (carStore.network) {
+    controlBike(commandType).then((res) => {
+      if (res.code !== '200') {
+        uni.showModal({
+          title: '设置失败',
+          content: res.message || '请稍后重试',
+          showCancel: false,
+        })
+        nextTick(() => {
+          isInductionCar.value = !e.value
+        })
+      }
+    })
+  }
+  else {
+    console.log('感应控车距离改变:', range)
+    EVSBikeSDK.bleCommandsApi.sendSetKeylessUnlockRangeCommand(range)
+  }
+}
+
 // 提交设置
 function onSubmitClick() {
-  // 开启/关闭感应功能
-  isInductionCar.value ? EVSBikeSDK.bleCommandsApi.sendSetKeylessUnlockExpireCommand('991231') : EVSBikeSDK.bleCommandsApi.sendKeylessUnlockCloseCommand()
+  if (carStore.network) {
+    controlBike('commandType').then((res) => {
+      if (res.code !== '200') {
+        uni.navigateBack()
+      }
+    })
+  }
+  else {
+    // 蓝牙车辆设置
 
-  setTimeout(() => {
+    setTimeout(() => {
     // 设置感应距离
-    EVSBikeSDK.bleCommandsApi.sendKeylessUnlockRangeCommand(distance.value)
-  }, 500)
+      EVSBikeSDK.bleCommandsApi.sendKeylessUnlockRangeCommand(distance.value)
+    }, 500)
 
-  uni.showToast({
-    title: '设置成功',
-    icon: 'success',
-    duration: 1000,
-  })
+    uni.showToast({
+      title: '设置成功',
+      icon: 'success',
+      duration: 1000,
+    })
 
-  setTimeout(() => {
+    setTimeout(() => {
     // 返回首页
-    uni.navigateBack()
-  }, 1000)
+      uni.navigateBack()
+    }, 1000)
+  }
 }
 </script>
 
@@ -153,7 +263,7 @@ function onSubmitClick() {
       <view class="mt-8rpx overflow-hidden rounded-[10rpx]">
         <wd-cell-group border>
           <wd-cell title="感应控车">
-            <wd-switch v-model="isInductionCar" active-color="#2CBC7B" inactive-color="#E9E9EB" />
+            <wd-switch v-model="isInductionCar" active-color="#2CBC7B" inactive-color="#E9E9EB" @change="setKeyless" />
           </wd-cell>
         </wd-cell-group>
       </view>
@@ -174,6 +284,7 @@ function onSubmitClick() {
                 :max="3"
                 custom-block
                 :show-steps="true"
+                @change="setKeylessRange"
               >
                 <template #block>
                   <image
@@ -214,9 +325,9 @@ function onSubmitClick() {
       </view>
     </view>
 
-    <view class="mt-62rpx h-80rpx w-710rpx flex items-center justify-center rounded-[40rpx] bg-[#239AF6] color-white" @click="onSubmitClick">
+    <!-- <view class="mt-62rpx h-80rpx w-710rpx flex items-center justify-center rounded-[40rpx] bg-[#239AF6] color-white" @click="onSubmitClick">
       提 交
-    </view>
+    </view> -->
   </view>
 </template>
 

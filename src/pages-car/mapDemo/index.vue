@@ -34,10 +34,10 @@ const location = ref({
 const markers = ref([
   {
     id: 2,
-    latitude: 40.03245000000001,
-    longitude: 116.272472,
-    width: 120 / 3,
-    height: 196 / 3,
+    latitude: 40.0370140,
+    longitude: 116.271214,
+    width: 120 / 4,
+    height: 196 / 4,
     iconPath: MapArrow,
     anchor: {
       x: 0.5,
@@ -46,17 +46,17 @@ const markers = ref([
   },
 ])
 const polyline = ref([
-  {
-    points: [{ latitude: 40.040129, longitude: 116.274968 }, { latitude: 40.038974, longitude: 116.275214 }, { latitude: 40.038974, longitude: 116.275214 }, { latitude: 40.038565000000006, longitude: 116.272683 }, { latitude: 40.03848200000001, longitude: 116.27209500000001 }, { latitude: 40.03836100000001, longitude: 116.27074 }, { latitude: 40.03832700000001, longitude: 116.270515 }, { latitude: 40.03807400000001, longitude: 116.268038 }, { latitude: 40.03801400000001, longitude: 116.26763600000001 }, { latitude: 40.03801400000001, longitude: 116.26763600000001 }, { latitude: 40.03790800000001, longitude: 116.267508 }, { latitude: 40.03450300000001, longitude: 116.270961 }, { latitude: 40.03419900000001, longitude: 116.271221 }, { latitude: 40.03396500000001, longitude: 116.271401 }, { latitude: 40.03245000000001, longitude: 116.272472 }],
-    color: '#239AF6',
-    width: 6,
-  },
+  // {
+  //   points: [{ latitude: 40.040129, longitude: 116.274968 }, { latitude: 40.038974, longitude: 116.275214 }, { latitude: 40.038974, longitude: 116.275214 }, { latitude: 40.038565000000006, longitude: 116.272683 }, { latitude: 40.03848200000001, longitude: 116.27209500000001 }, { latitude: 40.03836100000001, longitude: 116.27074 }, { latitude: 40.03832700000001, longitude: 116.270515 }, { latitude: 40.03807400000001, longitude: 116.268038 }, { latitude: 40.03801400000001, longitude: 116.26763600000001 }, { latitude: 40.03801400000001, longitude: 116.26763600000001 }, { latitude: 40.03790800000001, longitude: 116.267508 }, { latitude: 40.03450300000001, longitude: 116.270961 }, { latitude: 40.03419900000001, longitude: 116.271221 }, { latitude: 40.03396500000001, longitude: 116.271401 }, { latitude: 40.03245000000001, longitude: 116.272472 }],
+  //   color: '#239AF6',
+  //   width: 6,
+  // },
 ])
 // 骑行信息
 const ridingInfo = ref<any>({})
 
 onLoad((e) => {
-  getTrackInfo(e.rideId)
+  // getTrackInfo(e.rideId)
   // const instance = getCurrentInstance()?.proxy as { getOpenerEventChannel?: () => UniApp.EventChannel }
   // if (instance?.getOpenerEventChannel) {
   //   const eventChannel = instance.getOpenerEventChannel()
@@ -122,7 +122,6 @@ function setMapData(trackPoints: ParkingDetailDTO) {
       :latitude="location.latitude"
       :longitude="location.longitude"
       :markers="markers"
-      :polyline="polyline"
       :scale="scale"
     />
     <view class="absolute bottom-120rpx left-0 z-100">

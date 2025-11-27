@@ -1,7 +1,16 @@
 <script setup lang="ts">
+import { useCarStore } from '@/store'
+import { httpGet } from '@/utils/http'
+
 defineOptions({
   name: 'Infor',
 })
+const props = defineProps({
+  tabName: {
+    type: String,
+  },
+})
+
 const BgIcon = 'http://115.190.57.206/static/infor/bg.png'
 const DataIcon = 'http://115.190.57.206/static/infor/data.png'
 const HistoryIcon = 'http://115.190.57.206/static/infor/history.png'
@@ -9,13 +18,52 @@ const RightIcon = 'http://115.190.57.206/static/infor/right.png'
 const RoundMileageIcon = 'http://115.190.57.206/static/infor/round-mileage.png'
 const RoundTimeIcon = 'http://115.190.57.206/static/infor/round-time.png'
 const TraceIcon = 'http://115.190.57.206/static/infor/track.png'
+const carStore = useCarStore()
+const dailyStats = ref<any>({
+  totalRidingTime: '00:00:00',
+  totalDistanceKm: '0.00',
+})
+
+watch(() => props.tabName, (newVal) => {
+  if (newVal === 'infor') {
+    getRidingInfo(carStore.carInfo.id)
+  }
+})
+
+// 获取骑行天
+async function getRidingInfo(vehicleId) {
+  const res = await httpGet(`/riding/dashboard/riding`, {
+    vehicleId,
+  }) as any
+  if (res.code === '200') {
+    console.log('获取骑行数据成功:', res.data.dailyStats)
+    res.data.dailyStats.totalRidingTime = formatMinutesToTime(res.data.dailyStats.totalRidingTime)
+    dailyStats.value = res.data.dailyStats
+  }
+  else {
+    console.error('获取骑行天数失败', res.message)
+  }
+}
+
+// 分钟转换成00:00:00格式
+function formatMinutesToTime(minutes) {
+  const hrs = Math.floor(minutes / 60)
+  const mins = Math.floor(minutes % 60)
+  const secs = Math.floor((minutes * 60) % 60)
+
+  const formattedHrs = String(hrs).padStart(2, '0')
+  const formattedMins = String(mins).padStart(2, '0')
+  const formattedSecs = String(secs).padStart(2, '0')
+
+  return `${formattedHrs}:${formattedMins}:${formattedSecs}`
+}
 
 function goHistory() {
   uni.navigateTo({
     url: '/pages-network/history/index',
   })
 }
-
+// 去轨迹
 function goTrace() {
   uni.navigateTo({
     url: '/pages-network/ride-trace/index',
@@ -43,7 +91,7 @@ function goDrive() {
           今日骑行时间
         </view>
         <view class="text-26rpx text-[#333333] font-bold">
-          00:00:00
+          {{ dailyStats.totalRidingTime || '00:00:00' }}
         </view>
         <image
           class="absolute bottom-16rpx right-12rpx h-14rpx w-14rpx"
@@ -55,7 +103,7 @@ function goDrive() {
           今日骑行里程
         </view>
         <view class="mb-20rpx text-26rpx text-[#333333] font-bold">
-          0.00 KM
+          {{ dailyStats.totalDistanceKm || '0.00' }} KM
         </view>
         <image
           class="absolute bottom-16rpx right-12rpx h-14rpx w-14rpx"

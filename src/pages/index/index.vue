@@ -11,7 +11,7 @@
 </route>
 
 <script lang="ts" setup>
-import { useCarStore } from '@/store'
+import { useAppStore, useCarStore } from '@/store'
 // 4G+蓝牙
 import Find from './components/Find.vue'
 import Home from './components/Home.vue'
@@ -34,8 +34,9 @@ defineOptions({
 })
 
 const carStore = useCarStore()
+const appStore = useAppStore()
 
-const tabbar = ref<string>('home') // 页面状态
+const tabbar = ref<string>('home') // 页面标签名称
 const tabbarItems = ref<TabbarItem[]>([])
 
 // 4G+蓝牙标签栏配置
@@ -89,22 +90,35 @@ const BluetoothTabbarItems: TabbarItem[] = [
   },
 ]
 
+// 监听
 watch(tabbar, (newVal) => {
-  console.log('tabbar changed to:', newVal)
   uni.pageScrollTo({
     scrollTop: 0,
     duration: 300,
   })
 })
 
+// 监听当前车辆设备变化
+watch(() => carStore.network, (network) => {
+  setTabItems(network)
+})
+
 // 处理页面加载参数
 onLoad((option: Record<string, string>) => {
-  // 初始化标签栏
-  tabbarItems.value = carStore.network ? FourTabbarItems : BluetoothTabbarItems
+  setTabItems(carStore.network)
   // 验证选项卡是否有效
   const validTab = option?.name && tabbarItems.value.some(item => item.name === option.name)
   tabbar.value = validTab ? option.name : 'home'
 })
+onShow(() => {
+  // 获取当前网络状态
+  appStore.getAppInfo()
+})
+
+// 设置tabbar
+function setTabItems(network) {
+  tabbarItems.value = network ? FourTabbarItems : BluetoothTabbarItems
+}
 </script>
 
 <template>
@@ -114,8 +128,8 @@ onLoad((option: Record<string, string>) => {
 
     <!-- 内容区 -->
     <Home v-show="tabbar === 'home'" :tab-name="tabbar" />
-    <Find v-show="tabbar === 'find'" />
-    <Infor v-show="tabbar === 'infor'" />
+    <Find v-show="tabbar === 'find'" :tab-name="tabbar" />
+    <Infor v-show="tabbar === 'infor'" :tab-name="tabbar" />
     <InforBlue v-if="tabbar === 'InforBlue'" />
     <Mine v-if="tabbar === 'mine'" />
 

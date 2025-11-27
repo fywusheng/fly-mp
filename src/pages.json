@@ -112,6 +112,16 @@
           }
         },
         {
+          "path": "mapDemo/index",
+          "type": "page",
+          "layout": "default",
+          "style": {
+            "navigationStyle": "default",
+            "navigationBarTitleText": "查看历史停留",
+            "navigationBarBackgroundColor": "#ffffff"
+          }
+        },
+        {
           "path": "myCar/index",
           "type": "page",
           "style": {
@@ -233,7 +243,8 @@
           "style": {
             "navigationStyle": "default",
             "navigationBarTitleText": "历史停留",
-            "navigationBarBackgroundColor": "#ffffff"
+            "navigationBarBackgroundColor": "#ffffff",
+            "enablePullDownRefresh": true
           }
         },
         {
@@ -257,13 +268,35 @@
           }
         },
         {
+          "path": "notice/index",
+          "type": "page",
+          "layout": "default",
+          "style": {
+            "navigationStyle": "default",
+            "navigationBarTitleText": "车辆预警",
+            "navigationBarBackgroundColor": "#ffffff",
+            "enablePullDownRefresh": true
+          }
+        },
+        {
+          "path": "notice-info/index",
+          "type": "page",
+          "layout": "default",
+          "style": {
+            "navigationStyle": "default",
+            "navigationBarTitleText": "告警详情",
+            "navigationBarBackgroundColor": "#ffffff"
+          }
+        },
+        {
           "path": "ride-trace/index",
           "type": "page",
           "layout": "default",
           "style": {
             "navigationStyle": "default",
             "navigationBarTitleText": "骑行轨迹",
-            "navigationBarBackgroundColor": "#ffffff"
+            "navigationBarBackgroundColor": "#ffffff",
+            "enablePullDownRefresh": true
           }
         },
         {

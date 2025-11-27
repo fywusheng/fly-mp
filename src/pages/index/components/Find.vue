@@ -1,7 +1,17 @@
 <script setup lang="ts">
+import { useCarStore } from '@/store'
+import { httpGet } from '@/utils/http'
+
 defineOptions({
   name: 'Find',
 })
+
+const props = defineProps({
+  tabName: {
+    type: String,
+  },
+})
+
 const BgIcon = 'http://115.190.57.206/static/find/bg.png'
 const DescIcon = 'http://115.190.57.206/static/find/desc.png'
 const FlyLogoIcon = 'http://115.190.57.206/static/find/fly-logo.png'
@@ -13,6 +23,27 @@ const LineIcon = 'http://115.190.57.206/static/find/line.png'
 const menuButtonInfo = uni.getMenuButtonBoundingClientRect()
 const navHeight = ref(0)
 navHeight.value = menuButtonInfo?.top + menuButtonInfo.height
+
+const carStore = useCarStore()
+const days = ref(1)
+
+watch(() => props.tabName, (newVal) => {
+  if (newVal === 'find') {
+    // 获取骑行天数
+    getDayOffset(carStore.carInfo.deviceNo)
+  }
+})
+
+// 获取骑行天数
+async function getDayOffset(deviceId) {
+  const res = await httpGet(`/device/v2/devices/${deviceId}/status`)
+  if (res.code === '200') {
+    days.value = (res.data as any).companionshipDays
+  }
+  else {
+    console.error('获取骑行天数失败', res.message)
+  }
+}
 </script>
 
 <template>
@@ -44,7 +75,7 @@ navHeight.value = menuButtonInfo?.top + menuButtonInfo.height
       mode="widthFix"
     />
     <view class="absolute left-212rpx top-789rpx text-[#2E6BC6]">
-      <span class="text-180rpx">123</span>
+      <span class="text-180rpx">{{ days }}</span>
       <span class="text-40rpx">天</span>
       <image
         class="absolute bottom-26rpx left-[-105rpx] w-91rpx"

@@ -17,7 +17,7 @@
 // import EVSBikeSDK from '@/utils/EVSBikeSDK.v1.1.1'
 // 华慧蓝牙SDK
 import hhznBikeSDK from '@/plugin/bleSdk/HHZNBikeSDK/HHZNBikeSDK.v1.0.3.js'
-import { useUserStore } from '@/store/user'
+import { useCarStore, useUserStore } from '@/store'
 import { httpGet, httpPost } from '@/utils/http'
 
 // 华慧蓝牙SDK
@@ -61,6 +61,7 @@ const showCancelBtn = ref(true) // 是否显示取消按钮
 const showConfirmBtn = ref(true) // 是否显示确认按钮
 const closeOnClickModal = ref(true) // 是否点击蒙层关闭弹窗
 const userStore = useUserStore()
+const carStore = useCarStore()
 
 onLoad(() => {
   // connectBle()
@@ -77,8 +78,16 @@ onUnload(() => {
 watchEffect(async () => {
   if (selectCarId.value) {
     const selectCar = carList.value.find(car => car.id === selectCarId.value)
-    // 获取车辆设置
-    await getCarSetings(selectCar.deviceNo)
+
+    if (carStore.network) {
+      // 4G车辆状态获取
+      getCarInfo(selectCar.deviceNo)
+    }
+    else {
+      // 获取车辆设置
+      await getCarSetings(selectCar.deviceNo)
+    }
+
     // 连接蓝牙
     await connectBle()
   }
@@ -250,6 +259,38 @@ function setDefaultVehicleId(carsList) {
     }
   }
 }
+// 获取车辆状态信息
+function getCarInfo(deviceNo?: string) {
+  httpGet(`/device/v2/devices/${deviceNo}/status`).then((res) => {
+    console.log('获取车辆状态信息成功:', res)
+    carState.value = {
+      ...carState.value,
+      ...res.data as any,
+    }
+    // 更新车辆状态
+    // updateCarStatus()
+  }).catch((err) => {
+    console.error('获取车辆状态信息失败:', err)
+  })
+}
+// 4g控车指令
+function controlBike(commandType: string) {
+  uni.showLoading({
+    title: '指令发送中...',
+    mask: true,
+  })
+  const deviceNo = carList.value.find(car => car.id === selectCarId.value).deviceNo
+  return new Promise((resolve, reject) => {
+    httpPost(`/device/v2/devices/${deviceNo}/commands`, { commandType }).then((res) => {
+      uni.hideLoading()
+
+      resolve(res)
+    }).catch((err) => {
+      uni.hideLoading()
+      reject(err)
+    })
+  })
+}
 
 function handleCancel() {
   showMessagePopup.value = false
@@ -266,7 +307,7 @@ function handleOnConfirm({ value }) {
 
 // 自动熄火
 function beforeChange({ value, resolve }) {
-  if (status.value !== 2) {
+  if (status.value !== 2 && !carStore.network) {
     uni.showToast({
       title: '请先连接蓝牙',
       icon: 'none',
@@ -275,18 +316,56 @@ function beforeChange({ value, resolve }) {
     return
   }
   console.log('要改变的值:', value)
-  EVSBikeSDK.bleCommandsApi.sendSetOverspeedAlarmCommand(value ? 1 : 2)
-  setTimeout(() => {
-    resolve(true)
-    messageId.value = 1
-    duration.value = 1000
-    showCancelBtn.value = false
-    showConfirmBtn.value = false
-    closeOnClickModal.value = true
-    // confirmText.value = '立即删除'
-    message.value = `超速报警提示音已${value ? '开启' : '关闭'}!`
-    showMessagePopup.value = true
-  }, 500)
+  if (carStore.network) {
+    // 4G车辆
+    controlBike(value ? 'overspeedOn' : 'overspeedOff').then((res) => {
+      console.log('发送超速报警指令成功:', res)
+      if (res.code === '200') {
+        setTimeout(() => {
+          resolve(true)
+          messageId.value = 1
+          duration.value = 1000
+          showCancelBtn.value = false
+          showConfirmBtn.value = false
+          closeOnClickModal.value = true
+          // confirmText.value = '立即删除'
+          message.value = `超速报警提示音已${value ? '开启' : '关闭'}!`
+          showMessagePopup.value = true
+        }, 500)
+      }
+      else {
+        uni.showToast({
+          title: res.message || '指令发送失败',
+          icon: 'none',
+          duration: 1000,
+        })
+        overSpeed.value = !value
+      }
+    }).catch((err) => {
+      console.error('发送超速报警指令失败:', err)
+      uni.showToast({
+        title: '指令发送失败',
+        icon: 'none',
+        duration: 1000,
+      })
+      overSpeed.value = !value
+    })
+  }
+  else {
+    // 蓝牙车辆
+    EVSBikeSDK.bleCommandsApi.sendSetOverspeedAlarmCommand(value ? 1 : 2)
+    setTimeout(() => {
+      resolve(true)
+      messageId.value = 1
+      duration.value = 1000
+      showCancelBtn.value = false
+      showConfirmBtn.value = false
+      closeOnClickModal.value = true
+      // confirmText.value = '立即删除'
+      message.value = `超速报警提示音已${value ? '开启' : '关闭'}!`
+      showMessagePopup.value = true
+    }, 500)
+  }
 }
 
 // 复制遥控器

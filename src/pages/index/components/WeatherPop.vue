@@ -67,7 +67,7 @@ function handleClose() {
 
       <scroll-view scroll-x :show-scrollbar="false" enhanced class="h-350rpx flex items-center justify-between overflow-x-auto">
         <view class="flex items-center justify-between">
-          <view v-for="item in weatherInfo.hours" :key="item.hours" class="mr-40rpx flex flex-col flex-nowrap items-center justify-center text-25rpx">
+          <view v-for="(item, index) in weatherInfo.hours" :key="index" class="mr-40rpx flex flex-col flex-nowrap items-center justify-center text-25rpx">
             <view>{{ item.hours }}</view>
             <image
               class="my-62rpx h-40rpx w-40rpx"

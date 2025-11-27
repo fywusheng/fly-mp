@@ -1,14 +1,16 @@
 <script setup lang="ts">
-// E车星蓝牙SDK
-// import { openAndSearchAndConnect } from '@/utils/EvsBikeSdk'
-// import EVSBikeSDK from '@/utils/EVSBikeSDK.v1.1.1'
-
 // 华慧蓝牙SDK
-import hhznBikeSDK from '@/plugin/bleSdk/HHZNBikeSDK/HHZNBikeSDK.v1.0.3.js'
+// import hhznBikeSDK from '@/plugin/bleSdk/HHZNBikeSDK/HHZNBikeSDK.v1.0.3.js'
+import { useLocationListener } from '@/composables/useLocationListener'
+import { useRidingTracker } from '@/composables/useRidingTracker'
 import { useCarStore, useUserStore } from '@/store'
-import { debounce, generateUUID, getColorImg, getLocation, initBLuetoothAuth, initLocationAuth } from '@/utils'
+import { debounce, getColorImg, getLocation, initBLuetoothAuth, initLocationAuth } from '@/utils'
 
 import { getWeatherIcon } from '@/utils/common'
+// E车星蓝牙SDK
+import { openAndSearchAndConnect } from '@/utils/EvsBikeSdk'
+
+import EVSBikeSDK from '@/utils/EVSBikeSDK.v1.1.1'
 import { httpGet, httpPost } from '@/utils/http'
 import HomeMap from './HomeMap.vue'
 import WeatherPop from './WeatherPop.vue'
@@ -23,7 +25,7 @@ const props = defineProps({
   },
 })
 // 华慧蓝牙SDK
-const EVSBikeSDK = hhznBikeSDK
+// const EVSBikeSDK = hhznBikeSDK
 
 const ArrowIcon = 'http://115.190.57.206/static/home/arrow.png'
 const BlueConnect = 'http://115.190.57.206/static/home/blue-connect.png'
@@ -63,6 +65,29 @@ const userStore = useUserStore()
 const carStore = useCarStore()
 // 获取胶囊位置信息
 const menuButtonInfo = uni.getMenuButtonBoundingClientRect()
+let getCarInfoTimer = null
+
+// 初始化骑行追踪
+const {
+  rideId: currentRideId,
+  status: ridingStatus,
+  startRiding,
+  uploadLocation,
+  endRiding,
+  isRiding,
+} = useRidingTracker({
+  uploadInterval: 5 * 1000, // 5秒上传一次
+  enableLog: true,
+})
+
+// 初始化位置监听
+const {
+  isListening,
+  startListening,
+  stopListening,
+  onLocationChange,
+  getCurrentLocation,
+} = useLocationListener()
 
 // 天气信息
 const weatherInfo = ref<{
@@ -110,6 +135,8 @@ const list = ref([{
 
 // 车辆状态
 const carState = ref({
+  batteryVoltageType: 48, // 电池电压类型（48/60/72）
+  batteryLevel: 0, // 电池电量百分比 (0–100)
   isStarted: false, // 车辆是否已启动。`true`：已启动  - `false`：未启动
   isLocked: true, // 车辆是否处于锁车状态。  - `true`：已锁车  - `false`：未锁车
   isArmed: false, // 车辆是否已设防（防盗报警激活）。  - `true`：已设防  - `false`：未设防
@@ -117,6 +144,7 @@ const carState = ref({
   isKeylessOn: false, // 感应启动功能是否开启。  - `true`：开启  - `false`：关闭
   keylessType: false, // 感应启动类型。  - `1`：感应启动  - `2`：震动启动  - `3`：一键启动
   keylessRange: false, // 感应启动距离。 - `1`：一档，信号强度最高 - `2`：二档，信号强度中等  - `3`：表示三档，信号强度最低。
+  warnCount: 0, // 告警数量
 })
 // 更新车辆状态
 const updateCarStatusDebounced = debounce(updateCarStatus, 500)
@@ -133,7 +161,10 @@ const showCancelBtn = ref(true) // 是否显示取消按钮
 const showConfirmBtn = ref(true) // 是否显示确认按钮
 const closeOnClickModal = ref(true) // 是否点击蒙层关闭弹窗
 
+const batteryVoltageType = ref(48) // 电池类型
+const batterTab = ref([48, 60, 72]) // 电池类型tab
 const showBatPopup = ref(false) // 电池弹窗显示
+
 // 获取选中车辆名称
 const currentCarName = computed(() => {
   const car = carList.value.find(item => item.id === selectCar.value)
@@ -143,10 +174,7 @@ const colorCode = computed(() => {
   const car = carList.value.find(item => item.id === selectCar.value)
   return car ? car.colorCode : ''
 })
-// 当前骑行ID,用于标识一次完整的骑行过程，上传骑行数据
-let rideId = null
-// 上次上传时间
-let lastUploadTime = 0
+
 // 骑行info
 const currentRidingInfo = ref<any>({
   address: '',
@@ -160,74 +188,141 @@ const mapLocation = ref({
   longitude: 0,
 })
 
-// 监听解锁状态上报骑行轨迹
-watch(isUnlocked, (newVal) => {
-  console.log('当前解锁状态:', newVal)
-  getLocation().then((res) => {
-    console.log('当前位置:', res)
-    if (newVal) {
-      // 开始状态上报
-      uploadRideStartToServer(res)
-      // 上报骑行轨迹
-      reportRidingTrack()
-    }
-    else {
-      // 结束状态上报
-      uploadRideEndToServer(res)
-      // 停止定位
-      stopLocationTracking()
-    }
-  }).catch((err) => {
-    console.error('获取位置失败:', err)
-  })
-})
+// ============= 统一的初始化和清理函数 =============
 
-// 监听多个数据：tabName 和 用户登录状态
-watch([() => props.tabName, () => userStore.isLoggedIn], ([newTabName, isLoggedIn], [oldTabName, oldIsLoggedIn]) => {
-  if (newTabName === 'home' && isLoggedIn) {
-    // 获取车辆列表
+/**
+ * 初始化首页资源
+ */
+function initHomePage() {
+  console.log('🚀 初始化首页')
+  // 获取位置和蓝牙权限
+  getLocationAndBlueAuth()
+  // 如果已登录，获取车辆列表
+  if (userStore.isLoggedIn) {
     getCarList()
   }
-}, {
-  immediate: true, // 立即执行一次
-  deep: true, // 深度监听
-})
-watch(() => props.tabName, (newVal) => {
-  if (newVal === 'home') {
-    // 获取位置和蓝牙权限
-    getLocationAndBlueAuth()
+}
+
+/**
+ * 清理首页资源
+ */
+function cleanupHomePage() {
+  console.log('🧹 清理首页资源')
+  // 断开蓝牙连接
+  disconnect()
+  // 停止位置监听
+  if (isListening.value) {
+    stopListening()
   }
-}, { deep: true })
+  // 清除定时器
+  if (getCarInfoTimer) {
+    clearInterval(getCarInfoTimer)
+    getCarInfoTimer = null
+  }
+}
+
+// ============= 优化后的 watch 监听 =============
+
+/**
+ * 监听解锁状态 - 控制骑行轨迹上报（仅蓝牙设备）
+ */
+watch(isUnlocked, async (newVal, oldVal) => {
+  console.log('🔓 解锁状态变化:', oldVal, '->', newVal)
+
+  // ✅ 只有蓝牙设备才需要上报骑行轨迹（4G设备通过网络获取位置）
+  if (carStore.network) {
+    console.log('⚠️ 4G设备，不需要上报骑行轨迹')
+    return
+  }
+
+  try {
+    // 获取当前位置
+    const location = await getCurrentLocation()
+
+    if (newVal) {
+      // 开始骑行
+      console.log('🚴 蓝牙设备开始骑行，开启位置监听')
+      await startRiding(selectCar.value, location)
+
+      // 开启位置监听
+      await startListening()
+
+      // ✅ 注册位置变化回调，自动上传轨迹点
+      onLocationChange((location) => {
+        if (isRiding()) {
+          uploadLocation(location).catch((err) => {
+            console.error('❌ 位置上传失败:', err)
+          })
+        }
+      })
+    }
+    else {
+      // 结束骑行
+      console.log('🏁 蓝牙设备结束骑行，停止位置监听')
+      await endRiding(selectCar.value, location)
+
+      // 停止位置监听（会自动清理所有回调）
+      stopListening()
+    }
+  }
+  catch (error: any) {
+    console.error('❌ 操作失败:', error)
+    uni.showToast({
+      title: error.message || '操作失败',
+      icon: 'error',
+    })
+  }
+})
+
+/**
+ * 统一监听 tab 和登录状态
+ * 优化：合并了两个重复的 watch，避免重复执行
+ */
+watch(
+  [() => props.tabName, () => userStore.isLoggedIn],
+  ([newTabName, isLoggedIn], [oldTabName, oldIsLoggedIn]) => {
+    console.log('📊 状态变化:', {
+      tab: `${oldTabName} -> ${newTabName}`,
+      login: `${oldIsLoggedIn} -> ${isLoggedIn}`,
+    })
+
+    if (newTabName === 'home') {
+      // 切换到首页，初始化资源
+      console.log('✅ 切换到首页')
+      getLocationAndBlueAuth()
+
+      // 登录后获取车辆列表
+      if (isLoggedIn) {
+        getCarList()
+      }
+    }
+    else {
+      // 离开首页，清理资源
+      console.log('⬅️ 离开首页')
+      cleanupHomePage()
+    }
+  },
+  {
+    immediate: false, // 不立即执行，onShow 已处理初始化
+    deep: false, // 不需要深度监听，提升性能
+  },
+)
 
 onMounted(() => {
   // 获取滑块最大宽度
   getMaxSliderWidth()
-  // 获取位置和蓝牙权限
-  // getLocationAndBlueAuth()
-})
-
-onUnmounted(() => {
-  // 清理工作
-  disconnect()
-  console.log('组件卸载onUnmounted')
 })
 
 onShow(() => {
-  console.log('组件显示onShow')
+  console.log('👀 页面显示 - tab:', props.tabName)
   if (props.tabName === 'home') {
-    // 获取位置和蓝牙权限
-    getLocationAndBlueAuth()
-    if (userStore.isLoggedIn) {
-      // 获取车辆列表
-      getCarList()
-    }
+    initHomePage()
   }
 })
 
 onHide(() => {
-  // 清理工作
-  disconnect()
-  console.log('onHide() {}')
+  console.log('👋 页面隐藏')
+  cleanupHomePage()
 })
 
 function handleCancel() {
@@ -240,134 +335,41 @@ function handleConfirm() {
   console.log('确认操作')
 }
 
-// 骑行开始状态上报
-async function uploadRideStartToServer(location) {
-  // 生成骑行ID
-  rideId = generateUUID()
-  const res = await httpPost('/riding/ride/start', {
-    bikeId: selectCar.value,
-    latitude: location.latitude,
-    longitude: location.longitude,
-    rideId,
-    timestamp: Date.now(),
-  })
-  if (res.code === '200') {
-    console.log('上传骑行开始状态成功', res)
-  }
-  else {
-    console.error('上传骑行开始状态失败', res)
-  }
-}
-// 骑行中上传位置到服务器
-async function uploadLocationToServer(location) {
-  const res = await httpPost('/riding/ride/location', {
-    accuracy: location.accuracy,
-    latitude: location.latitude,
-    longitude: location.longitude,
-    rideId,
-    speed: location.speed,
-    timestamp: Date.now(),
-  })
-  if (res.code === '200') {
-    console.log('上传骑行中状态成功', res)
-  }
-  else {
-    console.error('上传骑行中状态失败', res)
-  }
+function handleShowBatPopup() {
+  batteryVoltageType.value = carState.value.batteryVoltageType || 48 // 默认48V
+  showBatPopup.value = true
 }
 
-// 骑行结束状态上报
-async function uploadRideEndToServer(location) {
-  const res = await httpPost('/riding/ride/end', {
-    bikeId: selectCar.value,
-    latitude: location.latitude,
-    longitude: location.longitude,
-    rideId,
-    timestamp: Date.now(),
-  })
-  // 重置骑行ID
-  rideId = null
-  if (res.code === '200') {
-    console.log('上传骑行结束状态成功', res)
-  }
-  else {
-    console.error('上传骑行结束状态失败', res)
-  }
-}
-
-// 上报骑行轨迹
-async function reportRidingTrack() {
+// 设置电压类型
+async function handleBatConfirm() {
+  const deviceNo = carList.value.find(item => item.id === selectCar.value)?.deviceNo
   try {
-    const res = await initLocationAuth()
-    console.log('开启后台定位权限成功', res)
-    // 成功后可开始监听位置变化
-    // 开启后台定位
-    wx.startLocationUpdateBackground({
-      success: (res) => {
-        console.log('开启后台定位成功', res)
-        // 成功后可开始监听位置变化
-        startListeningLocation()
-      },
-      fail: (err) => {
-        console.error('开启后台定位失败', err)
-        // this.handleLocationError(err)
-      },
+    const res = await httpPost(`/device/vehicle/update`, {
+      id: selectCar.value,
+      deviceNo,
+      batteryVoltageType: batteryVoltageType.value,
     })
+    if (res.code === '200') {
+      uni.showToast({
+        title: '设置成功',
+        icon: 'success',
+        duration: 2000,
+      })
+      showBatPopup.value = false
+    }
   }
   catch (err) {
-    console.error('开启后台定位失败', err)
+    console.error('设置电池电压类型失败:', err)
+    uni.showToast({
+      title: '设置失败，请重试',
+      icon: 'error',
+      duration: 2000,
+    })
   }
+
+  console.log('确认操作，选择电池类型:', batteryVoltageType.value)
 }
 
-// 监听位置变化
-function startListeningLocation() {
-  wx.onLocationChange((location) => {
-    console.log('位置发生变化', location)
-    // 处理位置信息，例如上传到服务器
-    processNewLocation(location)
-  })
-}
-
-// 处理新的位置信息
-
-function processNewLocation(location) {
-  // 获取位置详细信息
-  const {
-    latitude, // 纬度
-    longitude, // 经度
-    speed, // 速度，单位 m/s
-    accuracy, // 定位精度
-    altitude, // 高度，单位 m
-    verticalAccuracy, // 垂直精度(iOS)
-    horizontalAccuracy, // 水平精度
-  } = location
-
-  // 示例：每5秒上传一次位置信息
-  const currentTime = Date.now()
-  lastUploadTime = lastUploadTime || 0
-
-  if (currentTime - lastUploadTime > 5 * 1000) {
-    uploadLocationToServer(location)
-    console.log('上传位置信息到服务器', location)
-    lastUploadTime = currentTime
-  }
-  console.log('处理新的位置信息', location, carState.value)
-}
-
-// 停止定位
-function stopLocationTracking() {
-  wx.stopLocationUpdate({
-    success: (res) => {
-      console.log('停止定位成功', res)
-    },
-    fail: (err) => {
-      console.error('停止定位失败', err)
-    },
-  })
-
-  // 取消位置监听
-  wx.offLocationChange()
-}
 // 获取滑块最大宽度
 function getMaxSliderWidth() {
   uni.createSelectorQuery()
@@ -427,15 +429,19 @@ function toggleBluetooth() {
 
 // 蓝牙功能列表操作
 function onItemClick(item) {
-  console.log('点击了:', item)
-  if (status.value === 0 || status.value === 1) {
-    uni.showToast({
-      title: '请先连接蓝牙',
-      icon: 'none',
-      mask: true,
-    })
-    return
+  if (!carStore.network) {
+    if (status.value === 0 || status.value === 1) {
+      uni.showToast({
+        title: '请先连接蓝牙',
+        icon: 'none',
+        mask: true,
+      })
+      return
+    }
   }
+
+  const selectCarInfo = carList.value.find(item => item.id === selectCar.value)
+
   switch (item.name) {
     case '车辆设防':
       uni.showModal({
@@ -443,16 +449,29 @@ function onItemClick(item) {
         content: item.active ? '确定要解防车辆吗？' : '确定要设防车辆吗？',
         success(res) {
           if (res.confirm) {
-            // 设防/解防指令
-            item.active ? EVSBikeSDK.bleCommandsApi.sendDisarmCommand() : EVSBikeSDK.bleCommandsApi.sendArmCommand()
+            if (carStore.network) {
+              // 4g控车指令
+              controlBike(item.active ? 'undefense' : 'defense')
+            }
+            else {
+              // 蓝牙指令 设防/解防指令
+              item.active ? EVSBikeSDK.bleCommandsApi.sendDisarmCommand() : EVSBikeSDK.bleCommandsApi.sendArmCommand()
+            }
           }
         },
       })
       break
     case '一键静音':
       if (carState.value.isLocked) {
-        // 解防指令
-        EVSBikeSDK.bleCommandsApi.sendDisarmCommand()
+        // 撤防指令
+        if (carStore.network) {
+          // 4g控车 撤防指令
+          controlBike('undefense')
+        }
+        else {
+          // 蓝牙
+          EVSBikeSDK.bleCommandsApi.sendDisarmCommand()
+        }
       }
       else {
         uni.showToast({
@@ -463,13 +482,19 @@ function onItemClick(item) {
       break
     case '感应控车':
       uni.navigateTo({
-        url: '/pages-car/interaction/index',
+        url: `/pages-car/interaction/index?info=${encodeURIComponent(JSON.stringify(selectCarInfo))}`,
       })
       break
     case '鸣笛寻车':
       if (carState.value.isLocked) {
         uni.vibrateLong()
-        EVSBikeSDK.bleCommandsApi.sendFindVehicleCommand()
+        if (carStore.network) {
+          // 4g控车指令
+          controlBike('find')
+        }
+        else {
+          EVSBikeSDK.bleCommandsApi.sendFindVehicleCommand()
+        }
       }
       else {
         uni.showToast({
@@ -479,6 +504,24 @@ function onItemClick(item) {
       }
       break
   }
+}
+
+// 4g控车指令
+function controlBike(commandType: string) {
+  uni.showLoading({
+    title: '指令发送中...',
+    mask: true,
+  })
+  const deviceNo = carList.value.find(item => item.id === selectCar.value)?.deviceNo
+  return new Promise((resolve, reject) => {
+    httpPost(`/device/v2/devices/${deviceNo}/commands`, { commandType }).then((res) => {
+      uni.hideLoading()
+      resolve(res)
+    }).catch((err) => {
+      uni.hideLoading()
+      reject(err)
+    })
+  })
 }
 
 // 刷新
@@ -494,9 +537,18 @@ async function getCurrentRidingInfo(vehicleId = selectCar.value) {
     title: '加载中...',
     mask: true,
   })
-  const res = await httpGet(`/riding/ride/homepage/vehicle/${vehicleId}`)
-  uni.hideLoading()
-  currentRidingInfo.value = (res.data as any)
+  const deviceNo = carList.value.find(item => item.id === vehicleId)?.deviceNo
+  // 4g设备的话获取当前车辆位置信息
+  if (carStore.network) {
+    const res = await httpGet(`/device/v2/devices/${deviceNo}/location/basic`)
+    uni.hideLoading()
+    currentRidingInfo.value = (res.data as any)
+  }
+  else {
+    const res = await httpGet(`/riding/ride/homepage/vehicle/${vehicleId}`)
+    uni.hideLoading()
+    currentRidingInfo.value = (res.data as any)
+  }
 }
 
 // 获取位置信息和天气
@@ -508,7 +560,6 @@ function getLocationAndWeather() {
     httpGet(`/device/weather/tianqi`, { lat: latitude, lng: longitude }).then((weatherRes) => {
       (weatherRes.data as any).simpleWeather = (weatherRes.data as any).hours.slice(0, 3)
       weatherInfo.value = weatherRes.data as any
-      console.log('获取天气信息成功:', weatherRes.data)
     }).catch((err) => {
       console.error('获取天气信息失败:', err)
     })
@@ -540,40 +591,70 @@ async function getCarList() {
   else {
     // 有车辆，默认选中车辆
     setDefaultVehicleId(carList.value)
+    // 获取当前骑行信息
     getCurrentRidingInfo()
+    // 获取车辆状态信息
+    if (carStore.network) {
+      getCarInfo()
+      getCarInfoTimer = setInterval(() => {
+        getCarInfo()
+      }, 3000)
+    }
     // 自动连接蓝牙
     connectBle()
   }
 }
 // 默认选中车辆
-function setDefaultVehicleId(carsList) {
-  if (!userStore.userInfo.defaultVehicleId) {
-    // 未设置默认车辆，选中第一辆
-    if (carsList.length > 0) {
-      selectCar.value = carsList[0].id
-      // 更新用户信息,设置默认车辆id
-      const params = {
-        ...userStore.userInfo,
-        defaultVehicleId: carsList[0].id,
-      }
-      delete params.token
-
-      userStore.updateInfo(params)
-    }
+function setDefaultVehicleId(carsList: any[]) {
+  // 1. 参数校验
+  if (!carsList || carsList.length === 0) {
+    console.warn('车辆列表为空，无法设置默认车辆')
     return
   }
-  if (carsList.length > 0) {
-    const findCar = carsList.find(item => item.id === userStore.userInfo.defaultVehicleId)
+
+  // 2. 判断是否已有默认车辆ID
+  const defaultVehicleId = userStore.userInfo.defaultVehicleId
+
+  if (!defaultVehicleId) {
+    // 2.1 未设置默认车辆，选中第一辆
+    selectCar.value = carsList[0].id
+    console.log('未设置默认车辆，自动选择第一辆:', selectCar.value)
+    carStore.setCarInfo(carsList[0])
+  }
+  else {
+    // 2.2 已设置默认车辆，检查是否在列表中
+    const findCar = carsList.find(item => item.id === defaultVehicleId)
+
     if (findCar) {
       selectCar.value = findCar.id
+      console.log('找到默认车辆:', selectCar.value)
+      carStore.setCarInfo(findCar)
     }
     else {
+      // 默认车辆不在列表中（可能已删除），选择第一辆
       selectCar.value = carsList[0].id
+      carStore.setCarInfo(carsList[0])
+      console.warn('默认车辆不存在，自动选择第一辆:', selectCar.value)
     }
   }
 
-  // 存储选中车辆颜色
+  // 3. 存储选中车辆颜色
   uni.setStorageSync('selectColorCode', colorCode.value)
+}
+
+// 获取车辆状态信息
+function getCarInfo() {
+  const deviceNo = carList.value.find(item => item.id === selectCar.value)?.deviceNo
+  httpGet(`/device/v2/devices/${deviceNo}/status`).then((res) => {
+    carState.value = {
+      ...carState.value,
+      ...res.data as any,
+    }
+    // 更新车辆状态
+    updateCarStatusDebounced()
+  }).catch((err) => {
+    console.error('获取车辆状态信息失败:', err)
+  })
 }
 
 // 连接蓝牙
@@ -592,29 +673,29 @@ async function connectBle() {
 
     // 统一入口：传name或deviceId
     // E车星SDK连接方式
-    // const device = await openAndSearchAndConnect({
-    //   name: 'EV10C-15B6C6',
-    // }) as { deviceId: string }
-    // const res = await EVSBikeSDK.connect({
-    //   deviceId: device.deviceId,
-    //   type: 'at', // 设备类型
-    // })
-
-    // 华慧蓝牙SDK连接方式
-    await EVSBikeSDK.connect({
-      deviceId: '205091606',
+    const device = await openAndSearchAndConnect({
+      name: 'EV10C-15B6C6',
+    }) as { deviceId: string }
+    const res = await EVSBikeSDK.connect({
+      deviceId: device.deviceId,
       type: 'at', // 设备类型
     })
+
+    // 华慧蓝牙SDK连接方式
+    // await EVSBikeSDK.connect({
+    //   deviceId: '205091606',
+    //   type: 'at', // 设备类型
+    // })
     // console.log(res)
 
     status.value = 2
 
     EVSBikeSDK.subscribe(onStateChange)
     // E车星SDK发送密码验证指令
-    // EVSBikeSDK.bleCommandsApi.sendBindOwnerCommand('166A5F83')
+    EVSBikeSDK.bleCommandsApi.sendBindOwnerCommand('166A5F83')
 
     // 华慧SDK发送密码验证指令
-    EVSBikeSDK.bleCommandsApi.sendBindOwnerCommand('10 82 8D 54 AA B7 82 85 15 69 5D AE AF F2 D9 C9 9E 30 47 E4 FD 8F AF 25 87 7D 59 21 E9 E6 5B 69 ')
+    // EVSBikeSDK.bleCommandsApi.sendBindOwnerCommand('10 82 8D 54 AA B7 82 85 15 69 5D AE AF F2 D9 C9 9E 30 47 E4 FD 8F AF 25 87 7D 59 21 E9 E6 5B 69 ')
 
     // 监听蓝牙状态
     wx.onBLEConnectionStateChange((res) => {
@@ -726,7 +807,7 @@ function onTouchStart(event) {
   startX.value = event.touches[0].pageX - sliderX.value
 }
 function onTouchMove(event) {
-  if (status.value !== 2) {
+  if (status.value !== 2 && !carStore.network) {
     uni.showToast({
       title: '请先连接蓝牙',
       icon: 'success',
@@ -743,10 +824,17 @@ function onTouchMove(event) {
 function onTouchEnd(event) {
   const success = () => {
     // isUnlocked.value = !isUnlocked.value
-    // E车星蓝牙SDK发送开关车指令
-    // carState.value.isLocked ? EVSBikeSDK.bleCommandsApi.sendPowerOnCommand() : EVSBikeSDK.bleCommandsApi.sendDisarmCommand()
-    // 华慧蓝牙SDK发送开关车指令
-    carState.value.isLocked ? EVSBikeSDK.bleCommandsApi.sendPowerOnCommand() : EVSBikeSDK.bleCommandsApi.sendPowerOffCommand()
+    if (carStore.network) {
+      // 4g控车指令
+      controlBike(carState.value.isLocked ? 'unlock' : 'lock')
+    }
+    else {
+      // E车星蓝牙SDK发送开关车指令
+      carState.value.isLocked ? EVSBikeSDK.bleCommandsApi.sendPowerOnCommand() : EVSBikeSDK.bleCommandsApi.sendDisarmCommand()
+
+      // 华慧蓝牙SDK发送开关车指令
+      // carState.value.isLocked ? EVSBikeSDK.bleCommandsApi.sendPowerOnCommand() : EVSBikeSDK.bleCommandsApi.sendPowerOffCommand()
+    }
   }
   const fail = () => {
     // 回弹到对应位置
@@ -769,6 +857,20 @@ function onTouchEnd(event) {
   else {
     fail()
   }
+}
+
+function goLocationDetail() {
+  if (!userStore.isLoggedIn) {
+    uni.showToast({
+      title: '请先登录',
+      icon: 'none',
+      mask: true,
+    })
+    return
+  }
+  uni.navigateTo({
+    url: `/pages-network/localtion/index?rideId=${currentRidingInfo.value.rideId}`,
+  })
 }
 
 function goLogin() {
@@ -797,9 +899,70 @@ function goDetail() {
     url: `/pages-car/trackDetail/index?rideId=${currentRidingInfo.value.rideId}`,
   })
 }
+
+function goNotice() {
+  if (!userStore.isLoggedIn) {
+    uni.showToast({
+      title: '请先登录',
+      icon: 'none',
+      mask: true,
+    })
+    return
+  }
+  uni.navigateTo({
+    url: `/pages-network/notice/index?deviceId=${carStore.carInfo.deviceNo}`,
+  })
+}
 // 显示天气详情
 function showWeatherDetail() {
   weatherPopVisible.value = true
+}
+
+function getSliderBgStyle() {
+  if (carStore.network) {
+    return { background: isUnlocked.value ? '#2CBC7B' : '#DB6477' }
+  }
+  else {
+    if ((status.value === 0 || status.value === 1)) {
+      return { background: '#E6E6E6' }
+    }
+    else {
+      return { background: isUnlocked.value ? '#2CBC7B' : '#DB6477' }
+    }
+  }
+}
+
+function getSliderColorStyle() {
+  if (carStore.network) {
+    return '#ffffff'
+  }
+  else {
+    if ((status.value === 0 || status.value === 1)) {
+      return '#333333'
+    }
+    else {
+      return '#ffffff'
+    }
+  }
+}
+function getBatteryIcon() {
+  const batteryLevel = carState.value.batteryLevel
+  // 根据电池电量返回对应图标,电量总共100，分为5个阶段
+  if (batteryLevel >= 80) {
+    return Bat5
+  }
+  else if (batteryLevel >= 60) {
+    return Bat4
+  }
+  else if (batteryLevel >= 40) {
+    return Bat3
+  }
+  else if (batteryLevel >= 20) {
+    return Bat2
+  }
+  else {
+    return Bat1
+  }
 }
 </script>
 
@@ -890,7 +1053,7 @@ function showWeatherDetail() {
             </view>
             <!-- 更多天气 -->
             <view class="absolute bottom-[-65rpx] right-28rpx h-80rpx w-230rpx flex items-center justify-evenly rounded-[10rpx] bg-[#5DACF8]">
-              <view v-for="item in weatherInfo.simpleWeather" :key="item.hours" class="flex flex-col items-center justify-center text-16rpx">
+              <view v-for="(item, index) in weatherInfo.simpleWeather" :key="index" class="flex flex-col items-center justify-center text-16rpx">
                 <view>{{ item.hours }}</view>
                 <image
                   class="my-6rpx h-20rpx w-20rpx"
@@ -916,16 +1079,17 @@ function showWeatherDetail() {
               class="h-80rpx w-80rpx"
               :src="status === 0 ? BlueClose : BlueOpen"
               mode="scaleToFill"
+              @click="toggleBluetooth"
             />
             <image
               class="h-80rpx w-80rpx"
-              :src="Bat5"
+              :src="getBatteryIcon()"
               mode="scaleToFill"
-              @click="showBatPopup = true"
+              @click="handleShowBatPopup"
             />
-            <view class="relative h-80rpx w-80rpx">
+            <view class="relative h-80rpx w-80rpx" @click="goNotice">
               <view class="notice-count absolute right-0 top-0">
-                2
+                {{ carState.warnCount }}
               </view>
               <image
                 class="h-80rpx w-80rpx"
@@ -959,7 +1123,7 @@ function showWeatherDetail() {
       <view class="relative z-10 mb-19rpx ml-20rpx mt-[-75rpx] box-border w-710rpx rounded-[10rpx] bg-white px-80rpx py-33rpx">
         <view
           class="slider relative z-11 mb-40rpx h-136rpx w-550rpx rounded-[136rpx]"
-          :style="{ background: status === 0 || status === 1 ? '#E6E6E6' : isUnlocked ? '#2CBC7B' : '#DB6477' }"
+          :style="getSliderBgStyle()"
           @touchstart="onTouchStart"
           @touchmove="onTouchMove"
           @touchend="onTouchEnd"
@@ -967,7 +1131,7 @@ function showWeatherDetail() {
           <image
             class="slider-bg absolute left-0 top-0 z-12 h-136rpx w-136rpx"
             :style="sliderStyle"
-            :src="status === 0 || status === 1 ? CloseBtnBrayIcon : isUnlocked ? CloseBtnIcon : CloseBtnRedIcon"
+            :src="carStore.network ? CloseBtnRedIcon : status === 0 || status === 1 ? CloseBtnBrayIcon : isUnlocked ? CloseBtnIcon : CloseBtnRedIcon"
             mode="scaleToFill"
           />
           <image
@@ -978,7 +1142,7 @@ function showWeatherDetail() {
           />
           <view
             class="absolute top-52rpx text-31rpx"
-            :style="{ left: isUnlocked ? '213rpx' : '353rpx', color: status === 0 || status === 1 ? '#333333' : isUnlocked ? '#ffffff' : '#ffffff' }"
+            :style="{ left: isUnlocked ? '213rpx' : '353rpx', color: getSliderColorStyle() }"
           >
             {{ isUnlocked ? '滑动锁车' : '滑动开锁' }}
           </view>
@@ -993,7 +1157,7 @@ function showWeatherDetail() {
         >
           <view class="grid">
             <view v-for="item in list" :key="item.name" class="item" @click="onItemClick(item)">
-              <image mode="scaleToFill" class="item-img" :style="{ opacity: status === 2 ? '1' : '0.3' }" :src="item.active ? item.activeIcon : item.icon" />
+              <image mode="scaleToFill" class="item-img" :style="{ opacity: carStore.network ? '1' : status === 2 ? '1' : '0.3' }" :src="item.active ? item.activeIcon : item.icon" />
               <text class="item-text">
                 {{ item.name }}
               </text>
@@ -1001,7 +1165,7 @@ function showWeatherDetail() {
           </view>
         </fg-scroll-x>
       </view>
-      <!-- 车辆位置 -->
+      <!--  蓝牙车辆位置 -->
       <view v-if="!carStore.network" class="flex items-center justify-between px-20rpx">
         <view class="relative box-border w-710rpx rounded-[10rpx] bg-white px-25rpx py-23rpx">
           <view class="flex items-center justify-between">
@@ -1030,31 +1194,31 @@ function showWeatherDetail() {
           </view>
         </view>
       </view>
-      <!-- bottom -->
-      <view v-else class="flex items-center justify-between px-20rpx">
+      <!-- 4g车辆位置 -->
+      <view v-else class="flex items-center justify-between px-20rpx" @click="goLocationDetail">
         <view class="relative box-border h-166rpx w-340rpx rounded-[10rpx] bg-white px-25rpx py-23rpx">
           <view class="flex items-center">
             <view class="whitespace-nowrap text-30rpx">
               车辆位置
             </view>
             <image class="ml-72rpx h-22rpx w-22rpx" :src="ReloadIcon" mode="scaleToFill" />
-            <view class="ml-24rpx whitespace-nowrap text-28rpx">
+            <view class="ml-24rpx whitespace-nowrap text-28rpx" @click="reloadLocation">
               刷新
             </view>
           </view>
           <view class="mt-24rpx w-258rpx text-23rpx">
-            广东省广州市珠海区广东省 广州市珠海区
+            {{ currentRidingInfo.address }}
           </view>
           <image class="absolute bottom-12rpx right-14rpx h-48rpx w-52rpx" :src="LocationIcon" mode="scaleToFill" />
         </view>
 
-        <view class="relative box-border h-166rpx w-340rpx rounded-[10rpx] bg-white px-25rpx py-23rpx">
+        <view class="relative box-border h-166rpx w-340rpx rounded-[10rpx] bg-white px-25rpx py-23rpx" @click="goNotice">
           <view class="flex items-center justify-between">
             <view class="whitespace-nowrap text-30rpx">
               警告信息
             </view>
             <view class="notice-count">
-              2
+              {{ carState.warnCount }}
             </view>
           </view>
           <view class="mt-24rpx w-258rpx text-23rpx text-gray-500">
@@ -1069,17 +1233,11 @@ function showWeatherDetail() {
   <!-- 天气弹窗 -->
   <weather-pop v-model="weatherPopVisible" :weather-info="weatherInfo" />
   <!-- 电池电压弹窗 -->
-  <fg-message v-model:show="showBatPopup" :duration="duration" :show-cancel-btn="true" :show-confirm-btn="true" :close-on-click-modal="closeOnClickModal" @cancel="showBatPopup = false" @confirm="handleConfirm">
+  <fg-message v-model:show="showBatPopup" :duration="duration" :show-cancel-btn="true" :show-confirm-btn="true" :close-on-click-modal="closeOnClickModal" @cancel="showBatPopup = false" @confirm="handleBatConfirm">
     <view class="w-500rpx">
       <view class="bat flex items-center justify-between">
-        <view class="bat-item">
-          48V
-        </view>
-        <view class="bat-item">
-          60V
-        </view>
-        <view class="bat-item active">
-          72V
+        <view v-for="tab in batterTab" :key="tab" class="bat-item" :class="batteryVoltageType === tab ? 'active' : ''" @click="batteryVoltageType = tab">
+          {{ tab }}V
         </view>
       </view>
       <view class="mt-44rpx text-20rpx text-[#666666]">
@@ -1195,18 +1353,5 @@ function showWeatherDetail() {
        color: #2CBD7C;
     }
   }
-}
-</style>
-
-<style>
-.custom-txt {
-  color: black;
-  width: 400rpx;
-  height: 400rpx;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 40rpx;
-  border-radius: 32rpx;
 }
 </style>

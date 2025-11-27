@@ -163,6 +163,35 @@ function getEcuStatus() {
   })
   hhznBikeSDK.bleCommandsApi.sendGetEcuConfigCommand()
 }
+
+// 首页4g接口
+/**
+ * // 1、车辆位置信息
+ *  返回数据格式：
+ * {
+ *  “latitude”: 40.08923, // 纬度
+ *  "longitude": 116.41321, // 经度
+ *  "address": '北京市昌平区东小口', // 地址名称
+ *  "rideId": 123213, // 暂定 骑行ID 用于获取当前位置详情
+ *
+ * }
+ * // 2、车辆指令接口，发送指令到车辆
+ *  具体包括开锁、关锁、设防、撤防、寻车、一键静音、感应启动设置、感应距离设置、超速报警设置、无感解锁设置、获取车辆状态等指令
+ *
+ * 获取车辆状态返回数据格式：
+ * {
+ *   "warnCount": 3, // 当前车辆未处理告警数量
+ *   "battery": 85, // 电量百分比
+ *   isStarted: false, // 车辆是否已启动。`true`：已启动  - `false`：未启动
+     isLocked: true, // 车辆是否处于锁车状态。  - `true`：已锁车  - `false`：未锁车
+     isArmed: false, // 车辆是否已设防（防盗报警激活）。  - `true`：已设防  - `false`：未设防
+     isMuteArmOn: false, // 车辆是否已开启静音设防。  - `true`：已开启  - `false`：未开启
+     isKeylessOn: false, // 感应启动功能是否开启。  - `true`：开启  - `false`：关闭
+     keylessRange: false, // 感应启动距离。 - `1`：一档，信号强度最高 - `2`：二档，信号强度中等  - `3`：表示三档，信号强度最低。
+     isOverspeedOn: false, // 超速报警功能是否开启。  - `true`：超速  - `false`：未超速
+ 
+ * }
+ */
 </script>
 
 <template>

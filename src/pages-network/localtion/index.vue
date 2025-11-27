@@ -12,10 +12,9 @@
 <script lang="ts" setup>
 import { httpGet } from '@/utils/http'
 
-const MapArrow = 'http://115.190.57.206/static/home/map-arrow.png'
 const ReloadIcon = 'http://115.190.57.206/static/home/reload.png'
 
-const EndPointIcon = 'http://115.190.57.206/static/common/end-point.png'
+// const EndPointIcon = 'http://115.190.57.206/static/common/end-point.png'
 // 不同状态车辆图标
 const ArrowRed = 'http://115.190.57.206/static/network/arrow-red.png'
 const ArrowGray = 'http://115.190.57.206/static/network/arrow-gray.png'
@@ -28,32 +27,22 @@ const location = ref({
   latitude: 40.0370140,
   longitude: 116.271214,
 })
+// 地图点
 const markers = ref([
-  // {
-  //   id: 1,
-  //   latitude: 40.040129,
-  //   longitude: 116.274968,
-  //   width: 30,
-  //   height: 45,
-  //   iconPath: StartPointIcon,
-  //   anchor: {
-  //     x: 0.5,
-  //     y: 0.5,
-  //   },
-  // },
   {
     id: 2,
     latitude: 40.03245000000001,
     longitude: 116.272472,
     width: 45,
     height: 45,
-    iconPath: MapArrow,
+    iconPath: ArrowRed,
     anchor: {
       x: 0.5,
       y: 0.5,
     },
   },
 ])
+// 骑行轨迹
 const polyline = ref([
   {
     points: [{ latitude: 40.040129, longitude: 116.274968 }, { latitude: 40.038974, longitude: 116.275214 }, { latitude: 40.038974, longitude: 116.275214 }, { latitude: 40.038565000000006, longitude: 116.272683 }, { latitude: 40.03848200000001, longitude: 116.27209500000001 }, { latitude: 40.03836100000001, longitude: 116.27074 }, { latitude: 40.03832700000001, longitude: 116.270515 }, { latitude: 40.03807400000001, longitude: 116.268038 }, { latitude: 40.03801400000001, longitude: 116.26763600000001 }, { latitude: 40.03801400000001, longitude: 116.26763600000001 }, { latitude: 40.03790800000001, longitude: 116.267508 }, { latitude: 40.03450300000001, longitude: 116.270961 }, { latitude: 40.03419900000001, longitude: 116.271221 }, { latitude: 40.03396500000001, longitude: 116.271401 }, { latitude: 40.03245000000001, longitude: 116.272472 }],
@@ -64,10 +53,9 @@ const polyline = ref([
 
 // 骑行信息
 const ridingInfo = ref<any>({})
-const mapImage = ref('')
 
 onLoad((e) => {
-  // getTrackInfo(e.rideId)
+  getTrackInfo(e.rideId)
   // const instance = getCurrentInstance()?.proxy as { getOpenerEventChannel?: () => UniApp.EventChannel }
   // if (instance?.getOpenerEventChannel) {
   //   const eventChannel = instance.getOpenerEventChannel()
@@ -76,13 +64,13 @@ onLoad((e) => {
   //     getTrackInfo(info.rideId)
   //   })
   // }
-  const instance = getCurrentInstance() // 获取组件实
-  const mapCtx = uni.createMapContext('map', instance)
-  // 缩放视野展示所有点
-  mapCtx.includePoints({
-    points: polyline.value[0].points,
-    padding: [20, 20, 360, 20],
-  })
+  // const instance = getCurrentInstance() // 获取组件实
+  // const mapCtx = uni.createMapContext('map', instance)
+  // // 缩放视野展示所有点
+  // mapCtx.includePoints({
+  //   points: polyline.value[0].points,
+  //   padding: [20, 20, 360, 20],
+  // })
 })
 
 // onMounted(() => {
@@ -97,12 +85,12 @@ onLoad((e) => {
 // 获取骑行数据
 async function getTrackInfo(rideId: string) {
   try {
-    const res = await httpGet(`/riding/ride/track/detail/${rideId}`)
+    const res = await httpGet(`/device/v2/rides/${rideId}/track`)
     if (res.code === '200') {
       ridingInfo.value = res.data
       console.log('轨迹详情:', res.data)
       const trackPoints = (res.data as any).trackPoints
-      setMapData(trackPoints)
+      setMapData(trackPoints, ridingInfo.value.ridingStatus)
     }
     else {
       console.error('获取轨迹信息失败', res.message)
@@ -113,47 +101,64 @@ async function getTrackInfo(rideId: string) {
   }
 }
 
-function setMapData(trackPoints: Array<{ latitude: number, longitude: number }>) {
+function setMapData(trackPoints: Array<{ latitude: number, longitude: number }>, ridingStatus: string) {
   if (trackPoints.length === 0)
     return
 
-  const startPoint = trackPoints[trackPoints.length - 1]
-  const endPoint = trackPoints[0]
-  // 处理成功的轨迹数据
-  polyline.value[0].points = trackPoints
-  markers.value[0] = {
-    ...markers.value[0],
-    latitude: startPoint.latitude,
-    longitude: startPoint.longitude,
+  if (ridingStatus !== '骑行中') {
+    // 只有当前位置
+    markers.value[0] = {
+      ...markers.value[1],
+      iconPath: ridingStatus === '停泊中' ? ArrowRed : ArrowGray,
+      latitude: trackPoints[0].latitude,
+      longitude: trackPoints[0].longitude,
+    }
+    // 清空轨迹
+    polyline.value[0].points = []
+    // 取第一个点作为当前位置
+    location.value = {
+      latitude: trackPoints[0].latitude,
+      longitude: trackPoints[0].longitude,
+    }
+    const instance = getCurrentInstance() // 获取组件实
+    const mapCtx = uni.createMapContext('map', instance)
+    // 缩放视野展示所有点
+    mapCtx.includePoints({
+      points: polyline.value[0].points,
+      padding: [20, 20, 360, 20],
+    })
   }
-  markers.value[1] = {
-    ...markers.value[1],
-    latitude: endPoint.latitude,
-    longitude: endPoint.longitude,
+  else {
+    // 有轨迹
+    const startPoint = trackPoints[trackPoints.length - 1]
+    const endPoint = trackPoints[0]
+    // 处理成功的轨迹数据
+    polyline.value[0].points = trackPoints
+    // 设置终点标记
+    markers.value[0] = {
+      ...markers.value[1],
+      iconPath: ArrayGreen,
+      latitude: endPoint.latitude,
+      longitude: endPoint.longitude,
+    }
+    // 取第一个点作为当前位置
+    location.value = {
+      latitude: startPoint.latitude,
+      longitude: startPoint.longitude,
+    }
+    const instance = getCurrentInstance() // 获取组件实
+    const mapCtx = uni.createMapContext('map', instance)
+    // 缩放视野展示所有点
+    mapCtx.includePoints({
+      points: polyline.value[0].points,
+      padding: [20, 20, 360, 20],
+    })
   }
-  // 取第一个点作为当前位置
-  location.value = {
-    latitude: startPoint.latitude,
-    longitude: startPoint.longitude,
-  }
-  const instance = getCurrentInstance() // 获取组件实
-  const mapCtx = uni.createMapContext('map', instance)
-  // 缩放视野展示所有点
-  mapCtx.includePoints({
-    points: polyline.value[0].points,
-    padding: [20, 20, 360, 20],
-  })
 }
 </script>
 
 <template>
   <view class="track-detail">
-    <image
-      v-if="false"
-      class="absolute left-0 top-0 z-0 h-100% w-100%"
-      :src="mapImage"
-      mode="scaleToFill"
-    />
     <map
       id="map"
       class="map"
@@ -173,20 +178,22 @@ function setMapData(trackPoints: Array<{ latitude: number, longitude: number }>)
             class="mr-24rpx h-22rpx w-22rpx"
             :src="ReloadIcon"
             mode="scaleToFill"
+            @click="getTrackInfo(ridingInfo.rideId)"
           />
-          <view>刷新</view>
+          <view @click="getTrackInfo(ridingInfo.rideId)">
+            刷新
+          </view>
         </view>
         <view class="my-31rpx text-30rpx text-[#040404]">
-          广东省广州市珠海区广东省广州市珠海区广顺街
-          道2202-02
+          {{ ridingInfo.address }}
         </view>
         <view class="mb-20rpx h-2rpx w-100% bg-[#E6E6E6]" />
         <view class="w-100% flex justify-between text-30rpx text-[#040404]">
           <view>
-            锁车中
+            {{ ridingInfo.ridingStatus }}
           </view>
           <view class="color-[#666666]">
-            上次骑行人：爱美丽
+            上次骑行人：{{ ridingInfo.ridingName }}
           </view>
         </view>
       </view>

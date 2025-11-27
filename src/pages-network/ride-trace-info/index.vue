@@ -63,7 +63,7 @@ const ridingInfo = ref<any>({})
 const mapImage = ref('')
 
 onLoad((e) => {
-  // getTrackInfo(e.rideId)
+  getTrackInfo(e.rideId)
   // const instance = getCurrentInstance()?.proxy as { getOpenerEventChannel?: () => UniApp.EventChannel }
   // if (instance?.getOpenerEventChannel) {
   //   const eventChannel = instance.getOpenerEventChannel()
@@ -72,13 +72,13 @@ onLoad((e) => {
   //     getTrackInfo(info.rideId)
   //   })
   // }
-  const instance = getCurrentInstance() // 获取组件实
-  const mapCtx = uni.createMapContext('map', instance)
-  // 缩放视野展示所有点
-  mapCtx.includePoints({
-    points: polyline.value[0].points,
-    padding: [20, 20, 360, 20],
-  })
+  // const instance = getCurrentInstance() // 获取组件实
+  // const mapCtx = uni.createMapContext('map', instance)
+  // // 缩放视野展示所有点
+  // mapCtx.includePoints({
+  //   points: polyline.value[0].points,
+  //   padding: [20, 20, 360, 20],
+  // })
 })
 
 // onMounted(() => {
@@ -140,6 +140,15 @@ function setMapData(trackPoints: Array<{ latitude: number, longitude: number }>)
     padding: [20, 20, 360, 20],
   })
 }
+// 格式化骑行时长（毫秒转 HH:mm:ss）
+function formatDuration(milliseconds: number) {
+  if (!milliseconds) return '00:00:00'
+  const totalSeconds = Math.floor(milliseconds / 1000)
+  const hours = Math.floor(totalSeconds / 3600)
+  const minutes = Math.floor((totalSeconds % 3600) / 60)
+  const seconds = totalSeconds % 60
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+}
 </script>
 
 <template>
@@ -164,34 +173,34 @@ function setMapData(trackPoints: Array<{ latitude: number, longitude: number }>)
         <view class="card-item flex flex-col items-center justify-between">
           <view class="card-item-top box-border h-80rpx w-100% flex items-center justify-between px-29rpx">
             <view class="text-24rpx text-[#333333]">
-              2025/09/28  12:01:48-12:07:56
+              {{ ridingInfo.rideDate }}  {{ ridingInfo.startTime }}-{{ ridingInfo.endTime}}
             </view>
           </view>
           <view class="card-item-middle box-border flex flex-col px-29rpx py-40rpx">
             <view class="flex items-center">
               <view class="mr-20rpx h-20rpx w-20rpx rounded-10rpx bg-[#DB6477]" />
-              <view>广东省广州市珠海区广东省 广州市珠海区 拷贝 2</view>
+              <view>{{ ridingInfo.startLocation }}</view>
             </view>
             <view class="flex items-center">
               <view class="mr-20rpx h-20rpx w-20rpx rounded-10rpx bg-[#2CBC7B]" />
-              <view>广东省广州市珠海区广东省 广州市珠海区 拷贝 2</view>
+              <view>{{ ridingInfo.endLocation }}</view>
             </view>
           </view>
           <view class="box-border w-100% flex items-center justify-between px-29rpx py-25rpx">
             <view class="flex flex-col items-center justify-center text-24rpx text-[#333333]">
-              <view>204</view>
+              <view>{{ ridingInfo.distanceKm }}m</view>
               <view>本次里程</view>
             </view>
             <view class="flex flex-col items-center justify-center text-24rpx text-[#333333]">
-              <view>204km/h</view>
-              <view>评价速度</view>
+              <view>{{ ridingInfo.avgSpeed }}km/h</view>
+              <view>平均速度</view>
             </view>
             <view class="flex flex-col items-center justify-center text-24rpx text-[#333333]">
-              <view>00:23:32</view>
+              <view>{{ formatDuration(ridingInfo.ridingTimeMinutes || 0) }}</view>
               <view>骑行时间</view>
             </view>
             <view class="flex flex-col items-center justify-center text-24rpx text-[#333333]">
-              <view>204g</view>
+              <view>{{ridingInfo.carbonReduction}}g</view>
               <view>减少碳排放</view>
             </view>
           </view>
@@ -248,6 +257,7 @@ function setMapData(trackPoints: Array<{ latitude: number, longitude: number }>)
       }
       .card-item-middle {
         position: relative;
+        width: 100%;
          &::after{
           content: '';
           position: absolute;

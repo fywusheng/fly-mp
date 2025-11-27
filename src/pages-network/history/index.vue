@@ -5,100 +5,218 @@
     navigationStyle: 'default',
     navigationBarTitleText: '历史停留',
     navigationBarBackgroundColor: '#ffffff',
+    enablePullDownRefresh: true, // 启用下拉刷新
   },
 }
 </route>
 
 <script lang="ts" setup>
+import { useCarStore } from '@/store/car'
 import { httpGet } from '@/utils/http'
 
 const MapArrow = 'http://115.190.57.206/static/network/location.png'
-const state = ref('finished') // loading/finished/error
+
+const state = ref<'loading' | 'finished' | 'error'>('loading')
 const time = ref<number[]>([]) // 日期
+const hasMore = ref(true) // 是否还有更多数据
+const carStore = useCarStore()
+const page = ref(1) // 当前页码
+const size = 20
+const startDate = ref('')
+const endDate = ref('')
+const stayingInfo = ref<any[]>([]) // 历史停留列表信息
 
 onLoad((e) => {
-  // getTrackInfo(e.rideId)
-  // const instance = getCurrentInstance()?.proxy as { getOpenerEventChannel?: () => UniApp.EventChannel }
-  // if (instance?.getOpenerEventChannel) {
-  //   const eventChannel = instance.getOpenerEventChannel()
-  //   eventChannel.on('rideData', (info: any) => {
-  //     ridingInfo.value = info
-  //     getTrackInfo(info.rideId)
-  //   })
-  // }
-  // const instance = getCurrentInstance() // 获取组件实
-  // const mapCtx = uni.createMapContext('map', instance)
-  // // 缩放视野展示所有点
-  // mapCtx.includePoints({
-  //   points: polyline.value[0].points,
-  //   padding: [20, 20, 360, 20],
-  // })
+  // 默认当天
+  startDate.value = timeFormat(new Date().getTime())
+  endDate.value = timeFormat(new Date().getTime())
+  getTrackInfo()
 })
 
-// 获取骑行数据
-async function getTrackInfo(rideId: string) {
+// 下拉刷新
+onPullDownRefresh(() => {
+  refreshList()
+})
+
+// 上拉加载更多
+onReachBottom(() => {
+  loadMore()
+})
+
+// 获取历史停留数据
+async function getTrackInfo(isRefresh = false) {
+  // 如果是刷新，重置分页
+  if (isRefresh) {
+    page.value = 1
+    hasMore.value = true
+  }
+
+  // 如果没有更多数据且不是刷新，直接返回
+  if (!hasMore.value && !isRefresh) {
+    state.value = 'finished'
+    return
+  }
+
+  state.value = 'loading'
+
   try {
-    const res = await httpGet(`/riding/ride/track/detail/${rideId}`)
+    const params = {
+      vehicleId: carStore.carInfo.id,
+      page: page.value,
+      size,
+      startDate: startDate.value,
+      endDate: endDate.value,
+    }
+    console.log('请求参数:', params)
+    const res = await httpGet(`/riding/ride/parking/history`, params) as any
+
     if (res.code === '200') {
-      ridingInfo.value = res.data
-      console.log('轨迹详情:', res.data)
-      const trackPoints = (res.data as any).trackPoints
-      setMapData(trackPoints)
+      const data = res.data as { records?: any[], total?: number, current?: number, pages?: number }
+      const records = data.records || []
+
+      if (isRefresh) {
+        // 刷新时替换数据
+        stayingInfo.value = records
+      }
+      else {
+        // 加载更多时追加数据
+        stayingInfo.value = [...stayingInfo.value, ...records]
+      }
+
+      // 判断是否还有更多数据
+      if (stayingInfo.value.length === data.total) {
+        hasMore.value = false
+        state.value = 'finished'
+      }
+      else {
+        hasMore.value = true
+        state.value = 'loading'
+      }
+
+      // 只有在有更多数据时才增加页码
+      if (hasMore.value && records.length > 0) {
+        page.value++
+      }
+
+      // 停止下拉刷新动画
+      if (isRefresh) {
+        uni.stopPullDownRefresh()
+      }
     }
     else {
-      console.error('获取轨迹信息失败', res.message)
+      console.error('获取历史停留数据失败', res.message)
+      state.value = 'error'
+      uni.showToast({
+        title: res.message || '获取数据失败',
+        icon: 'none',
+      })
     }
   }
   catch (error) {
-    console.error('获取轨迹信息失败', error)
+    console.error('获取历史停留数据失败', error)
+    state.value = 'error'
+    uni.showToast({
+      title: '网络错误，请重试',
+      icon: 'none',
+    })
+
+    // 停止下拉刷新动画
+    if (isRefresh) {
+      uni.stopPullDownRefresh()
+    }
   }
 }
+// 刷新列表
+function refreshList() {
+  getTrackInfo(true)
+}
+
+// 加载更多
+function loadMore() {
+  if (state.value === 'finished' || !hasMore.value) {
+    return
+  }
+
+  getTrackInfo(false)
+}
+
+function timeFormat(timestamp: number) {
+  const date = new Date(timestamp)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+// 格式化日期显示（YYYY年MM月DD日）
+function formatDate(dateStr: string) {
+  if (!dateStr)
+    return ''
+  const date = new Date(dateStr)
+  const year = date.getFullYear()
+  const month = date.getMonth() + 1
+  const day = date.getDate()
+  return `${year}年${month}月${day}日`
+}
+
 // 日期确定事件
 function handleConfirm({ value }) {
-  console.log(value)
-  console.log(time)
+  startDate.value = timeFormat(value[0])
+  endDate.value = timeFormat(value[1])
+  // 切换日期时重置列表
+  stayingInfo.value = []
+  page.value = 1
+  hasMore.value = true
+  getTrackInfo(true)
 }
-function goHistoryInfo() {
+
+function goHistoryInfo(item: any) {
   uni.navigateTo({
-    url: '/pages-network/history-info/index',
+    url: `/pages-network/history-info/index?rideId=${item.parkingId}`,
   })
 }
 </script>
 
 <template>
   <view class="track-detail">
-    <view class="card">
-      <view class="card-item box-border h-80rpx flex items-center justify-between px-29rpx" @click="goHistoryInfo">
-        <view class="flex items-center">
-          <image
-            class="mr-29rpx h-30rpx w-25rpx"
-            :src="MapArrow"
-            mode="scaleToFill"
-          />
-          <view>重庆市渝北区金开大道西段106号两江......</view>
-        </view>
-        <view>
-          <wd-icon name="arrow-right" size="20px" color="#C8C8C8" />
-        </view>
-      </view>
-      <view class="card-item box-border h-80rpx flex items-center justify-between px-29rpx" @click="goHistoryInfo">
-        <view class="flex items-center">
-          <image
-            class="mr-29rpx h-30rpx w-25rpx"
-            :src="MapArrow"
-            mode="scaleToFill"
-          />
-          <view>重庆市渝北区金开大道西段106号两江......</view>
-        </view>
-        <view>
-          <wd-icon name="arrow-right" size="20px" color="#C8C8C8" />
+    <!-- 列表内容 -->
+    <view v-if="stayingInfo.length > 0" class="list-container">
+      <view class="card">
+        <view
+          v-for="(item, index) in stayingInfo"
+          :key="item.id || index"
+          class="card-item box-border h-80rpx flex items-center justify-between px-29rpx"
+          @click="goHistoryInfo(item)"
+        >
+          <view class="flex items-center">
+            <image
+              class="mr-29rpx h-30rpx w-25rpx"
+              :src="MapArrow"
+              mode="scaleToFill"
+            />
+            <view class="address-text">
+              {{ item.address || '地址信息未知' }}
+            </view>
+          </view>
+          <view>
+            <wd-icon name="arrow-right" size="20px" color="#C8C8C8" />
+          </view>
         </view>
       </view>
+
+      <!-- 加载更多状态 -->
+      <wd-loadmore custom-class="loadmore" :state="state" />
     </view>
-    <wd-loadmore custom-class="loadmore" :state="state" />
+
+    <!-- 空状态 -->
+    <view v-else-if="state !== 'loading'" class="empty-state">
+      <wd-status-tip image="search" tip="当前搜索无结果" />
+    </view>
+
+    <!-- 日期选择器 -->
     <wd-calendar v-model="time" type="daterange" @confirm="handleConfirm">
       <view class="sub-btn">
-        <view>2025年4月1日-2025年4月2日</view>
+        <view>{{ formatDate(startDate) }}-{{ formatDate(endDate) }}</view>
         <view>点击查看更多</view>
       </view>
     </wd-calendar>
@@ -108,17 +226,42 @@ function goHistoryInfo() {
 <style lang="scss" scoped>
 .track-detail {
   width: 100vw;
-  height: 100vh;
+  min-height: 100vh;
   position: relative;
   background-color: #DDE3EC;
   padding-top: 20rpx;
   display: flex;
   flex-direction: column;
   align-items: center;
+
+  .list-container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+ .empty-state {
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items:center;
+    background: #FFFFFF;
+  }
+
   .card{
     width: 710rpx;
     background: #FFFFFF;
     border-radius: 20rpx;
+
+    .address-text {
+      max-width: 500rpx;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
     .card-item {
       position: relative;
       &::before {
@@ -139,6 +282,9 @@ function goHistoryInfo() {
     }
   }
   .sub-btn {
+    position: fixed;
+    bottom: 40rpx;
+    left: 20rpx;
     background-color: #239AF6;
     width: 710rpx;
     height: 80rpx;
