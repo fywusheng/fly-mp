@@ -9,22 +9,27 @@
 </route>
 
 <script lang="ts" setup>
-// const AutoSheFang = 'http://115.190.57.206/static/mine/auto-shefang.png'
-// const AutoXihuo = 'http://115.190.57.206/static/mine/auto-xihuo.png'
-// const MuteShefang = 'http://115.190.57.206/static/mine/mute-shefang.png'
-// E车星蓝牙SDK
-// import { openAndSearchAndConnect } from '@/utils/EvsBikeSdk'
-// import EVSBikeSDK from '@/utils/EVSBikeSDK.v1.1.1'
-// 华慧蓝牙SDK
-import hhznBikeSDK from '@/plugin/bleSdk/HHZNBikeSDK/HHZNBikeSDK.v1.0.3.js'
+// ✅ 导入蓝牙管理 Composable
+import type { BluetoothDeviceInfo } from '@/composables/useBluetooth'
+import { BluetoothStatus, useBluetooth } from '@/composables/useBluetooth'
 import { useCarStore, useUserStore } from '@/store'
 import { httpGet, httpPost } from '@/utils/http'
 
-// 华慧蓝牙SDK
-const EVSBikeSDK = hhznBikeSDK
-
 const OverSpeed = 'http://115.190.57.206/static/mine/over-speed.png'
 const RemoteControl = 'http://115.190.57.206/static/mine/remote-control.png'
+
+// ✅ 初始化蓝牙管理
+const {
+  status: bluetoothStatus,
+  vehicleState: bluetoothVehicleState,
+  connect: connectBluetooth,
+  disconnect: disconnectBluetooth,
+  sendSetOverspeedAlarmCommand,
+  sendLearnRemoteControlCommand,
+  sendGetVehicleStatusCommand,
+  onStateChange: onBluetoothStateChange,
+  offStateChange: offBluetoothStateChange,
+} = useBluetooth()
 
 const carList = ref([]) // 车辆列表
 const selectCarId = ref('') // 选中的车辆
@@ -37,8 +42,6 @@ const setId = ref('') // 设置车辆id
 
 // 超速报警开启标志
 const overSpeed = ref<boolean>(false)
-// 蓝牙状态 0:未连接 1:连接中 2:已连接
-const status = ref(0)
 // 车辆状态
 const carState = ref({
   isOverspeedOn: false, // 超速报警功能是否开启。  - `true`：超速  - `false`：未超速
@@ -69,10 +72,12 @@ onLoad(() => {
 })
 
 onHide(() => {
-  EVSBikeSDK.unsubscribe(onStateChange)
+  disconnectBluetooth()
+  offBluetoothStateChange(handleBluetoothStateChange)
 })
 onUnload(() => {
-  EVSBikeSDK.unsubscribe(onStateChange)
+  disconnectBluetooth()
+  offBluetoothStateChange(handleBluetoothStateChange)
 })
 
 watchEffect(async () => {
@@ -93,36 +98,38 @@ watchEffect(async () => {
   }
 })
 
-// 连接蓝牙
+// ✅ 连接蓝牙
 async function connectBle() {
   try {
-    status.value = 1
-    //  E车星SDK连接方式
-    // 统一入口：传name或deviceId
-    // const device = await openAndSearchAndConnect({
-    //   name: 'EV10C-15B6C6',
-    // }) as { deviceId: string }
-    // const res = await EVSBikeSDK.connect({
-    //   deviceId: device.deviceId,
-    //   type: 'at', // 设备类型
-    // })
-    // 华慧蓝牙SDK连接方式
-    const res = await EVSBikeSDK.connect({
-      deviceId: '205091606',
-      type: 'at', // 设备类型
-    })
-    console.log('连接成功', res)
-    status.value = 2
-    EVSBikeSDK.subscribe(onStateChange)
-    // E车星SDK发送密码验证指令
-    // EVSBikeSDK.bleCommandsApi.sendBindOwnerCommand('166A5F83')
-    // 华慧SDK发送密码验证指令
-    EVSBikeSDK.bleCommandsApi.sendBindOwnerCommand('10 82 8D 54 AA B7 82 85 15 69 5D AE AF F2 D9 C9 9E 30 47 E4 FD 8F AF 25 87 7D 59 21 E9 E6 5B 69 ')
+    const selectedCar = carList.value.find(car => car.id === selectCarId.value)
+    if (!selectedCar) {
+      uni.showToast({
+        title: '请先选择车辆',
+        icon: 'none',
+        duration: 500,
+      })
+      return
+    }
+
+    // 构建蓝牙设备信息
+    const deviceInfo: BluetoothDeviceInfo = {
+      bluetoothDeviceNo: selectedCar.bluetoothDeviceNo || '',
+      bluetoothDeviceType: selectedCar.bluetoothDeviceType || 2,
+      bluetoothDeviceName: selectedCar.bluetoothDeviceName || '',
+      bluetoothDeviceKey: selectedCar.bluetoothDeviceKey || '',
+    }
+
+    // 使用composable连接蓝牙
+    await connectBluetooth(deviceInfo)
+
+    // 监听蓝牙状态变化
+    onBluetoothStateChange(handleBluetoothStateChange)
+
+    console.log('连接成功')
   }
-  catch (err) {
+  catch (err: any) {
     console.log(err)
-    status.value = 0
-    wx.showToast({
+    uni.showToast({
       title: err.message || '连接失败',
       icon: 'none',
       duration: 500,
@@ -130,23 +137,18 @@ async function connectBle() {
   }
 }
 
-// 蓝牙状态变化事件
-function onStateChange(data) {
+// ✅ 处理蓝牙状态变化
+function handleBluetoothStateChange(data: any) {
   console.log('设备状态变化:', data)
-  const {
-    operType,
-    message,
-    success,
-    state,
-  } = data
+  const { operType, message: msg, success, state } = data
+
   switch (operType) {
     // 绑定用户
     case 'BIND_USER':
       // 查询车辆状态和取设备设置参数，感应启动相关
-      EVSBikeSDK.bleCommandsApi.sendGetVehicleStatusCommand()
-      // EVSBikeSDK.bleCommandsApi.sendGetEcuConfigCommand()
+      sendGetVehicleStatusCommand()
       break
-      // 复制遥控器
+    // 复制遥控器
     case 'LEARN_REMOTE':
       if (success) {
         // 复制遥控器成功
@@ -155,21 +157,19 @@ function onStateChange(data) {
         showCancelBtn.value = false
         showConfirmBtn.value = false
         closeOnClickModal.value = true
-        // confirmText.value = '立即删除'
         message.value = `复制成功!`
         showMessagePopup.value = true
       }
       else {
         // 复制遥控器失败
         uni.showToast({
-          title: message || '复制失败',
+          title: msg || '复制失败',
           icon: 'none',
           duration: 2000,
         })
       }
       break
     default:
-
       break
   }
 
@@ -231,6 +231,15 @@ function getCarList() {
   httpGet('/device/vehicle/user/complete').then((res) => {
     carList.value = (res.data as any).resultList
     setDefaultVehicleId(carList.value)
+    const selectCar = carList.value.find(car => car.id === selectCarId.value)
+    if (carStore.network) {
+      // 4G车辆状态获取
+      getCarInfo(selectCar.deviceNo)
+    }
+    else {
+      // 获取车辆设置
+      getCarSetings(selectCar.deviceNo)
+    }
   }).catch((err) => {
     console.error('获取车辆列表失败:', err)
     uni.showToast({
@@ -269,6 +278,7 @@ function getCarInfo(deviceNo?: string) {
     }
     // 更新车辆状态
     // updateCarStatus()
+    overSpeed.value = carState.value.isOverspeedOn
   }).catch((err) => {
     console.error('获取车辆状态信息失败:', err)
   })
@@ -307,7 +317,7 @@ function handleOnConfirm({ value }) {
 
 // 自动熄火
 function beforeChange({ value, resolve }) {
-  if (status.value !== 2 && !carStore.network) {
+  if (bluetoothStatus.value !== BluetoothStatus.CONNECTED && !carStore.network) {
     uni.showToast({
       title: '请先连接蓝牙',
       icon: 'none',
@@ -318,7 +328,7 @@ function beforeChange({ value, resolve }) {
   console.log('要改变的值:', value)
   if (carStore.network) {
     // 4G车辆
-    controlBike(value ? 'overspeedOn' : 'overspeedOff').then((res) => {
+    controlBike(value ? 'overspeedOn' : 'overspeedOff').then((res: any) => {
       console.log('发送超速报警指令成功:', res)
       if (res.code === '200') {
         setTimeout(() => {
@@ -335,7 +345,7 @@ function beforeChange({ value, resolve }) {
       }
       else {
         uni.showToast({
-          title: res.message || '指令发送失败',
+          title: (res as any).message || '指令发送失败',
           icon: 'none',
           duration: 1000,
         })
@@ -352,8 +362,8 @@ function beforeChange({ value, resolve }) {
     })
   }
   else {
-    // 蓝牙车辆
-    EVSBikeSDK.bleCommandsApi.sendSetOverspeedAlarmCommand(value ? 1 : 2)
+    // ✅ 蓝牙车辆使用composable方法
+    sendSetOverspeedAlarmCommand(value ? 1 : 2)
     setTimeout(() => {
       resolve(true)
       messageId.value = 1
@@ -361,16 +371,15 @@ function beforeChange({ value, resolve }) {
       showCancelBtn.value = false
       showConfirmBtn.value = false
       closeOnClickModal.value = true
-      // confirmText.value = '立即删除'
       message.value = `超速报警提示音已${value ? '开启' : '关闭'}!`
       showMessagePopup.value = true
     }, 500)
   }
 }
 
-// 复制遥控器
+// ✅ 复制遥控器
 function copyKeys() {
-  if (status.value !== 2) {
+  if (bluetoothStatus.value !== BluetoothStatus.CONNECTED) {
     uni.showToast({
       title: '请先连接蓝牙',
       icon: 'none',
@@ -378,7 +387,7 @@ function copyKeys() {
     })
     return
   }
-  EVSBikeSDK.bleCommandsApi.sendLearnRemoteControlCommand()
+  sendLearnRemoteControlCommand()
 }
 </script>
 

@@ -26,7 +26,7 @@ interface ParkingDetailDTO {
 }
 
 // 地图点和线
-const scale = ref(18)
+const scale = ref(16)
 const location = ref({
   latitude: 40.0370140,
   longitude: 116.271214,
@@ -106,11 +106,6 @@ function setMapData(trackPoints: ParkingDetailDTO) {
     latitude: trackPoints.latitude,
     longitude: trackPoints.longitude,
   })
-  // 缩放视野展示所有点
-  // mapCtx.includePoints({
-  //   points: polyline.value[0].points,
-  //   padding: [20, 20, 360, 20],
-  // })
 }
 </script>
 

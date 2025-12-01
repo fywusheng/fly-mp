@@ -10,9 +10,10 @@
 </route>
 
 <script lang="ts" setup>
-import { useUserStore } from '@/store'
+import { useCarStore, useUserStore } from '@/store'
 
 const userStore = useUserStore()
+const carStore = useCarStore()
 
 // 退出登录
 function loginOut() {
@@ -36,6 +37,10 @@ function loginOut() {
     }, 1000)
   })
 }
+
+function switchDeviceType() {
+  carStore.setNetwork(!carStore.network)
+}
 </script>
 
 <template>
@@ -46,6 +51,9 @@ function loginOut() {
     <view class="mt-100rpx">
       <wd-button block size="large" @click="loginOut">
         退出登录
+      </wd-button>
+      <wd-button block size="large" @click="switchDeviceType">
+        切换设备类型
       </wd-button>
     </view>
   </view>

@@ -1,16 +1,12 @@
 <script setup lang="ts">
-// 华慧蓝牙SDK
-// import hhznBikeSDK from '@/plugin/bleSdk/HHZNBikeSDK/HHZNBikeSDK.v1.0.3.js'
+// ✅ 导入蓝牙管理 Composable
+import type { BluetoothDeviceInfo } from '@/composables/useBluetooth'
+import { BluetoothStatus, useBluetooth } from '@/composables/useBluetooth'
 import { useLocationListener } from '@/composables/useLocationListener'
 import { useRidingTracker } from '@/composables/useRidingTracker'
 import { useCarStore, useUserStore } from '@/store'
-import { debounce, getColorImg, getLocation, initBLuetoothAuth, initLocationAuth } from '@/utils'
-
+import { debounce, getColorImg, getLocation, initLocationAuth } from '@/utils'
 import { getWeatherIcon } from '@/utils/common'
-// E车星蓝牙SDK
-import { openAndSearchAndConnect } from '@/utils/EvsBikeSdk'
-
-import EVSBikeSDK from '@/utils/EVSBikeSDK.v1.1.1'
 import { httpGet, httpPost } from '@/utils/http'
 import HomeMap from './HomeMap.vue'
 import WeatherPop from './WeatherPop.vue'
@@ -24,8 +20,24 @@ const props = defineProps({
     type: String,
   },
 })
-// 华慧蓝牙SDK
-// const EVSBikeSDK = hhznBikeSDK
+
+// ✅ 初始化蓝牙管理
+const {
+  status: bluetoothStatus,
+  vehicleState: bluetoothVehicleState,
+  currentSDKType,
+  connect: connectBluetooth,
+  disconnect: disconnectBluetooth,
+  sendUnlockCommand,
+  sendLockCommand,
+  sendArmCommand,
+  sendDisarmCommand,
+  sendFindVehicleCommand,
+  sendGetVehicleStatusCommand,
+  sendGetEcuConfigCommand,
+  onStateChange: onBluetoothStateChange,
+  offStateChange: offBluetoothStateChange,
+} = useBluetooth()
 
 const ArrowIcon = 'http://115.190.57.206/static/home/arrow.png'
 const BlueConnect = 'http://115.190.57.206/static/home/blue-connect.png'
@@ -59,6 +71,7 @@ const Bat2 = 'http://115.190.57.206/static/home/bat-2.png'
 const Bat3 = 'http://115.190.57.206/static/home/bat-3.png'
 const Bat4 = 'http://115.190.57.206/static/home/bat-4.png'
 const Bat5 = 'http://115.190.57.206/static/home/bat-5.png'
+const pickerClass = ref('transparent-picker')
 
 // 用户信息
 const userStore = useUserStore()
@@ -66,6 +79,7 @@ const carStore = useCarStore()
 // 获取胶囊位置信息
 const menuButtonInfo = uni.getMenuButtonBoundingClientRect()
 let getCarInfoTimer = null
+const isControling = ref(false) // 是否正在控车
 
 // 初始化骑行追踪
 const {
@@ -108,8 +122,7 @@ const maxRight = ref(0)
 const sliderStyle = ref({})
 const isUnlocked = ref(false) // 是否解锁成功
 
-// 蓝牙状态 0:未连接 1:连接中 2:已连接
-const status = ref(0)
+// ✅ 蓝牙状态由useBluetooth composable管理（bluetoothStatus）
 // 蓝牙功能列表
 const list = ref([{
   name: '车辆设防',
@@ -152,6 +165,7 @@ const updateCarStatusDebounced = debounce(updateCarStatus, 500)
 // 弹出框相关
 const carList = ref([])
 const selectCar = ref<number>() // 选中车辆ID
+const carPickerRef = ref() // ✅ 车辆选择器引用
 
 // message弹窗
 const showMessagePopup = ref(false) // 控制弹窗显示
@@ -214,9 +228,9 @@ function cleanupHomePage() {
   if (isListening.value) {
     stopListening()
   }
-  // 清除定时器
+  // ✅ 清除定时器
   if (getCarInfoTimer) {
-    clearInterval(getCarInfoTimer)
+    clearTimeout(getCarInfoTimer)
     getCarInfoTimer = null
   }
 }
@@ -419,7 +433,7 @@ function toggleBluetooth() {
     return
   }
   // 蓝牙状态 0:未连接 1:连接中 2:已连接
-  if (status.value === 0) {
+  if (bluetoothStatus.value === BluetoothStatus.DISCONNECTED) {
     connectBle()
   }
   else {
@@ -430,7 +444,7 @@ function toggleBluetooth() {
 // 蓝牙功能列表操作
 function onItemClick(item) {
   if (!carStore.network) {
-    if (status.value === 0 || status.value === 1) {
+    if (bluetoothStatus.value === BluetoothStatus.DISCONNECTED || bluetoothStatus.value === BluetoothStatus.CONNECTING) {
       uni.showToast({
         title: '请先连接蓝牙',
         icon: 'none',
@@ -449,29 +463,16 @@ function onItemClick(item) {
         content: item.active ? '确定要解防车辆吗？' : '确定要设防车辆吗？',
         success(res) {
           if (res.confirm) {
-            if (carStore.network) {
-              // 4g控车指令
-              controlBike(item.active ? 'undefense' : 'defense')
-            }
-            else {
-              // 蓝牙指令 设防/解防指令
-              item.active ? EVSBikeSDK.bleCommandsApi.sendDisarmCommand() : EVSBikeSDK.bleCommandsApi.sendArmCommand()
-            }
+            // ✅ 使用统一控车方法
+            controlVehicle(item.active ? 'undefense' : 'defense')
           }
         },
       })
       break
     case '一键静音':
       if (carState.value.isLocked) {
-        // 撤防指令
-        if (carStore.network) {
-          // 4g控车 撤防指令
-          controlBike('undefense')
-        }
-        else {
-          // 蓝牙
-          EVSBikeSDK.bleCommandsApi.sendDisarmCommand()
-        }
+        // ✅ 使用统一控车方法 onekeymuteon  一键静音  onekeymuteoff 解除一键静音
+        controlVehicle('onekeymuteon')
       }
       else {
         uni.showToast({
@@ -488,13 +489,8 @@ function onItemClick(item) {
     case '鸣笛寻车':
       if (carState.value.isLocked) {
         uni.vibrateLong()
-        if (carStore.network) {
-          // 4g控车指令
-          controlBike('find')
-        }
-        else {
-          EVSBikeSDK.bleCommandsApi.sendFindVehicleCommand()
-        }
+        // ✅ 使用统一控车方法
+        controlVehicle('find')
       }
       else {
         uni.showToast({
@@ -506,20 +502,91 @@ function onItemClick(item) {
   }
 }
 
+// ✅ 统一控车方法：优先4G，回退蓝牙
+async function controlVehicle(commandType: string) {
+  // 优先使用4G控车
+  if (carStore.network) {
+    await controlBike(commandType)
+    return
+  }
+
+  // 检查蓝牙连接状态
+  if (bluetoothStatus.value !== BluetoothStatus.CONNECTED) {
+    uni.showToast({
+      title: '请先连接蓝牙',
+      icon: 'none',
+      mask: true,
+    })
+    return
+  }
+
+  // 使用蓝牙控车
+  switch (commandType) {
+    case 'unlock':
+      // 蓝牙解锁根据设备类型发送不同指令 E车星发送解防 华慧发送解锁
+      carStore.carInfo.bluetoothDeviceType === 1 ? sendDisarmCommand() : sendUnlockCommand()
+      break
+    case 'lock':
+      sendLockCommand()
+      break
+    case 'defense':
+      sendArmCommand()
+      break
+    case 'undefense':
+      sendDisarmCommand()
+      break
+    case 'find':
+      sendFindVehicleCommand()
+      break
+  }
+}
+
 // 4g控车指令
 function controlBike(commandType: string) {
+  // ✅ 清除旧定时器
+  if (getCarInfoTimer) {
+    clearTimeout(getCarInfoTimer)
+    getCarInfoTimer = null
+  }
+  // 发送控车指令
+  isControling.value = true
+  const nameMap = {
+    lock: '锁车',
+    unlock: '解锁',
+    defense: '设防',
+    undefense: '解防',
+    find: '寻车',
+  }
+
   uni.showLoading({
-    title: '指令发送中...',
+    title: `车辆${nameMap[commandType]}中`,
     mask: true,
   })
+
+  if (['lock', 'unlock'].includes(commandType)) {
+    isUnlocked.value = commandType === 'unlock'
+    setSliderStatus(isUnlocked.value)
+  }
+  if (['defense', 'undefense'].includes(commandType)) {
+    const isDefend = commandType === 'defense'
+    list.value[0].active = isDefend
+    carState.value.isArmed = isDefend
+  }
+
   const deviceNo = carList.value.find(item => item.id === selectCar.value)?.deviceNo
   return new Promise((resolve, reject) => {
     httpPost(`/device/v2/devices/${deviceNo}/commands`, { commandType }).then((res) => {
       uni.hideLoading()
+      isControling.value = false
       resolve(res)
+      // 重新获取车辆状态
+      getCarInfo()
     }).catch((err) => {
       uni.hideLoading()
       reject(err)
+      isControling.value = false
+      // 重新获取车辆状态
+      getCarInfo()
     })
   })
 }
@@ -593,12 +660,9 @@ async function getCarList() {
     setDefaultVehicleId(carList.value)
     // 获取当前骑行信息
     getCurrentRidingInfo()
-    // 获取车辆状态信息
+    // ✅ 4G设备开始轮询车辆状态（首次调用，内部会通过 setTimeout 继续轮询）
     if (carStore.network) {
       getCarInfo()
-      getCarInfoTimer = setInterval(() => {
-        getCarInfo()
-      }, 3000)
     }
     // 自动连接蓝牙
     connectBle()
@@ -618,7 +682,6 @@ function setDefaultVehicleId(carsList: any[]) {
   if (!defaultVehicleId) {
     // 2.1 未设置默认车辆，选中第一辆
     selectCar.value = carsList[0].id
-    console.log('未设置默认车辆，自动选择第一辆:', selectCar.value)
     carStore.setCarInfo(carsList[0])
   }
   else {
@@ -627,14 +690,12 @@ function setDefaultVehicleId(carsList: any[]) {
 
     if (findCar) {
       selectCar.value = findCar.id
-      console.log('找到默认车辆:', selectCar.value)
       carStore.setCarInfo(findCar)
     }
     else {
       // 默认车辆不在列表中（可能已删除），选择第一辆
       selectCar.value = carsList[0].id
       carStore.setCarInfo(carsList[0])
-      console.warn('默认车辆不存在，自动选择第一辆:', selectCar.value)
     }
   }
 
@@ -645,64 +706,71 @@ function setDefaultVehicleId(carsList: any[]) {
 // 获取车辆状态信息
 function getCarInfo() {
   const deviceNo = carList.value.find(item => item.id === selectCar.value)?.deviceNo
-  httpGet(`/device/v2/devices/${deviceNo}/status`).then((res) => {
-    carState.value = {
-      ...carState.value,
-      ...res.data as any,
-    }
-    // 更新车辆状态
-    updateCarStatusDebounced()
-  }).catch((err) => {
-    console.error('获取车辆状态信息失败:', err)
-  })
+  httpGet(`/device/v2/devices/${deviceNo}/status`)
+    .then((res) => {
+      if (isControling.value) {
+        // 控车中不更新状态
+        return
+      }
+      // 更新车辆状态信息
+      carState.value = {
+        ...carState.value,
+        ...res.data as any,
+      }
+
+      // 更新车辆状态
+      updateCarStatusDebounced()
+
+      // ✅ 使用 setTimeout 实现轮询（1.5秒后继续查询）
+      if (props.tabName === 'home' && carStore.network) {
+        getCarInfoTimer = setTimeout(() => {
+          getCarInfo()
+        }, 1500) as unknown as number
+      }
+    })
+    .catch((err) => {
+      console.error('获取车辆状态信息失败:', err)
+
+      // ✅ 即使失败也继续轮询（避免一次失败导致停止查询）
+      if (props.tabName === 'home' && carStore.network) {
+        getCarInfoTimer = setTimeout(() => {
+          getCarInfo()
+        }, 1500) as unknown as number
+      }
+    })
 }
 
-// 连接蓝牙
+// ✅ 连接蓝牙
 async function connectBle() {
   try {
-    const blueAuth = await initBLuetoothAuth()
-    if (!blueAuth) {
+    const selectedCarInfo = carList.value.find(item => item.id === selectCar.value)
+    if (!selectedCarInfo) {
       uni.showToast({
-        title: '请开启蓝牙权限',
+        title: '请先选择车辆',
         icon: 'none',
         mask: true,
       })
       return
     }
-    status.value = 1
 
-    // 统一入口：传name或deviceId
-    // E车星SDK连接方式
-    const device = await openAndSearchAndConnect({
-      name: 'EV10C-15B6C6',
-    }) as { deviceId: string }
-    const res = await EVSBikeSDK.connect({
-      deviceId: device.deviceId,
-      type: 'at', // 设备类型
-    })
+    // 构建蓝牙设备信息
+    const deviceInfo: BluetoothDeviceInfo = {
+      bluetoothDeviceNo: selectedCarInfo.bluetoothDeviceNo || '',
+      bluetoothDeviceType: selectedCarInfo.bluetoothDeviceType || 2, // 默认E车星
+      bluetoothDeviceName: selectedCarInfo.bluetoothDeviceName || '',
+      bluetoothDeviceKey: selectedCarInfo.bluetoothDeviceKey || '',
+    }
 
-    // 华慧蓝牙SDK连接方式
-    // await EVSBikeSDK.connect({
-    //   deviceId: '205091606',
-    //   type: 'at', // 设备类型
-    // })
-    // console.log(res)
+    // 使用composable连接蓝牙
+    await connectBluetooth(deviceInfo)
 
-    status.value = 2
+    // 监听蓝牙状态变化
+    onBluetoothStateChange(handleBluetoothStateChange)
 
-    EVSBikeSDK.subscribe(onStateChange)
-    // E车星SDK发送密码验证指令
-    EVSBikeSDK.bleCommandsApi.sendBindOwnerCommand('166A5F83')
-
-    // 华慧SDK发送密码验证指令
-    // EVSBikeSDK.bleCommandsApi.sendBindOwnerCommand('10 82 8D 54 AA B7 82 85 15 69 5D AE AF F2 D9 C9 9E 30 47 E4 FD 8F AF 25 87 7D 59 21 E9 E6 5B 69 ')
-
-    // 监听蓝牙状态
+    // 监听蓝牙连接状态变化
     wx.onBLEConnectionStateChange((res) => {
-      // 该方法回调中可以用于处理连接意外断开等异常情况
       console.log(`device ${res.deviceId} state has changed, connected: ${res.connected}`)
       if (!res.connected) {
-        status.value = 0
         if (props.tabName === 'home') {
           uni.showToast({
             title: '蓝牙连接已断开',
@@ -710,48 +778,41 @@ async function connectBle() {
             duration: 600,
           })
         }
-        EVSBikeSDK.unsubscribe(onStateChange)
+        offBluetoothStateChange(handleBluetoothStateChange)
       }
     })
   }
-  catch (err) {
+  catch (err: any) {
     console.log(err)
-    status.value = 0
-    // wx.showToast({
-    //   title: err.errMsg || '连接蓝牙失败',
+    // uni.showToast({
+    //   title: err.message || '连接蓝牙失败',
     //   icon: 'error',
     //   duration: 600,
     // })
   }
 }
 
-function onStateChange(data) {
+// ✅ 处理蓝牙状态变化
+function handleBluetoothStateChange(data: any) {
   console.log('设备状态变化:', data)
-  const {
-    operType,
-    message,
-    success,
-    state,
-  } = data
+  const { state, operType } = data
+
+  if (!state)
+    return
+
   switch (operType) {
-    // 绑定用户
     case 'BIND_USER':
-      // 查询车辆状态和取设备设置参数，感应启动相关
-      EVSBikeSDK.bleCommandsApi.sendGetVehicleStatusCommand()
-      // setTimeout(() => {
-      //   EVSBikeSDK.bleCommandsApi.sendGetEcuConfigCommand()
-      // }, 100)
+      console.log('✅ 用户绑定成功，查询车辆状态')
+      sendGetVehicleStatusCommand()
       break
-    // 获取车辆状态成功后发送获取ECU
+
     case 'GET_CAR_STATUS':
-      EVSBikeSDK.bleCommandsApi.sendGetEcuConfigCommand()
+      console.log('✅ 获取车辆状态成功，获取 ECU 配置')
+      sendGetEcuConfigCommand()
       break
     default:
       break
   }
-
-  if (!state)
-    return
 
   carState.value = {
     ...carState.value,
@@ -765,8 +826,6 @@ function updateCarStatus() {
   list.value = list.value.map((item) => {
     if (item.name === '车辆设防')
       item.active = carState.value.isArmed
-    // if (item.name === '一键静音')
-    //   item.active = carState.value.isMuteArmOn
     if (item.name === '感应控车')
       item.active = carState.value.isKeylessOn
     return item
@@ -775,21 +834,35 @@ function updateCarStatus() {
   isUnlocked.value = !carState.value.isLocked
   setSliderStatus(isUnlocked.value)
 }
-// 断开蓝牙
-function disconnect() {
-  EVSBikeSDK.disconnect()
-    .then((res) => {
-      console.log('断开蓝牙', res)
-      status.value = 0
-      EVSBikeSDK.unsubscribe(onStateChange)
-    })
-    .catch((err) => {
-      console.log(err)
-    })
+// ✅ 断开蓝牙
+async function disconnect() {
+  try {
+    await disconnectBluetooth()
+    offBluetoothStateChange(handleBluetoothStateChange)
+    console.log('断开蓝牙成功')
+  }
+  catch (err) {
+    console.log('断开蓝牙失败:', err)
+  }
 }
+
+// ✅ 显示车辆选择器
+function showCarPicker() {
+  if (!carList.value.length) {
+    uni.showToast({
+      title: '暂无车辆',
+      icon: 'none',
+    })
+    return
+  }
+  pickerClass.value = ''
+  carPickerRef.value?.open()
+}
+
 // 切换车辆
 async function handleConfirmCar({ value, selectedItems }) {
   console.log('选中车辆:', value, selectedItems)
+  selectCar.value = value
   const params = {
     ...userStore.userInfo,
     defaultVehicleId: value,
@@ -798,16 +871,31 @@ async function handleConfirmCar({ value, selectedItems }) {
 
   // 更新用户信息,设置车辆id
   userStore.updateInfo(params)
+  // 设置车辆信息
+  carStore.setCarInfo(selectedItems)
 
   // 存储选中车辆颜色
   uni.setStorageSync('selectColorCode', colorCode.value)
+
+  // ✅ 清除旧定时器
+  if (getCarInfoTimer) {
+    clearTimeout(getCarInfoTimer)
+    getCarInfoTimer = null
+  }
+
+  // ✅ 4G设备重新开始轮询车辆状态
+  if (carStore.network) {
+    getCarInfo()
+  }
+  // 获取当前骑行信息
+  getCurrentRidingInfo()
 }
 
 function onTouchStart(event) {
   startX.value = event.touches[0].pageX - sliderX.value
 }
 function onTouchMove(event) {
-  if (status.value !== 2 && !carStore.network) {
+  if (bluetoothStatus.value !== BluetoothStatus.CONNECTED && !carStore.network) {
     uni.showToast({
       title: '请先连接蓝牙',
       icon: 'success',
@@ -823,18 +911,8 @@ function onTouchMove(event) {
 // 开锁、关锁
 function onTouchEnd(event) {
   const success = () => {
-    // isUnlocked.value = !isUnlocked.value
-    if (carStore.network) {
-      // 4g控车指令
-      controlBike(carState.value.isLocked ? 'unlock' : 'lock')
-    }
-    else {
-      // E车星蓝牙SDK发送开关车指令
-      carState.value.isLocked ? EVSBikeSDK.bleCommandsApi.sendPowerOnCommand() : EVSBikeSDK.bleCommandsApi.sendDisarmCommand()
-
-      // 华慧蓝牙SDK发送开关车指令
-      // carState.value.isLocked ? EVSBikeSDK.bleCommandsApi.sendPowerOnCommand() : EVSBikeSDK.bleCommandsApi.sendPowerOffCommand()
-    }
+    // ✅ 使用统一控车方法
+    controlVehicle(carState.value.isLocked ? 'unlock' : 'lock')
   }
   const fail = () => {
     // 回弹到对应位置
@@ -923,11 +1001,25 @@ function getSliderBgStyle() {
     return { background: isUnlocked.value ? '#2CBC7B' : '#DB6477' }
   }
   else {
-    if ((status.value === 0 || status.value === 1)) {
+    if ((bluetoothStatus.value === BluetoothStatus.DISCONNECTED || bluetoothStatus.value === BluetoothStatus.CONNECTING)) {
       return { background: '#E6E6E6' }
     }
     else {
       return { background: isUnlocked.value ? '#2CBC7B' : '#DB6477' }
+    }
+  }
+}
+
+function getLockIcon() {
+  if (carStore.network) {
+    return isUnlocked.value ? CloseBtnIcon : CloseBtnRedIcon
+  }
+  else {
+    if ((bluetoothStatus.value === BluetoothStatus.DISCONNECTED || bluetoothStatus.value === BluetoothStatus.CONNECTING)) {
+      return CloseBtnBrayIcon
+    }
+    else {
+      return isUnlocked.value ? CloseBtnIcon : CloseBtnRedIcon
     }
   }
 }
@@ -937,7 +1029,7 @@ function getSliderColorStyle() {
     return '#ffffff'
   }
   else {
-    if ((status.value === 0 || status.value === 1)) {
+    if ((bluetoothStatus.value === BluetoothStatus.DISCONNECTED || bluetoothStatus.value === BluetoothStatus.CONNECTING)) {
       return '#333333'
     }
     else {
@@ -976,126 +1068,93 @@ function getBatteryIcon() {
       />
 
       <!-- 我的车辆&蓝牙状态 -->
-      <wd-picker v-if="userStore.isLoggedIn" v-model="selectCar" :z-index="100" label-key="vehicleName" value-key="id" :columns="carList" :disabled="!carList.length" use-default-slot @confirm="handleConfirmCar">
-        <view class="car relative z-3 h-90rpx flex items-center justify-between px-29rpx" :style="{ paddingTop: `${menuButtonInfo?.top + menuButtonInfo.height + 0}px` }">
-          <view>
-            <span class="text-30rpx font-bold">{{ currentCarName }}</span>
+      <view class="car relative z-3 h-90rpx flex items-center justify-between px-29rpx" :style="{ paddingTop: `${menuButtonInfo?.top + menuButtonInfo.height + 0}px` }">
+        <!-- ✅ 点击触发车辆选择器 -->
+        <view v-if="userStore.isLoggedIn" @click="showCarPicker">
+          <span class="text-30rpx font-bold">{{ currentCarName }}</span>
+          <image
+            class="ml-16rpx h-15rpx w-30rpx"
+            :src="DownIcon"
+            mode="aspectFit"
+          />
+        </view>
+        <view v-else @click="goLogin ">
+          登录
+        </view>
+        <template v-if="weatherInfo && weatherInfo.wea">
+          <view class="flex items-center justify-center color-[#333333]">
             <image
-              class="ml-16rpx h-15rpx w-30rpx"
-              :src="DownIcon"
+              class="h-40rpx w-34rpx"
+              :src="getWeatherIcon(weatherInfo.wea)"
               mode="aspectFit"
             />
+            <view class="slide-text flex items-center justify-center">
+              <view class="ml-16rpx text-48rpx">
+                {{ weatherInfo.tem }}°
+              </view>
+              <view class="ml-12rpx text-20rpx">
+                <view>{{ weatherInfo.wea }}</view>
+                <view>
+                  {{ weatherInfo.tem1 }}°/{{ weatherInfo.tem2 }}°
+                </view>
+              </view>
+            </view>
           </view>
-
-          <template v-if="weatherInfo && weatherInfo.wea">
-            <view class="flex items-center justify-center color-[#333333]">
+          <!-- 更多天气 -->
+          <view class="absolute bottom-[-65rpx] right-28rpx h-80rpx w-230rpx flex items-center justify-evenly rounded-[10rpx] bg-[#5DACF8]" @click.stop="showWeatherDetail">
+            <view v-for="item in weatherInfo.simpleWeather" :key="item.hours" class="flex flex-col items-center justify-center text-16rpx">
+              <view>{{ item.hours }}</view>
               <image
-                class="h-40rpx w-34rpx"
-                :src="getWeatherIcon(weatherInfo.wea)"
-                mode="aspectFit"
+                class="my-6rpx h-20rpx w-20rpx"
+                :src="getWeatherIcon(item.wea)"
+                mode="scaleToFill"
               />
-              <view class="slide-text flex items-center justify-center">
-                <view class="ml-16rpx text-48rpx">
-                  {{ weatherInfo.tem }}°
-                </view>
-                <view class="ml-12rpx text-20rpx">
-                  <view>{{ weatherInfo.wea }}</view>
-                  <view>
-                    {{ weatherInfo.tem1 }}°/{{ weatherInfo.tem2 }}°
-                  </view>
-                </view>
-              </view>
+              <view>{{ item.wea }}</view>
             </view>
-            <!-- 更多天气 -->
-            <view class="absolute bottom-[-65rpx] right-28rpx h-80rpx w-230rpx flex items-center justify-evenly rounded-[10rpx] bg-[#5DACF8]">
-              <view v-for="item in weatherInfo.simpleWeather" :key="item.hours" class="flex flex-col items-center justify-center text-16rpx">
-                <view>{{ item.hours }}</view>
-                <image
-                  class="my-6rpx h-20rpx w-20rpx"
-                  :src="getWeatherIcon(item.wea)"
-                  mode="scaleToFill"
-                />
-                <view>{{ item.wea }}</view>
-              </view>
-            </view>
-            <image
-              class="absolute bottom-[-95rpx] right-38rpx z-10 h-24rpx w-40rpx"
-              :src="MoreBtnIcon"
-              mode="scaleToFill"
-              @click.stop="showWeatherDetail"
-            />
-          </template>
-        </view>
-      </wd-picker>
-      <template v-else>
-        <view class="car relative z-3 h-90rpx flex items-center justify-between px-29rpx" :style="{ paddingTop: `${menuButtonInfo?.top + menuButtonInfo.height + 15}px` }">
-          <view @click="goLogin ">
-            登录
           </view>
-          <template v-if="weatherInfo && weatherInfo.wea">
-            <view class="flex items-center justify-center color-[#333333]">
-              <image
-                class="h-40rpx w-34rpx"
-                :src="getWeatherIcon(weatherInfo.wea)"
-                mode="aspectFit"
-              />
-              <view class="slide-text flex items-center justify-center">
-                <view class="ml-16rpx text-48rpx">
-                  {{ weatherInfo.tem }}°
-                </view>
-                <view class="ml-12rpx text-20rpx">
-                  <view>{{ weatherInfo.wea }}</view>
-                  <view>
-                    {{ weatherInfo.tem1 }}°/{{ weatherInfo.tem2 }}°
-                  </view>
-                </view>
-              </view>
-            </view>
-            <!-- 更多天气 -->
-            <view class="absolute bottom-[-65rpx] right-28rpx h-80rpx w-230rpx flex items-center justify-evenly rounded-[10rpx] bg-[#5DACF8]">
-              <view v-for="(item, index) in weatherInfo.simpleWeather" :key="index" class="flex flex-col items-center justify-center text-16rpx">
-                <view>{{ item.hours }}</view>
-                <image
-                  class="my-6rpx h-20rpx w-20rpx"
-                  :src="getWeatherIcon(item.wea)"
-                  mode="scaleToFill"
-                />
-                <view>{{ item.wea }}</view>
-              </view>
-            </view>
-            <image
-              class="absolute bottom-[-95rpx] right-38rpx z-10 h-24rpx w-40rpx"
-              :src="MoreBtnIcon"
-              mode="scaleToFill"
-              @click.stop="showWeatherDetail"
-            />
-          </template>
-        </view>
-      </template>
+        </template>
+      </view>
+      <!-- 蓝牙连接&电池电量&告警信息 -->
       <view class="top-cont">
         <template v-if="carStore.network">
           <view class="flex items-center justify-between px-114rpx pt-40rpx">
-            <image
-              class="h-80rpx w-80rpx"
-              :src="status === 0 ? BlueClose : BlueOpen"
-              mode="scaleToFill"
-              @click="toggleBluetooth"
-            />
-            <image
-              class="h-80rpx w-80rpx"
-              :src="getBatteryIcon()"
-              mode="scaleToFill"
-              @click="handleShowBatPopup"
-            />
-            <view class="relative h-80rpx w-80rpx" @click="goNotice">
-              <view class="notice-count absolute right-0 top-0">
-                {{ carState.warnCount }}
-              </view>
+            <view class="flex flex-col items-center justify-center">
               <image
                 class="h-80rpx w-80rpx"
-                :src="WarnInfo"
+                :class="{ 'animate-opacity': bluetoothStatus === BluetoothStatus.CONNECTING }"
+                :src="bluetoothStatus === BluetoothStatus.DISCONNECTED ? BlueClose : BlueOpen"
                 mode="scaleToFill"
+                @click="toggleBluetooth"
               />
+              <view class="mt-20rpx text-24rpx text-[#333333]">
+                {{ bluetoothStatus === BluetoothStatus.CONNECTED ? '已连接' : bluetoothStatus === BluetoothStatus.CONNECTING ? '连接中' : '未连接' }}
+              </view>
+            </view>
+            <view class="flex flex-col items-center justify-center">
+              <image
+                class="h-80rpx w-80rpx"
+                :src="getBatteryIcon()"
+                mode="scaleToFill"
+                @click="handleShowBatPopup"
+              />
+              <view class="mt-20rpx text-24rpx text-[#333333]">
+                电池电量
+              </view>
+            </view>
+            <view class="flex flex-col items-center justify-center">
+              <view class="relative h-80rpx w-80rpx" @click="goNotice">
+                <view class="notice-count absolute right-0 top-0">
+                  {{ carState.warnCount > 99 ? '···' : carState.warnCount }}
+                </view>
+                <image
+                  class="h-80rpx w-80rpx"
+                  :src="WarnInfo"
+                  mode="scaleToFill"
+                />
+              </view>
+              <view class="mt-20rpx text-24rpx text-[#333333]">
+                告警信息
+              </view>
             </view>
           </view>
         </template>
@@ -1110,11 +1169,11 @@ function getBatteryIcon() {
           <view class="pl-60rpx" @click="toggleBluetooth">
             <image
               class="h-60rpx w-40rpx"
-              :class="{ 'animate-opacity': status === 1 }"
-              :src="status === 0 ? BLueDisconnect : BlueConnect"
+              :class="{ 'animate-opacity': bluetoothStatus === BluetoothStatus.CONNECTING }"
+              :src="bluetoothStatus === BluetoothStatus.DISCONNECTED ? BLueDisconnect : BlueConnect"
               mode="scaleToFill"
             />
-            <span class="ml-20rpx text-24rpx">{{ status === 2 ? '已连接' : status === 1 ? '蓝牙连接中' : '未连接' }}</span>
+            <span class="ml-20rpx text-24rpx">{{ bluetoothStatus === BluetoothStatus.CONNECTED ? '已连接' : bluetoothStatus === BluetoothStatus.CONNECTING ? '蓝牙连接中' : '未连接' }}</span>
           </view>
         </template>
       </view>
@@ -1131,7 +1190,7 @@ function getBatteryIcon() {
           <image
             class="slider-bg absolute left-0 top-0 z-12 h-136rpx w-136rpx"
             :style="sliderStyle"
-            :src="carStore.network ? CloseBtnRedIcon : status === 0 || status === 1 ? CloseBtnBrayIcon : isUnlocked ? CloseBtnIcon : CloseBtnRedIcon"
+            :src="getLockIcon()"
             mode="scaleToFill"
           />
           <image
@@ -1157,14 +1216,19 @@ function getBatteryIcon() {
         >
           <view class="grid">
             <view v-for="item in list" :key="item.name" class="item" @click="onItemClick(item)">
-              <image mode="scaleToFill" class="item-img" :style="{ opacity: carStore.network ? '1' : status === 2 ? '1' : '0.3' }" :src="item.active ? item.activeIcon : item.icon" />
-              <text class="item-text">
+              <image mode="scaleToFill" class="item-img" :style="{ opacity: carStore.network ? '1' : bluetoothStatus === BluetoothStatus.CONNECTED ? '1' : '0.3' }" :src="item.active ? item.activeIcon : item.icon" />
+
+              <text v-if="item.name === '车辆设防'" class="item-text">
+                {{ item.active ? item.name : '已解防' }}
+              </text>
+              <text v-else class="item-text">
                 {{ item.name }}
               </text>
             </view>
           </view>
         </fg-scroll-x>
       </view>
+
       <!--  蓝牙车辆位置 -->
       <view v-if="!carStore.network" class="flex items-center justify-between px-20rpx">
         <view class="relative box-border w-710rpx rounded-[10rpx] bg-white px-25rpx py-23rpx">
@@ -1201,8 +1265,8 @@ function getBatteryIcon() {
             <view class="whitespace-nowrap text-30rpx">
               车辆位置
             </view>
-            <image class="ml-72rpx h-22rpx w-22rpx" :src="ReloadIcon" mode="scaleToFill" />
-            <view class="ml-24rpx whitespace-nowrap text-28rpx" @click="reloadLocation">
+            <image class="ml-72rpx h-22rpx w-22rpx" :src="ReloadIcon" mode="scaleToFill" @click.stop="reloadLocation" />
+            <view class="ml-24rpx whitespace-nowrap text-28rpx" @click.stop="reloadLocation">
               刷新
             </view>
           </view>
@@ -1218,7 +1282,7 @@ function getBatteryIcon() {
               警告信息
             </view>
             <view class="notice-count">
-              {{ carState.warnCount }}
+              {{ carState.warnCount > 99 ? '···' : carState.warnCount }}
             </view>
           </view>
           <view class="mt-24rpx w-258rpx text-23rpx text-gray-500">
@@ -1250,6 +1314,22 @@ function getBatteryIcon() {
 
   <!-- 操作提示弹窗 -->
   <fg-message v-model:show="showMessagePopup" :duration="duration" :show-cancel-btn="showCancelBtn" :show-confirm-btn="showConfirmBtn" :close-on-click-modal="closeOnClickModal" :message-id="messageId" @cancel="handleCancel" @confirm="handleConfirm" />
+
+  <!-- ✅ 车辆选择器（移到外层，避免层级问题） -->
+  <view>
+    <wd-picker
+      ref="carPickerRef"
+      v-model="selectCar"
+      :close-on-click-modal="false"
+      :z-index="999999"
+      label-key="vehicleName"
+      value-key="id"
+      :columns="carList"
+      :custom-class="pickerClass"
+      @confirm="handleConfirmCar"
+      @cancel="pickerClass = 'transparent-picker'"
+    />
+  </view>
 </template>
 
 <style lang="scss" scoped>
@@ -1353,5 +1433,13 @@ function getBatteryIcon() {
        color: #2CBD7C;
     }
   }
+}
+</style>
+
+<style>
+.transparent-picker {
+  opacity: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
 }
 </style>

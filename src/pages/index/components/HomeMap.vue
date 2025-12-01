@@ -63,7 +63,6 @@ onMounted(() => {
 watch(() => props.ridingTrack, (newTrack) => {
   if (newTrack && newTrack.length > 0) {
     const reversedTrack = [...newTrack].reverse()
-    console.log('新的骑行轨迹:', reversedTrack)
     polyline.value[0].points = reversedTrack
     // 取第一个点作为当前位置
     const lastPoint = reversedTrack[0]

@@ -112,16 +112,6 @@
           }
         },
         {
-          "path": "mapDemo/index",
-          "type": "page",
-          "layout": "default",
-          "style": {
-            "navigationStyle": "default",
-            "navigationBarTitleText": "查看历史停留",
-            "navigationBarBackgroundColor": "#ffffff"
-          }
-        },
-        {
           "path": "myCar/index",
           "type": "page",
           "style": {

@@ -9,19 +9,26 @@
 </route>
 
 <script lang="ts" setup>
-// E车星蓝牙SDK
-// import { openAndSearchAndConnect } from '@/utils/EvsBikeSdk'
-// import EVSBikeSDK from '@/utils/EVSBikeSDK.v1.1.1'
-
-// 华慧蓝牙SDK
-import hhznBikeSDK from '@/plugin/bleSdk/HHZNBikeSDK/HHZNBikeSDK.v1.0.3.js'
-
+// ✅ 导入蓝牙管理 Composable
+import type { BluetoothDeviceInfo } from '@/composables/useBluetooth'
+import { useBluetooth } from '@/composables/useBluetooth'
 import { useCarStore } from '@/store'
 import { debounce } from '@/utils'
 import { httpGet, httpPost } from '@/utils/http'
 
-// 华慧蓝牙SDK
-const EVSBikeSDK = hhznBikeSDK
+// ✅ 初始化蓝牙管理
+const {
+  vehicleState: bluetoothVehicleState,
+  connect: connectBluetooth,
+  sendSetKeylessUnlockExpireCommand,
+  sendKeylessUnlockCloseCommand,
+  sendSetKeylessUnlockRangeCommand,
+  sendKeylessUnlockRangeCommand,
+  sendGetVehicleStatusCommand,
+  onStateChange: onBluetoothStateChange,
+  offStateChange: offBluetoothStateChange,
+} = useBluetooth()
+
 const carStore = useCarStore()
 
 const PointIcon = 'http://115.190.57.206/static/car/point.png'
@@ -52,10 +59,10 @@ onLoad((e) => {
 })
 
 onHide(() => {
-  EVSBikeSDK.unsubscribe(onStateChange)
+  offBluetoothStateChange(handleBluetoothStateChange)
 })
 onUnload(() => {
-  EVSBikeSDK.unsubscribe(onStateChange)
+  offBluetoothStateChange(handleBluetoothStateChange)
 })
 
 // 获取车辆状态信息
@@ -91,33 +98,33 @@ function controlBike(commandType: string) {
   })
 }
 
-// 连接蓝牙
+// ✅ 连接蓝牙
 async function connectBle() {
   try {
-    // 统一入口：传name或deviceId
-    // const device = await openAndSearchAndConnect({
-    //   name: 'EV10C-15B6C6',
-    // }) as { deviceId: string }
-    // const res = await EVSBikeSDK.connect({
-    //   deviceId: device.deviceId,
-    //   type: 'at', // 设备类型
-    // })
-    // 华慧蓝牙SDK连接方式
-    const res = await EVSBikeSDK.connect({
-      deviceId: '205091606',
-      type: 'at', // 设备类型
-    })
-    console.log('连接成功', res)
-    EVSBikeSDK.subscribe(onStateChange)
-    // E车星SDK发送密码验证指令
-    // EVSBikeSDK.bleCommandsApi.sendBindOwnerCommand('166A5F83')
+    if (!carInfo) {
+      console.error('车辆信息不存在')
+      return
+    }
 
-    // 华慧SDK发送密码验证指令
-    EVSBikeSDK.bleCommandsApi.sendBindOwnerCommand('10 82 8D 54 AA B7 82 85 15 69 5D AE AF F2 D9 C9 9E 30 47 E4 FD 8F AF 25 87 7D 59 21 E9 E6 5B 69 ')
+    // 构建蓝牙设备信息
+    const deviceInfo: BluetoothDeviceInfo = {
+      bluetoothDeviceNo: carInfo.bluetoothDeviceNo || '',
+      bluetoothDeviceType: carInfo.bluetoothDeviceType || 2,
+      bluetoothDeviceName: carInfo.bluetoothDeviceName || '',
+      bluetoothDeviceKey: carInfo.bluetoothDeviceKey || '',
+    }
+
+    // 使用composable连接蓝牙
+    await connectBluetooth(deviceInfo)
+
+    // 监听蓝牙状态变化
+    onBluetoothStateChange(handleBluetoothStateChange)
+
+    console.log('连接成功')
   }
-  catch (err) {
+  catch (err: any) {
     console.log(err)
-    wx.showToast({
+    uni.showToast({
       title: err.message || '连接失败',
       icon: 'none',
       duration: 500,
@@ -125,34 +132,21 @@ async function connectBle() {
   }
 }
 
-function onStateChange(data) {
+// ✅ 处理蓝牙状态变化
+function handleBluetoothStateChange(data: any) {
   console.log('设备状态变化:', data)
-  const {
-    operType,
-    message,
-    success,
-    state,
-  } = data
-  switch (operType) {
-    // 绑定用户
-    case 'BIND_USER':
-      // 查询车辆状态和取设备设置参数，感应启动相关
-      EVSBikeSDK.bleCommandsApi.sendGetEcuConfigCommand()
-      break
-    case 'SET_KEYLESS_EXPIRE': // at设备设置感应启动时间后查询一下时间是否过期
-      EVSBikeSDK.bleCommandsApi.sendGetEcuConfigCommand()
-      break
-    case 'SET_KEYLESS_RANGE':
-      if (success) {
-        EVSBikeSDK.bleCommandsApi.sendGetEcuConfigCommand()
-      }
-      break
-    default:
-      break
-  }
+  const { state } = data
 
   if (!state)
     return
+
+  switch (state.isConnected) {
+    // 绑定用户
+    case 'BIND_USER':
+      // 查询车辆状态和取设备设置参数，感应启动相关
+      sendGetVehicleStatusCommand()
+      break
+  }
 
   carState.value = {
     ...carState.value,
@@ -170,7 +164,7 @@ function updateCarStatus() {
 // 设置感应控车状态改变
 function setKeyless(e: any) {
   if (carStore.network) {
-    controlBike(e.value ? 'keylessOn' : 'keylessOff').then((res) => {
+    controlBike(e.value ? 'keylessOn' : 'keylessOff').then((res: any) => {
       if (res.code !== '200') {
         uni.showModal({
           title: '设置失败',
@@ -184,8 +178,8 @@ function setKeyless(e: any) {
     })
   }
   else {
-    // 开启/关闭感应功能
-    e ? EVSBikeSDK.bleCommandsApi.sendSetKeylessUnlockExpireCommand('991231') : EVSBikeSDK.bleCommandsApi.sendKeylessUnlockCloseCommand()
+    // ✅ 开启/关闭感应功能
+    e ? sendSetKeylessUnlockExpireCommand('991231') : sendKeylessUnlockCloseCommand()
   }
 }
 
@@ -207,29 +201,27 @@ function setKeylessRange(range: number) {
       break
   }
   if (carStore.network) {
-    controlBike(commandType).then((res) => {
+    controlBike(commandType).then((res: any) => {
       if (res.code !== '200') {
         uni.showModal({
           title: '设置失败',
           content: res.message || '请稍后重试',
           showCancel: false,
         })
-        nextTick(() => {
-          isInductionCar.value = !e.value
-        })
       }
     })
   }
   else {
     console.log('感应控车距离改变:', range)
-    EVSBikeSDK.bleCommandsApi.sendSetKeylessUnlockRangeCommand(range)
+    // ✅ 使用composable方法
+    sendSetKeylessUnlockRangeCommand(range)
   }
 }
 
 // 提交设置
 function onSubmitClick() {
   if (carStore.network) {
-    controlBike('commandType').then((res) => {
+    controlBike('commandType').then((res: any) => {
       if (res.code !== '200') {
         uni.navigateBack()
       }
@@ -237,10 +229,9 @@ function onSubmitClick() {
   }
   else {
     // 蓝牙车辆设置
-
     setTimeout(() => {
-    // 设置感应距离
-      EVSBikeSDK.bleCommandsApi.sendKeylessUnlockRangeCommand(distance.value)
+      // ✅ 设置感应距离
+      sendKeylessUnlockRangeCommand(distance.value)
     }, 500)
 
     uni.showToast({
@@ -250,7 +241,7 @@ function onSubmitClick() {
     })
 
     setTimeout(() => {
-    // 返回首页
+      // 返回首页
       uni.navigateBack()
     }, 1000)
   }

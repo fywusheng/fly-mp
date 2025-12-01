@@ -73,3 +73,8 @@ scroll-view ::-webkit-scrollbar {
   background: transparent;
 }
 
+.transparent-picker {
+  opacity: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+}

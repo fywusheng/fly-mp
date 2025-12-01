@@ -85,7 +85,12 @@ onLoad((e) => {
 // 获取骑行数据
 async function getTrackInfo(rideId: string) {
   try {
+    uni.showLoading({
+      title: '加载中...',
+      mask: true,
+    })
     const res = await httpGet(`/device/v2/rides/${rideId}/track`)
+    uni.hideLoading()
     if (res.code === '200') {
       ridingInfo.value = res.data
       console.log('轨迹详情:', res.data)
@@ -98,6 +103,7 @@ async function getTrackInfo(rideId: string) {
   }
   catch (error) {
     console.error('获取轨迹信息失败', error)
+    uni.hideLoading()
   }
 }
 
@@ -105,11 +111,11 @@ function setMapData(trackPoints: Array<{ latitude: number, longitude: number }>,
   if (trackPoints.length === 0)
     return
 
-  if (ridingStatus !== '骑行中') {
+  if (ridingStatus !== '行驶中') {
     // 只有当前位置
     markers.value[0] = {
-      ...markers.value[1],
-      iconPath: ridingStatus === '停泊中' ? ArrowRed : ArrowGray,
+      ...markers.value[0],
+      iconPath: ridingStatus === '已泊车' ? ArrowRed : ArrowGray,
       latitude: trackPoints[0].latitude,
       longitude: trackPoints[0].longitude,
     }
@@ -122,10 +128,10 @@ function setMapData(trackPoints: Array<{ latitude: number, longitude: number }>,
     }
     const instance = getCurrentInstance() // 获取组件实
     const mapCtx = uni.createMapContext('map', instance)
-    // 缩放视野展示所有点
-    mapCtx.includePoints({
-      points: polyline.value[0].points,
-      padding: [20, 20, 360, 20],
+    // 移动到中心点
+    mapCtx.moveToLocation({
+      latitude: trackPoints[0].latitude,
+      longitude: trackPoints[0].longitude,
     })
   }
   else {
@@ -136,7 +142,7 @@ function setMapData(trackPoints: Array<{ latitude: number, longitude: number }>,
     polyline.value[0].points = trackPoints
     // 设置终点标记
     markers.value[0] = {
-      ...markers.value[1],
+      ...markers.value[0],
       iconPath: ArrayGreen,
       latitude: endPoint.latitude,
       longitude: endPoint.longitude,
@@ -185,7 +191,7 @@ function setMapData(trackPoints: Array<{ latitude: number, longitude: number }>,
           </view>
         </view>
         <view class="my-31rpx text-30rpx text-[#040404]">
-          {{ ridingInfo.address }}
+          {{ ridingInfo.endLocation }}
         </view>
         <view class="mb-20rpx h-2rpx w-100% bg-[#E6E6E6]" />
         <view class="w-100% flex justify-between text-30rpx text-[#040404]">

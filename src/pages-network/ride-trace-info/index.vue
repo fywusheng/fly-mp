@@ -12,9 +12,6 @@
 <script lang="ts" setup>
 import { httpGet } from '@/utils/http'
 
-const MapArrow = 'http://115.190.57.206/static/home/map-arrow.png'
-const ReloadIcon = 'http://115.190.57.206/static/home/reload.png'
-
 const EndPointIcon = 'http://115.190.57.206/static/common/end-point.png'
 const StartPointIcon = 'http://115.190.57.206/static/common/start-point.png'
 
@@ -60,36 +57,11 @@ const polyline = ref([
 
 // 骑行信息
 const ridingInfo = ref<any>({})
-const mapImage = ref('')
 
 onLoad((e) => {
   getTrackInfo(e.rideId)
-  // const instance = getCurrentInstance()?.proxy as { getOpenerEventChannel?: () => UniApp.EventChannel }
-  // if (instance?.getOpenerEventChannel) {
-  //   const eventChannel = instance.getOpenerEventChannel()
-  //   eventChannel.on('rideData', (info: any) => {
-  //     ridingInfo.value = info
-  //     getTrackInfo(info.rideId)
-  //   })
-  // }
-  // const instance = getCurrentInstance() // 获取组件实
-  // const mapCtx = uni.createMapContext('map', instance)
-  // // 缩放视野展示所有点
-  // mapCtx.includePoints({
-  //   points: polyline.value[0].points,
-  //   padding: [20, 20, 360, 20],
-  // })
 })
 
-// onMounted(() => {
-// const instance = getCurrentInstance() // 获取组件实
-// const mapCtx = uni.createMapContext('map', instance)
-// // 缩放视野展示所有点
-// mapCtx.includePoints({
-//   points: polyline.value[0].points,
-//   padding: [20, 20, 360, 20],
-// })
-// })
 // 获取骑行数据
 async function getTrackInfo(rideId: string) {
   try {
@@ -110,8 +82,20 @@ async function getTrackInfo(rideId: string) {
 }
 
 function setMapData(trackPoints: Array<{ latitude: number, longitude: number }>) {
-  if (trackPoints.length === 0)
+  if (trackPoints.length === 0) {
+    polyline.value[0].points = []
+    markers.value[0] = {
+      ...markers.value[0],
+      width: 0,
+      height: 0,
+    }
+    markers.value[1] = {
+      ...markers.value[1],
+      width: 0,
+      height: 0,
+    }
     return
+  }
 
   const startPoint = trackPoints[trackPoints.length - 1]
   const endPoint = trackPoints[0]
@@ -142,7 +126,8 @@ function setMapData(trackPoints: Array<{ latitude: number, longitude: number }>)
 }
 // 格式化骑行时长（毫秒转 HH:mm:ss）
 function formatDuration(milliseconds: number) {
-  if (!milliseconds) return '00:00:00'
+  if (!milliseconds)
+    return '00:00:00'
   const totalSeconds = Math.floor(milliseconds / 1000)
   const hours = Math.floor(totalSeconds / 3600)
   const minutes = Math.floor((totalSeconds % 3600) / 60)
@@ -153,12 +138,6 @@ function formatDuration(milliseconds: number) {
 
 <template>
   <view class="track-detail">
-    <image
-      v-if="false"
-      class="absolute left-0 top-0 z-0 h-100% w-100%"
-      :src="mapImage"
-      mode="scaleToFill"
-    />
     <map
       id="map"
       class="map"
@@ -173,7 +152,7 @@ function formatDuration(milliseconds: number) {
         <view class="card-item flex flex-col items-center justify-between">
           <view class="card-item-top box-border h-80rpx w-100% flex items-center justify-between px-29rpx">
             <view class="text-24rpx text-[#333333]">
-              {{ ridingInfo.rideDate }}  {{ ridingInfo.startTime }}-{{ ridingInfo.endTime}}
+              {{ ridingInfo.rideDate }}  {{ ridingInfo.startTime }}-{{ ridingInfo.endTime }}
             </view>
           </view>
           <view class="card-item-middle box-border flex flex-col px-29rpx py-40rpx">
@@ -200,7 +179,7 @@ function formatDuration(milliseconds: number) {
               <view>骑行时间</view>
             </view>
             <view class="flex flex-col items-center justify-center text-24rpx text-[#333333]">
-              <view>{{ridingInfo.carbonReduction}}g</view>
+              <view>{{ ridingInfo.carbonReduction }}g</view>
               <view>减少碳排放</view>
             </view>
           </view>
