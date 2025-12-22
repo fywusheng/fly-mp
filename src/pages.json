@@ -263,7 +263,7 @@
           "layout": "default",
           "style": {
             "navigationStyle": "default",
-            "navigationBarTitleText": "车辆预警",
+            "navigationBarTitleText": "告警信息",
             "navigationBarBackgroundColor": "#ffffff",
             "enablePullDownRefresh": true
           }

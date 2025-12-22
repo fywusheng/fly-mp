@@ -12,7 +12,7 @@
 // ✅ 导入蓝牙管理 Composable
 import type { BluetoothDeviceInfo } from '@/composables/useBluetooth'
 import { useBluetooth } from '@/composables/useBluetooth'
-import { useCarStore } from '@/store'
+import { useAppStore, useCarStore } from '@/store'
 import { debounce } from '@/utils'
 import { httpGet, httpPost } from '@/utils/http'
 
@@ -25,11 +25,14 @@ const {
   sendSetKeylessUnlockRangeCommand,
   sendKeylessUnlockRangeCommand,
   sendGetVehicleStatusCommand,
+  sendGetEcuConfigCommand,
   onStateChange: onBluetoothStateChange,
   offStateChange: offBluetoothStateChange,
 } = useBluetooth()
 
 const carStore = useCarStore()
+// app信息 networkType 手机设备是否连接网络
+const appStore = useAppStore()
 
 const PointIcon = 'http://115.190.57.206/static/car/point.png'
 const isInductionCar = ref(true) // 感应控车
@@ -48,21 +51,30 @@ const carState = ref({
 // 车辆信息
 let carInfo = {} as any
 
+// 是否使用4G网络控车
+const useNetwork = computed(() => {
+  return [5, 6].includes(carStore.carInfo.deviceType)
+})
+
 onLoad((e) => {
   carInfo = JSON.parse(decodeURIComponent(e.info))
   console.log('解析后的车辆信息', carInfo)
-  if (carStore.network) {
+
+  // 如果是一体机车辆且有网络，获取车辆状态
+  if (carStore.network && useNetwork.value) {
     // 4G车辆状态获取
     getCarInfo(carInfo.deviceNo)
   }
+
+  // 连接蓝牙
   connectBle()
 })
 
 onHide(() => {
-  offBluetoothStateChange(handleBluetoothStateChange)
+  offBluetoothStateChange()
 })
 onUnload(() => {
-  offBluetoothStateChange(handleBluetoothStateChange)
+  offBluetoothStateChange()
 })
 
 // 获取车辆状态信息
@@ -109,7 +121,7 @@ async function connectBle() {
     // 构建蓝牙设备信息
     const deviceInfo: BluetoothDeviceInfo = {
       bluetoothDeviceNo: carInfo.bluetoothDeviceNo || '',
-      bluetoothDeviceType: carInfo.bluetoothDeviceType || 2,
+      bluetoothVendor: carInfo.bluetoothVendor,
       bluetoothDeviceName: carInfo.bluetoothDeviceName || '',
       bluetoothDeviceKey: carInfo.bluetoothDeviceKey || '',
     }
@@ -125,9 +137,9 @@ async function connectBle() {
   catch (err: any) {
     console.log(err)
     uni.showToast({
-      title: err.message || '连接失败',
+      title: '连接失败',
       icon: 'none',
-      duration: 500,
+      duration: 800,
     })
   }
 }
@@ -135,18 +147,23 @@ async function connectBle() {
 // ✅ 处理蓝牙状态变化
 function handleBluetoothStateChange(data: any) {
   console.log('设备状态变化:', data)
-  const { state } = data
+  const { state, operType } = data
+
+  switch (operType) {
+    case 'BIND_USER':
+      console.log('✅ 用户绑定成功，查询车辆状态')
+      sendGetVehicleStatusCommand()
+      break
+    case 'GET_CAR_STATUS':
+      console.log('✅ 获取车辆状态成功，获取 ECU 配置')
+      sendGetEcuConfigCommand()
+      break
+    default:
+      break
+  }
 
   if (!state)
     return
-
-  switch (state.isConnected) {
-    // 绑定用户
-    case 'BIND_USER':
-      // 查询车辆状态和取设备设置参数，感应启动相关
-      sendGetVehicleStatusCommand()
-      break
-  }
 
   carState.value = {
     ...carState.value,
@@ -163,7 +180,12 @@ function updateCarStatus() {
 }
 // 设置感应控车状态改变
 function setKeyless(e: any) {
-  if (carStore.network) {
+  // ✅ 判断控车方式：有网 && 是4G设备 → 使用4G控车，否则使用蓝牙控车
+  const hasNetwork = appStore.hasNetwork // 手机是否有网络
+  const is4GDevice = carStore.network // 车辆是否是4G设备
+
+  // ✅ 开启/关闭感应功能
+  if (hasNetwork && is4GDevice && useNetwork.value) {
     controlBike(e.value ? 'keylessOn' : 'keylessOff').then((res: any) => {
       if (res.code !== '200') {
         uni.showModal({
@@ -179,7 +201,7 @@ function setKeyless(e: any) {
   }
   else {
     // ✅ 开启/关闭感应功能
-    e ? sendSetKeylessUnlockExpireCommand('991231') : sendKeylessUnlockCloseCommand()
+    e.value ? sendSetKeylessUnlockExpireCommand('991231') : sendKeylessUnlockCloseCommand()
   }
 }
 
@@ -200,7 +222,11 @@ function setKeylessRange(range: number) {
       commandType = 'keylesslevel1'
       break
   }
-  if (carStore.network) {
+  // ✅ 判断控车方式：有网 && 是4G设备 → 使用4G控车，否则使用蓝牙控车
+  const hasNetwork = appStore.hasNetwork // 手机是否有网络
+  const is4GDevice = carStore.network // 车辆是否是4G设备
+
+  if (hasNetwork && is4GDevice && useNetwork.value) {
     controlBike(commandType).then((res: any) => {
       if (res.code !== '200') {
         uni.showModal({
@@ -215,35 +241,6 @@ function setKeylessRange(range: number) {
     console.log('感应控车距离改变:', range)
     // ✅ 使用composable方法
     sendSetKeylessUnlockRangeCommand(range)
-  }
-}
-
-// 提交设置
-function onSubmitClick() {
-  if (carStore.network) {
-    controlBike('commandType').then((res: any) => {
-      if (res.code !== '200') {
-        uni.navigateBack()
-      }
-    })
-  }
-  else {
-    // 蓝牙车辆设置
-    setTimeout(() => {
-      // ✅ 设置感应距离
-      sendKeylessUnlockRangeCommand(distance.value)
-    }, 500)
-
-    uni.showToast({
-      title: '设置成功',
-      icon: 'success',
-      duration: 1000,
-    })
-
-    setTimeout(() => {
-      // 返回首页
-      uni.navigateBack()
-    }, 1000)
   }
 }
 </script>

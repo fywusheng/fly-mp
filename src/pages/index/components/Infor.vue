@@ -18,11 +18,26 @@ const RightIcon = 'http://115.190.57.206/static/infor/right.png'
 const RoundMileageIcon = 'http://115.190.57.206/static/infor/round-mileage.png'
 const RoundTimeIcon = 'http://115.190.57.206/static/infor/round-time.png'
 const TraceIcon = 'http://115.190.57.206/static/infor/track.png'
+const DeviceIcon = 'http://115.190.57.206/static/infor/4g-device.png'
+const DataAive = 'http://115.190.57.206/static/infor/4g-data-active.png'
+const DataUnAive = 'http://115.190.57.206/static/infor/4g-data.png'
+const DataNone = 'http://115.190.57.206/static/infor/4g-data-none.png'
+const Effect = 'http://115.190.57.206/static/infor/effect.png'
 const carStore = useCarStore()
 const dailyStats = ref<any>({
   totalRidingTime: '00:00:00',
   totalDistanceKm: '0.00',
 })
+
+// message弹窗
+const showMessagePopup = ref(false) // 控制弹窗显示
+const messageId = ref<number>(0) // 弹窗ID
+const message = ref<string>('<view >删除该成员后，</view> <view >他将不能使用此设备。</view>') // 弹窗内容
+const duration = ref(0) // 弹窗持续时间
+const confirmText = ref<string>('确定') // 确认按钮文本
+const showCancelBtn = ref(true) // 是否显示取消按钮
+const showConfirmBtn = ref(true) // 是否显示确认按钮
+const closeOnClickModal = ref(true) // 是否点击蒙层关闭弹窗
 
 watch(() => props.tabName, (newVal) => {
   if (newVal === 'infor') {
@@ -74,6 +89,21 @@ function goDrive() {
   uni.navigateTo({
     url: '/pages-network/drive-data/index',
   })
+}
+
+// 领取数据服务体验卡
+function getCard() {
+  messageId.value = 1
+  message.value = '您有一张数据服务体验卡待领取'
+  showMessagePopup.value = true
+}
+function handleConfirm() {
+  if(messageId.value === 1){
+    console.log('领取数据服务体验卡')
+  }
+}
+function handleCancel() {
+  showMessagePopup.value = false
 }
 </script>
 
@@ -178,16 +208,93 @@ function goDrive() {
         mode="scaleToFill"
       />
     </view>
+    <!-- 骑行卡 -->
+    <view class="ml-20rpx mt-20rpx box-border w-710rpx rounded-8rpx bg-white px-20rpx pb-9rpx pt-19rpx">
+      <view class="mb-11rpx text-30rpx text-[#333333] font-bold">
+        车主服务
+      </view>
+      <view class="w-100% flex items-center justify-between">
+        <image
+          class="h-180rpx w-325rpx"
+          :src="DeviceIcon"
+          mode="scaleToFill"
+        />
+        <view class="relative h-180rpx w-325rpx">
+          <image
+            class="absolute left-0 top-0 h-100% w-100%"
+            :src="DataAive"
+            mode="scaleToFill"
+          />
+           <!-- <image
+            class="absolute left-0 top-0 h-100% w-100%"
+            :src="DataUnAive"
+            mode="scaleToFill"
+          /> -->
+
+          <view class="relative z-10 box-border h-100% w-100% px-21rpx pt-29rpx">
+            <view class="unclaimed" @click="getCard">
+              去领取
+            </view>
+            <!-- 生效中 -->
+            <!-- <image
+                class="effect"
+                :src="Effect"
+                mode="scaleToFill"
+            /> -->
+            <view class="text-24rpx text-[#ffffff]">
+              数据服务体验卡
+            </view>
+            <view class="mb-10rpx mt-6rpx h-4rpx w-60rpx bg-[#ffffff]" />
+            <view class="mb-9rpx text-18rpx text-[#275C4E]">
+              可查询骑行轨迹/停车位置/行驶数据 全国可用
+            </view>
+            <view class="h-24rpx w-180rpx flex items-center justify-center rounded-20rpx bg-[#2CBC7B] text-14rpx text-[#ffffff]">
+              有效期至2026-03-31
+            </view>
+            <!-- <view class="w-100% flex justify-center items-center">
+              <image
+                class="w-99rpx h-99rpx"
+                :src="DataNone"
+                mode="scaleToFill"
+              />
+            </view> -->
+           
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 操作提示弹窗 -->
+    <fg-message v-model:show="showMessagePopup" :duration="duration" :confirm-text="confirmText" :show-cancel-btn="showCancelBtn" :show-confirm-btn="showConfirmBtn" :close-on-click-modal="closeOnClickModal" :message="message" :message-id="messageId" @cancel="handleCancel" @confirm="handleConfirm" />
   </view>
 </template>
 
 <style lang="scss" scoped>
 .infor {
-  height: calc(100vh - 88rpx);
   background: #F2F4F6;
   position: relative;
-  // display: flex;
-  // flex-direction: column;
-  // align-items: center;
+  padding-bottom: 28rpx;
+  .unclaimed {
+    position: absolute;
+    right: 20rpx;
+    top: 8rpx;
+    font-size: 20rpx;
+    width: 92rpx;
+    height: 34rpx;
+    border-radius: 17rpx;
+    background: #2CBC7B;
+    color: #ffffff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .effect {
+     position: absolute;
+    right: 20rpx;
+    top: 8rpx;
+    width: 77rpx;
+    height: 34rpx;
+  }
+  
 }
 </style>

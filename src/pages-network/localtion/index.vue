@@ -24,8 +24,8 @@ const ArrayGreen = 'http://115.190.57.206/static/network/arrow-green.png'
 // 使用ref定义响应式数据
 const scale = ref(18)
 const location = ref({
-  latitude: 40.0370140,
-  longitude: 116.271214,
+  latitude: 39.9087,
+  longitude: 116.3975,
 })
 // 地图点
 const markers = ref([
@@ -110,56 +110,55 @@ async function getTrackInfo(rideId: string) {
 function setMapData(trackPoints: Array<{ latitude: number, longitude: number }>, ridingStatus: string) {
   if (trackPoints.length === 0)
     return
-
-  if (ridingStatus !== '行驶中') {
-    // 只有当前位置
-    markers.value[0] = {
-      ...markers.value[0],
-      iconPath: ridingStatus === '已泊车' ? ArrowRed : ArrowGray,
-      latitude: trackPoints[0].latitude,
-      longitude: trackPoints[0].longitude,
-    }
-    // 清空轨迹
-    polyline.value[0].points = []
-    // 取第一个点作为当前位置
-    location.value = {
-      latitude: trackPoints[0].latitude,
-      longitude: trackPoints[0].longitude,
-    }
-    const instance = getCurrentInstance() // 获取组件实
-    const mapCtx = uni.createMapContext('map', instance)
-    // 移动到中心点
-    mapCtx.moveToLocation({
-      latitude: trackPoints[0].latitude,
-      longitude: trackPoints[0].longitude,
-    })
+  // if (ridingStatus !== '行驶中') {
+  const endPoint = trackPoints[0]
+  markers.value[0] = {
+    ...markers.value[0],
+    iconPath: ridingStatus === '已泊车' ? ArrowRed : ridingStatus === '行驶中' ? ArrayGreen : ArrowGray,
+    latitude: endPoint.latitude,
+    longitude: endPoint.longitude,
   }
-  else {
-    // 有轨迹
-    const startPoint = trackPoints[trackPoints.length - 1]
-    const endPoint = trackPoints[0]
-    // 处理成功的轨迹数据
-    polyline.value[0].points = trackPoints
-    // 设置终点标记
-    markers.value[0] = {
-      ...markers.value[0],
-      iconPath: ArrayGreen,
-      latitude: endPoint.latitude,
-      longitude: endPoint.longitude,
-    }
-    // 取第一个点作为当前位置
-    location.value = {
-      latitude: startPoint.latitude,
-      longitude: startPoint.longitude,
-    }
-    const instance = getCurrentInstance() // 获取组件实
-    const mapCtx = uni.createMapContext('map', instance)
-    // 缩放视野展示所有点
-    mapCtx.includePoints({
-      points: polyline.value[0].points,
-      padding: [20, 20, 360, 20],
-    })
+  // 清空轨迹
+  polyline.value[0].points = []
+  // 取第一个点作为当前位置
+  location.value = {
+    latitude: endPoint.latitude,
+    longitude: endPoint.longitude,
   }
+  const instance = getCurrentInstance() // 获取组件实
+  const mapCtx = uni.createMapContext('map', instance)
+  // 移动到中心点
+  mapCtx.moveToLocation({
+    latitude: endPoint.latitude,
+    longitude: endPoint.longitude,
+  })
+  // }
+  // else {
+  // // 有轨迹
+  // const startPoint = trackPoints[trackPoints.length - 1]
+  // const endPoint = trackPoints[0]
+  // // 处理成功的轨迹数据
+  // polyline.value[0].points = trackPoints
+  // // 设置终点标记
+  // markers.value[0] = {
+  //   ...markers.value[0],
+  //   iconPath: ArrayGreen,
+  //   latitude: endPoint.latitude,
+  //   longitude: endPoint.longitude,
+  // }
+  // // 取第一个点作为当前位置
+  // location.value = {
+  //   latitude: startPoint.latitude,
+  //   longitude: startPoint.longitude,
+  // }
+  // const instance = getCurrentInstance() // 获取组件实
+  // const mapCtx = uni.createMapContext('map', instance)
+  // // 缩放视野展示所有点
+  // mapCtx.includePoints({
+  //   points: polyline.value[0].points,
+  //   padding: [20, 20, 360, 20],
+  // })
+  // }
 }
 </script>
 
@@ -174,7 +173,7 @@ function setMapData(trackPoints: Array<{ latitude: number, longitude: number }>,
       :polyline="polyline"
       :scale="scale"
     />
-    <view class="absolute bottom-120rpx left-0 z-100">
+    <!-- <view class="absolute bottom-120rpx left-0 z-100">
       <view class="ml-20rpx mt-20rpx box-border w-710rpx rounded-8rpx bg-[#ffffff] px-42rpx py-30rpx">
         <view class="flex items-center text-25rpx text-[#666666]">
           <view class="mr-60rpx">
@@ -203,7 +202,7 @@ function setMapData(trackPoints: Array<{ latitude: number, longitude: number }>,
           </view>
         </view>
       </view>
-    </view>
+    </view> -->
   </view>
 </template>
 

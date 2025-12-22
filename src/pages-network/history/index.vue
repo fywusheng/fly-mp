@@ -17,19 +17,24 @@ import { httpGet } from '@/utils/http'
 const MapArrow = 'http://115.190.57.206/static/network/location.png'
 
 const state = ref<'loading' | 'finished' | 'error'>('loading')
-const time = ref<number[]>([]) // 日期
+const time = ref<number>(Date.now()) // 单选日期（时间戳）
 const hasMore = ref(true) // 是否还有更多数据
 const carStore = useCarStore()
 const page = ref(1) // 当前页码
 const size = 20
 const startDate = ref('')
 const endDate = ref('')
+// 仅允许最近3天（含今天）
+const ONE_DAY = 24 * 60 * 60 * 1000
+const maxDate = ref<number>(Date.now())
+const minDate = ref<number>(Date.now() - 2 * ONE_DAY)
 const stayingInfo = ref<any[]>([]) // 历史停留列表信息
 
 onLoad((e) => {
   // 默认当天
   startDate.value = timeFormat(new Date().getTime())
   endDate.value = timeFormat(new Date().getTime())
+  time.value = Date.now()
   getTrackInfo()
 })
 
@@ -161,8 +166,10 @@ function formatDate(dateStr: string) {
 
 // 日期确定事件
 function handleConfirm({ value }) {
-  startDate.value = timeFormat(value[0])
-  endDate.value = timeFormat(value[1])
+  // 单选日期：起止同一天
+  const ts = Array.isArray(value) ? value[0] : value
+  startDate.value = timeFormat(ts)
+  endDate.value = timeFormat(ts)
   // 切换日期时重置列表
   stayingInfo.value = []
   page.value = 1
@@ -213,11 +220,16 @@ function goHistoryInfo(item: any) {
       <wd-status-tip image="search" tip="当前搜索无结果" />
     </view>
 
-    <!-- 日期选择器 -->
-    <wd-calendar v-model="time" type="daterange" @confirm="handleConfirm">
+    <!-- 日期选择器（单选，限制最近3天） -->
+    <wd-calendar
+      v-model="time"
+      type="date"
+      :min-date="minDate"
+      :max-date="maxDate"
+      @confirm="handleConfirm"
+    >
       <view class="sub-btn">
-        <view>{{ formatDate(startDate) }}-{{ formatDate(endDate) }}</view>
-        <view>点击查看更多</view>
+        <view>{{ startDate }}</view>
       </view>
     </wd-calendar>
   </view>
@@ -294,7 +306,7 @@ function goHistoryInfo(item: any) {
     justify-content: center;
     align-items: center;
     color: #FFFFFF;
-    font-size: 24rpx;
+    font-size: 30rpx;
     margin-top: 98rpx;
   }
 }

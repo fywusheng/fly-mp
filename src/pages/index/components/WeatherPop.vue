@@ -66,7 +66,7 @@ function handleClose() {
       </view>
 
       <scroll-view scroll-x :show-scrollbar="false" enhanced class="h-350rpx flex items-center justify-between overflow-x-auto">
-        <view class="flex items-center justify-between">
+        <view class="flex items-baseline justify-between">
           <view v-for="(item, index) in weatherInfo.hours" :key="index" class="mr-40rpx flex flex-col flex-nowrap items-center justify-center text-25rpx">
             <view>{{ item.hours }}</view>
             <image
@@ -74,7 +74,9 @@ function handleClose() {
               :src="getWeatherIcon(item.wea)"
               mode="scaleToFill"
             />
-            <view>{{ item.wea }}</view>
+            <view class="text-center">
+              {{ item.wea }}
+            </view>
           </view>
         </view>
       </scroll-view>

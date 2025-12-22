@@ -225,84 +225,105 @@ export function initLocationAuth() {
   })
 }
 /**
- * 获取蓝牙权限
+ * 判断是否获取蓝牙权限
  * @returns {Promise<void>} 获取蓝牙权限
  */
-export function initBLuetoothAuth() {
+export async function initBLuetoothAuth() {
+  const hasNetwork = await getNetworkType()
   return new Promise((resolve, reject) => {
-    uni.getSetting({
-      success(res) {
-        // 检测蓝牙权限
-        // if (!res.authSetting['scope.bluetooth']) {
-        //   uni.showModal({
-        //     title: '请求权限',
-        //     content: '需要获取您的蓝牙权限',
-        //     success(res) {
-        //       if (res.confirm) {
-        //         uni.openSetting({
-        //           success(res) {
-        //             if (res.authSetting['scope.bluetooth']) {
-        //               // 用户同意授权地理位置
-        //               resolve(true)
-        //             }
-        //             else {
-        //               reject(new Error('用户拒绝授权蓝牙'))
-        //             }
-        //           },
-        //         })
-        //       }
-        //       else if (res.cancel) {
-        //         reject(new Error('用户拒绝授权蓝牙'))
-        //       }
-        //     },
-        //     fail(err) {
-        //       reject(err)
-        //     },
-        //   })
-        // }
-        // else {
-        //   // 已经授权
-        //   resolve(true)
-        // }
-        if (!res.authSetting['scope.bluetooth']) {
-          wx.authorize({
-            scope: 'scope.bluetooth',
-            success() {
-              resolve(true)
-            },
-            fail(err) {
-              console.log('authorize fail:', err)
-              uni.showModal({
-                title: '请求权限',
-                content: '已拒绝使用蓝牙功能，是否允许启用？',
-                success(res) {
+    if (hasNetwork !== 'none' && hasNetwork !== 'offline') {
+      uni.getSetting({
+        success(res) {
+          // 检测蓝牙权限
+          if (!res.authSetting['scope.bluetooth']) {
+            wx.authorize({
+              scope: 'scope.bluetooth',
+              success() {
+                resolve(true)
+              },
+              fail(err) {
+                console.log('authorize fail:', err)
+                uni.showModal({
+                  title: '请求权限',
+                  content: '已拒绝使用蓝牙功能，是否允许启用？',
+                  success(res) {
                   // if (res.confirm) {
-                  uni.openSetting({
-                    success(res) {
-                      if (res.authSetting['scope.bluetooth']) {
+                    uni.openSetting({
+                      success(res) {
+                        if (res.authSetting['scope.bluetooth']) {
                         // 用户同意授权蓝牙
-                        resolve(true)
-                      }
-                      else {
-                        reject(new Error('用户拒绝授权蓝牙'))
-                      }
-                    },
-                  })
+                          resolve(true)
+                        }
+                        else {
+                          reject(new Error('用户拒绝授权蓝牙'))
+                        }
+                      },
+                    })
                   // }
                   // else if (res.cancel) {
                   //   reject(new Error('用户拒绝授权蓝牙'))
                   // }
-                },
-                fail(err) {
-                  reject(err)
-                },
-              })
-            },
-          })
-        }
-        else {
+                  },
+                  fail(err) {
+                    reject(err)
+                  },
+                })
+              },
+            })
+          }
+          else {
+            resolve(true)
+          }
+        },
+        fail(err) {
+          console.log('getSetting fail:', err)
+          reject(err)
+        },
+      })
+    }
+    else {
+      // 尝试打开蓝牙模块
+      uni.openBluetoothAdapter({
+        success() {
           resolve(true)
-        }
+        },
+        fail(err) {
+          console.log('openBluetoothAdapter fail:', err)
+
+          // 常见错误码处理
+          if (err.errCode === 10001) {
+          // 10001 = 系统蓝牙未开启
+            uni.showModal({
+              title: '蓝牙未开启',
+              content: '请打开手机系统蓝牙后再试',
+              showCancel: false,
+              success() {
+                reject(new Error('系统蓝牙未开启'))
+              },
+            })
+          }
+          else {
+            uni.showModal({
+              title: '蓝牙不可用',
+              content: '当前设备蓝牙不可用，请检查后重试。',
+              showCancel: false,
+            })
+            reject(err)
+          }
+        },
+      })
+    }
+  })
+}
+
+function getNetworkType() {
+  return new Promise<string>((resolve, reject) => {
+    uni.getNetworkType({
+      success: (res) => {
+        resolve(res.networkType)
+      },
+      fail: (err) => {
+        reject(err)
       },
     })
   })

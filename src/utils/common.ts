@@ -109,7 +109,12 @@ export function getWeatherIcon(weather: string): string {
     云: 'http://115.190.57.206/static/weather/cloudy.png',
     阴: 'http://115.190.57.206/static/weather/cloudy.png',
     多云: 'http://115.190.57.206/static/weather/cloudy.png',
+    霾: 'http://115.190.57.206/static/weather/haze.png',
   }
+  if (weather.includes('霾'))
+    return 'http://115.190.57.206/static/weather/haze.png'
+  if (weather.includes('雾'))
+    return 'http://115.190.57.206/static/weather/fog.png'
   return weatherIconMap[weather] || 'http://115.190.57.206/static/weather/sun.png'
 }
 
@@ -128,7 +133,12 @@ export function getPopWeatherIcon(weather: string): string {
     云: 'http://115.190.57.206/static/weather/cloudy-bg.png',
     阴: 'http://115.190.57.206/static/weather/cloudy-bg.png',
     多云: 'http://115.190.57.206/static/weather/cloudy-bg.png',
+    霾: 'http://115.190.57.206/static/weather/haze-bg.png',
   }
+  if (weather.includes('霾'))
+    return 'http://115.190.57.206/static/weather/haze-bg.png'
+  if (weather.includes('雾'))
+    return 'http://115.190.57.206/static/weather/fog-bg.png'
   return weatherIconMap[weather] || ''
 }
 

@@ -1,4 +1,147 @@
-export function openAndSearchAndConnect(options) {
+/**
+ * 安卓蓝牙查找
+ * 只负责找到设备，不负责连接。
+ * 如果发现设备之前连着，会主动断开，为 SDK 连接做准备。
+ */
+export function androidOpenAndSearchAndConnect(options) {
+  const {
+    name,
+    deviceId,
+    serviceUUID = ['0000ae40-0000-1000-8000-00805f9b34fb', 'FEE7', '0000FFF0-0000-1000-8000-00805F9B34FB'], // 搜索时通常不需要过滤 Service，除非你很确定
+    timeout = 15000,
+  } = options
+
+  let found = false
+  let timer = null
+  let _discoveryStarted = false
+
+  // 辅助：断开连接并返回（为 SDK 腾位置）
+  const disconnectAndResolve = (device, resolve) => {
+    // 停止搜索
+    if (_discoveryStarted) {
+      wx.stopBluetoothDevicesDiscovery()
+      _discoveryStarted = false
+    }
+
+    // 检查设备当前是否连接，如果连着，必须断开，否则 SDK 会报错
+    wx.getConnectedBluetoothDevices({
+      // services: ['0000ae40-0000-1000-8000-00805f9b34fb'],
+      services: [],
+      success(res) {
+        const isConnected = res.devices.find(d => d.deviceId === device.deviceId)
+        if (isConnected) {
+          console.log('检测到设备已占用连接，正在断开以供 SDK 使用...', device.deviceId)
+          wx.closeBLEConnection({
+            deviceId: device.deviceId,
+            complete: () => {
+              // 关键延迟：给安卓底层一点时间释放句柄
+              setTimeout(() => {
+                console.log('设备已断开，返回给 SDK')
+                resolve(device)
+              }, 200)
+            },
+          })
+        }
+        else {
+          // 没连着，直接返回
+          resolve(device)
+        }
+      },
+      fail() {
+        resolve(device)
+      },
+    })
+  }
+
+  return new Promise((resolve, reject) => {
+    // 1. 检查已连接 (如果已在系统列表，直接拿来用，但在返回前会断开)
+    const checkConnected = () => {
+      wx.getConnectedBluetoothDevices({
+        // services: ['0000ae40-0000-1000-8000-00805f9b34fb'],
+        services: [],
+        success(res) {
+          const devices = res.devices || []
+          const target = devices.find(d =>
+            (deviceId && d.deviceId === deviceId)
+            || (name && d.name === name),
+          )
+          if (target) {
+            console.log('在已连接列表中找到设备')
+            found = true
+            disconnectAndResolve(target, resolve) // 走断开流程
+            return
+          }
+          startDiscovery() // 没找到，去搜索
+        },
+        fail: () => startDiscovery(),
+      })
+    }
+
+    // 2. 初始化
+    wx.openBluetoothAdapter({
+      success: checkConnected,
+      fail: (err) => {
+        if (err.errMsg && err.errMsg.includes('already opened')) {
+          checkConnected()
+        }
+        else {
+          reject(new Error('请打开手机蓝牙'))
+        }
+      },
+    })
+
+    // 3. 搜索
+    function startDiscovery() {
+      _discoveryStarted = true
+      wx.startBluetoothDevicesDiscovery({
+        services: ['00001812-0000-1000-8000-00805F9B34FB'],
+        allowDuplicatesKey: false,
+        success() {
+          wx.onBluetoothDeviceFound(listener)
+          timer = setTimeout(() => {
+            if (!found) {
+              cleanup()
+              reject(new Error('搜索设备超时，未发现目标设备'))
+            }
+          }, timeout)
+        },
+        fail: err => reject(err),
+      })
+    }
+
+    // 4. 监听
+    function listener(res) {
+      if (found)
+        return
+
+      const devices = res.devices || (res.deviceId ? [res] : [])
+      for (const d of devices) {
+        const isMatch = (deviceId && d.deviceId === deviceId) || (name && d.name === name)
+        if (isMatch) {
+          console.log('搜索到目标设备:', d.deviceId)
+          found = true
+          cleanup()
+          // 这里的设备通常是未连接的，直接返回
+          resolve(d)
+          return
+        }
+      }
+    }
+
+    function cleanup() {
+      if (timer)
+        clearTimeout(timer)
+      wx.offBluetoothDeviceFound()
+      if (_discoveryStarted) {
+        wx.stopBluetoothDevicesDiscovery()
+        _discoveryStarted = false
+      }
+    }
+  })
+}
+
+// iOS通用的蓝牙连接方法
+export function iosOpenAndSearchAndConnect(options) {
   const {
     name,
     deviceId,

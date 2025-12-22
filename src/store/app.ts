@@ -8,7 +8,7 @@ interface AppInfoVo {
 // 初始化状态
 const appInfoState: AppInfoVo = {
   // 获取网络状态
-  networkType: 'none',
+  networkType: 'none', // 'networkType' | 'wifi' | '2g' | '3g' | '4g' | '5g' | 'unknown'
 }
 
 export const useAppStore = defineStore(
@@ -17,8 +17,8 @@ export const useAppStore = defineStore(
     // 定义当前车辆信息
     const appInfo = ref<AppInfoVo>({ ...appInfoState })
 
-    // 计算属性
-    const networkType = computed(() => Boolean(appInfo.value.networkType !== 'none'))
+    //  是否有网络连接
+    const hasNetwork = computed(() => Boolean(appInfo.value.networkType !== 'none' && appInfo.value.networkType !== 'offline'))
 
     // 获取设备网络状态
     const getAppInfo = async () => {
@@ -37,8 +37,10 @@ export const useAppStore = defineStore(
     return {
       // 状态
       appInfo,
+
       //  计算属性
-      networkType,
+      hasNetwork,
+
       // 方法
       getAppInfo,
 

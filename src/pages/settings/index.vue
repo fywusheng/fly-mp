@@ -25,6 +25,7 @@ function loginOut() {
       })
       return
     }
+    carStore.resetCarInfo()
     uni.showToast({
       title: '退出登录成功',
       icon: 'success',

@@ -16,18 +16,23 @@ import { httpGet } from '@/utils/http'
 
 const state = ref<'loading' | 'finished' | 'error'>('loading')
 const hasMore = ref(true) // 是否还有更多数据
-const time = ref<number[]>([]) // 日期
+const time = ref<number>(Date.now()) // 单选日期（时间戳）
 const carStore = useCarStore()
 const page = ref(1) // 当前页码
 const size = 20
 const startDate = ref('')
 const endDate = ref('')
+// 仅允许最近3天（含今天）
+const ONE_DAY = 24 * 60 * 60 * 1000
+const maxDate = ref<number>(Date.now())
+const minDate = ref<number>(Date.now() - 2 * ONE_DAY)
 const ridingInfo = ref<any[]>([]) // 骑行列表信息
 
 onLoad((e) => {
   // 默认当天
   startDate.value = timeFormat(new Date().getTime())
   endDate.value = timeFormat(new Date().getTime())
+  time.value = Date.now()
   getTrackInfo()
 })
 
@@ -67,7 +72,7 @@ async function getTrackInfo(isRefresh = false) {
     }
     console.log('请求参数:', params)
     const res = await httpGet(`/riding/ride/history`, params)
-    
+
     if (res.code === '200') {
       const data = res.data as { records?: any[], total?: number, current?: number, pages?: number }
       const records = data.records || []
@@ -75,7 +80,8 @@ async function getTrackInfo(isRefresh = false) {
       if (isRefresh) {
         // 刷新时替换数据
         ridingInfo.value = records
-      } else {
+      }
+      else {
         // 加载更多时追加数据
         ridingInfo.value = [...ridingInfo.value, ...records]
       }
@@ -86,7 +92,8 @@ async function getTrackInfo(isRefresh = false) {
       if (ridingInfo.value.length === data.total) {
         hasMore.value = false
         state.value = 'finished'
-      } else {
+      }
+      else {
         hasMore.value = true
         state.value = 'loading'
       }
@@ -139,8 +146,10 @@ function loadMore() {
 
 // 日期确定事件
 function handleConfirm({ value }) {
-  startDate.value = timeFormat(value[0])
-  endDate.value = timeFormat(value[1])
+  // 单选日期：起止同一天
+  const ts = Array.isArray(value) ? value[0] : value
+  startDate.value = timeFormat(ts)
+  endDate.value = timeFormat(ts)
   // 切换日期时重置列表
   ridingInfo.value = []
   page.value = 1
@@ -171,7 +180,8 @@ function timeFormat(timestamp: number) {
 
 // 格式化时间显示（YYYY/MM/DD HH:mm:ss）
 function formatDateTime(dateStr: string) {
-  if (!dateStr) return ''
+  if (!dateStr)
+    return ''
   const date = new Date(dateStr)
   const year = date.getFullYear()
   const month = String(date.getMonth() + 1).padStart(2, '0')
@@ -182,14 +192,15 @@ function formatDateTime(dateStr: string) {
   return `${year}/${month}/${day}  ${hours}:${minutes}:${seconds}`
 }
 
-// 格式化骑行时长（毫秒转 HH:mm:ss）
-function formatDuration(milliseconds: number) {
-  if (!milliseconds) return '00:00:00'
-  const totalSeconds = Math.floor(milliseconds / 1000)
-  const hours = Math.floor(totalSeconds / 3600)
-  const minutes = Math.floor((totalSeconds % 3600) / 60)
-  const seconds = totalSeconds % 60
-  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+// 格式化骑行时长（秒转 HH:mm:ss）
+function formatDuration(seconds: number) {
+  if (!seconds)
+    return '00:00:00'
+
+  const hrs = Math.floor(seconds / 3600)
+  const mins = Math.floor((seconds % 3600) / 60)
+  const secs = seconds % 60
+  return `${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
 }
 </script>
 
@@ -227,7 +238,7 @@ function formatDuration(milliseconds: number) {
               <view>平均速度</view>
             </view>
             <view class="flex flex-col items-center justify-center text-24rpx text-[#333333]">
-              <view>{{ formatDuration(item.duration || 0) }}</view>
+              <view>{{ formatDuration(item.durationSeconds || 0) }} </view>
               <view>骑行时间</view>
             </view>
             <view class="flex flex-col items-center justify-center text-24rpx text-[#333333]">
@@ -237,7 +248,7 @@ function formatDuration(milliseconds: number) {
           </view>
         </view>
       </view>
-      
+
       <!-- 加载更多状态 -->
       <wd-loadmore custom-class="loadmore" :state="state" />
     </view>
@@ -247,11 +258,17 @@ function formatDuration(milliseconds: number) {
       <wd-status-tip image="search" tip="当前搜索无结果" />
     </view>
 
-    <!-- 日期选择器 -->
-    <wd-calendar v-model="time" type="daterange" @confirm="handleConfirm">
+    <!-- 日期选择器（单选，限制最近3天） -->
+    <wd-calendar
+      v-model="time"
+      type="date"
+      :min-date="minDate"
+      :max-date="maxDate"
+      @confirm="handleConfirm"
+    >
       <view class="sub-btn">
-        <view>{{ startDate }}至{{ endDate }}</view>
-        <view>点击查看更多</view>
+        <view>{{ startDate }}</view>
+        <!-- <view>点击查看更多</view> -->
       </view>
     </wd-calendar>
   </view>
@@ -332,7 +349,7 @@ function formatDuration(milliseconds: number) {
     justify-content: center;
     align-items: center;
     color: #FFFFFF;
-    font-size: 24rpx;
+    font-size: 30rpx;
     // margin-top: 98rpx;
   }
   .look-btn {

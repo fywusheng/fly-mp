@@ -12,7 +12,7 @@
 // ✅ 导入蓝牙管理 Composable
 import type { BluetoothDeviceInfo } from '@/composables/useBluetooth'
 import { BluetoothStatus, useBluetooth } from '@/composables/useBluetooth'
-import { useCarStore, useUserStore } from '@/store'
+import { useAppStore, useCarStore, useUserStore } from '@/store'
 import { httpGet, httpPost } from '@/utils/http'
 
 const OverSpeed = 'http://115.190.57.206/static/mine/over-speed.png'
@@ -65,6 +65,13 @@ const showConfirmBtn = ref(true) // 是否显示确认按钮
 const closeOnClickModal = ref(true) // 是否点击蒙层关闭弹窗
 const userStore = useUserStore()
 const carStore = useCarStore()
+// app信息 networkType 手机设备是否连接网络
+const appStore = useAppStore()
+
+// 是否使用4G网络控车
+const useNetwork = computed(() => {
+  return [5, 6].includes(carStore.carInfo.deviceType)
+})
 
 onLoad(() => {
   // connectBle()
@@ -73,18 +80,19 @@ onLoad(() => {
 
 onHide(() => {
   disconnectBluetooth()
-  offBluetoothStateChange(handleBluetoothStateChange)
+  offBluetoothStateChange()
 })
 onUnload(() => {
   disconnectBluetooth()
-  offBluetoothStateChange(handleBluetoothStateChange)
+  offBluetoothStateChange()
 })
 
 watchEffect(async () => {
   if (selectCarId.value) {
     const selectCar = carList.value.find(car => car.id === selectCarId.value)
 
-    if (carStore.network) {
+    //  获取车辆设置
+    if (carStore.network && useNetwork.value) {
       // 4G车辆状态获取
       getCarInfo(selectCar.deviceNo)
     }
@@ -114,7 +122,7 @@ async function connectBle() {
     // 构建蓝牙设备信息
     const deviceInfo: BluetoothDeviceInfo = {
       bluetoothDeviceNo: selectedCar.bluetoothDeviceNo || '',
-      bluetoothDeviceType: selectedCar.bluetoothDeviceType || 2,
+      bluetoothVendor: selectedCar.bluetoothVendor,
       bluetoothDeviceName: selectedCar.bluetoothDeviceName || '',
       bluetoothDeviceKey: selectedCar.bluetoothDeviceKey || '',
     }
@@ -130,9 +138,9 @@ async function connectBle() {
   catch (err: any) {
     console.log(err)
     uni.showToast({
-      title: err.message || '连接失败',
+      title: '蓝牙连接失败',
       icon: 'none',
-      duration: 500,
+      duration: 800,
     })
   }
 }
@@ -231,15 +239,6 @@ function getCarList() {
   httpGet('/device/vehicle/user/complete').then((res) => {
     carList.value = (res.data as any).resultList
     setDefaultVehicleId(carList.value)
-    const selectCar = carList.value.find(car => car.id === selectCarId.value)
-    if (carStore.network) {
-      // 4G车辆状态获取
-      getCarInfo(selectCar.deviceNo)
-    }
-    else {
-      // 获取车辆设置
-      getCarSetings(selectCar.deviceNo)
-    }
   }).catch((err) => {
     console.error('获取车辆列表失败:', err)
     uni.showToast({
@@ -315,18 +314,26 @@ function handleOnConfirm({ value }) {
   // value.value = value
 }
 
-// 自动熄火
+// 设置超速报警提示音
 function beforeChange({ value, resolve }) {
-  if (bluetoothStatus.value !== BluetoothStatus.CONNECTED && !carStore.network) {
-    uni.showToast({
-      title: '请先连接蓝牙',
-      icon: 'none',
-      duration: 1000,
-    })
-    return
+  // ✅ 判断控车方式：有网 && 是4G设备 → 使用4G控车，否则使用蓝牙控车
+  const hasNetwork = appStore.hasNetwork // 手机是否有网络
+  const is4GDevice = carStore.network // 车辆是否是4G设备
+
+  if (!hasNetwork && !is4GDevice) {
+    // 无网且非4G设备，需要蓝牙连接
+    if (bluetoothStatus.value !== BluetoothStatus.CONNECTED) {
+      uni.showToast({
+        title: '请先连接蓝牙',
+        icon: 'none',
+        duration: 1000,
+      })
+      return
+    }
   }
+
   console.log('要改变的值:', value)
-  if (carStore.network) {
+  if (hasNetwork && is4GDevice && useNetwork.value) {
     // 4G车辆
     controlBike(value ? 'overspeedOn' : 'overspeedOff').then((res: any) => {
       console.log('发送超速报警指令成功:', res)

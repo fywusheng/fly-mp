@@ -3,7 +3,7 @@
   layout: 'default',
   style: {
     navigationStyle: 'default',
-    navigationBarTitleText: '车辆预警',
+    navigationBarTitleText: '告警信息',
     navigationBarBackgroundColor: '#ffffff',
     enablePullDownRefresh: true, // 启用下拉刷新
   },
@@ -17,7 +17,7 @@ const state = ref<'loading' | 'finished' | 'error'>('loading')
 const tabWithBadge = ref(0)
 const tabsWithBadge = ref([
   {
-    title: '全部告警',
+    title: '全部消息',
     badgeProps: {
       modelValue: 0,
       max: 99,
@@ -25,7 +25,7 @@ const tabsWithBadge = ref([
     },
   },
   {
-    title: '位移告警',
+    title: '消息通知',
     badgeProps: {
       modelValue: 0,
       max: 99,
@@ -33,7 +33,7 @@ const tabsWithBadge = ref([
     },
   },
   {
-    title: '震动告警',
+    title: '车辆告警',
     badgeProps: {
       modelValue: 0,
       max: 99,
@@ -48,6 +48,12 @@ let deviceId = ''
 const pageNo = ref(1)
 const pageSize = 20
 const hasMore = ref(true) // 是否还有更多数据
+
+interface AlarmSummary {
+  all: number
+  notice: number
+  alarm: number
+}
 
 onLoad((e) => {
   deviceId = e.deviceId
@@ -68,17 +74,12 @@ onReachBottom(() => {
 // 获取告警统计信息
 async function getNoticeCount(deviceId: string) {
   try {
-    interface AlarmSummary {
-      all: number
-      move: number
-      shake: number
-    }
     const res = await httpGet(`/device/v2/devices/${deviceId}/alarms/summary`)
     if (res.code === '200') {
       const data = res.data as AlarmSummary
       tabsWithBadge.value[0].badgeProps!.modelValue = data.all
-      tabsWithBadge.value[1].badgeProps!.modelValue = data.move
-      tabsWithBadge.value[2].badgeProps!.modelValue = data.shake
+      tabsWithBadge.value[1].badgeProps!.modelValue = data.notice
+      tabsWithBadge.value[2].badgeProps!.modelValue = data.alarm
     }
     else {
       console.error('获取告警统计信息失败', res.message)
@@ -91,7 +92,7 @@ async function getNoticeCount(deviceId: string) {
 
 // 获取告警列表
 async function getInfoList(deviceId: string, type = 0, isRefresh = false) {
-  const types = ['all', 'move', 'shake']
+  const types = ['all', 'notice', 'alarm']
 
   // 如果是刷新，重置分页
   if (isRefresh) {
@@ -109,7 +110,7 @@ async function getInfoList(deviceId: string, type = 0, isRefresh = false) {
 
   try {
     const res = await httpGet(`/device/v2/devices/${deviceId}/alarms`, {
-      type: types[type],
+      bizType: types[type],
       pageNo: pageNo.value,
       pageSize,
     })
@@ -349,7 +350,7 @@ async function goInfo(item: any) {
         width: 40rpx;
         height: 40rpx;
         border-radius: 50%;
-        background-color: #FF4D4D;
+        background-color:  #fa4350;
       }
     }
   }
@@ -383,6 +384,17 @@ async function goInfo(item: any) {
       .wd-tabs__nav {
         background: #DDE3EC !important;
       }
+      // .wd-badge__content {
+      //   background-color: #FCAB2A;
+      //   border:none;
+      //   width: 40rpx;
+      //   height: 40rpx;
+      //   border-radius: 50%;
+      //   padding: 0;
+      //   display: flex;
+      //   justify-content: center;
+      //   align-items: center;
+      // }
     }
   }
 }
