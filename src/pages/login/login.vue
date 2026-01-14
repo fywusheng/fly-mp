@@ -10,15 +10,16 @@
 
 <script lang="ts" setup>
 import { useUserStore } from '@/store'
+import { getImageUrl } from '@/utils/image'
 
 defineOptions({
   name: 'Login',
 })
 const userStore = useUserStore()
 const loading = ref(false)
-const CursorIcon = 'http://115.190.57.206/static/login/cursor.png'
-const LogoIcon = 'http://115.190.57.206/static/login/logo.png'
-const ParticleIcon = 'http://115.190.57.206/static/login/particle.png'
+const CursorIcon = getImageUrl('/login/cursor.png')
+const LogoIcon = getImageUrl('/login/logo.png')
+const ParticleIcon = getImageUrl('/login/particle.png')
 
 async function onGetPhoneNumber(e: any) {
   // 处理获取到的手机号
@@ -35,7 +36,7 @@ async function onGetPhoneNumber(e: any) {
         duration: 500,
       })
       setTimeout(() => {
-        uni.navigateBack()
+        uni.reLaunch({ url: '/pages/index/index' })
       }, 500)
     }
     else {

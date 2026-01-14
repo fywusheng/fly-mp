@@ -11,8 +11,9 @@
 <script lang="ts" setup>
 import { getColorImg } from '@/utils'
 import { httpGet, httpPost } from '@/utils/http'
+import { getImageUrl } from '@/utils/image'
 
-const CarGreenIcon = 'http://115.190.57.206/static/mine/bind-car-green.png'
+const CarGreenIcon = getImageUrl('/mine/bind-car-green.png')
 
 const name = ref('')
 const brand = ref('飞鸽')

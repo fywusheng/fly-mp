@@ -14,9 +14,10 @@ import type { BluetoothDeviceInfo } from '@/composables/useBluetooth'
 import { BluetoothStatus, useBluetooth } from '@/composables/useBluetooth'
 import { useAppStore, useCarStore, useUserStore } from '@/store'
 import { httpGet, httpPost } from '@/utils/http'
+import { getImageUrl } from '@/utils/image'
 
-const OverSpeed = 'http://115.190.57.206/static/mine/over-speed.png'
-const RemoteControl = 'http://115.190.57.206/static/mine/remote-control.png'
+const OverSpeed = getImageUrl('/mine/over-speed.png')
+const RemoteControl = getImageUrl('/mine/remote-control.png')
 
 // ✅ 初始化蓝牙管理
 const {
@@ -44,6 +45,7 @@ const setId = ref('') // 设置车辆id
 const overSpeed = ref<boolean>(false)
 // 车辆状态
 const carState = ref({
+  status: 0, // 4g设备状态：0-离线，1-在线
   isOverspeedOn: false, // 超速报警功能是否开启。  - `true`：超速  - `false`：未超速
   // isStarted: false, // 车辆是否已启动。`true`：已启动  - `false`：未启动
   // isLocked: true, // 车辆是否处于锁车状态。  - `true`：已锁车  - `false`：未锁车
@@ -271,6 +273,12 @@ function setDefaultVehicleId(carsList) {
 function getCarInfo(deviceNo?: string) {
   httpGet(`/device/v2/devices/${deviceNo}/status`).then((res) => {
     console.log('获取车辆状态信息成功:', res)
+    // 4g设备不在线不更新状态
+    if ((res.data as any).status === 0) {
+      console.log('4G设备不在线，状态不更新')
+      return
+    }
+
     carState.value = {
       ...carState.value,
       ...res.data as any,
@@ -316,11 +324,12 @@ function handleOnConfirm({ value }) {
 
 // 设置超速报警提示音
 function beforeChange({ value, resolve }) {
-  // ✅ 判断控车方式：有网 && 是4G设备 → 使用4G控车，否则使用蓝牙控车
+  // ✅ 判断控车方式：有网 && 是4G设备 && 设备在线 → 使用4G控车，否则使用蓝牙控车
   const hasNetwork = appStore.hasNetwork // 手机是否有网络
   const is4GDevice = carStore.network // 车辆是否是4G设备
+  const deviceOnline = carState.value.status === 1 // 车辆是否在线
 
-  if (!hasNetwork && !is4GDevice) {
+  if (!hasNetwork && !is4GDevice && !deviceOnline) {
     // 无网且非4G设备，需要蓝牙连接
     if (bluetoothStatus.value !== BluetoothStatus.CONNECTED) {
       uni.showToast({
@@ -332,8 +341,7 @@ function beforeChange({ value, resolve }) {
     }
   }
 
-  console.log('要改变的值:', value)
-  if (hasNetwork && is4GDevice && useNetwork.value) {
+  if (hasNetwork && is4GDevice && deviceOnline && useNetwork.value) {
     // 4G车辆
     controlBike(value ? 'overspeedOn' : 'overspeedOff').then((res: any) => {
       console.log('发送超速报警指令成功:', res)

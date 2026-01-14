@@ -9,8 +9,10 @@
 </route>
 
 <script lang="ts" setup>
-const UserStart = 'http://115.190.57.206/static/mine/user-start.png'
-// import UserUse from 'http://115.190.57.206/static/mine/user-use.png'
+import { getImageUrl } from '@/utils/image'
+
+const UserStart = getImageUrl('/mine/user-start.png')
+// import UserUse from getImageUrl('/mine/user-use.png')
 </script>
 
 <template>

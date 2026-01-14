@@ -254,7 +254,7 @@ function goAllDrive() {
     .normal {
       width: 50rpx;
       height: 50rpx;
-      border: 1rpx solid #6E6E6E;
+      border: 2rpx solid #6E6E6E;
       color: #333333;
       display: flex;
       justify-content: center;
@@ -262,7 +262,7 @@ function goAllDrive() {
       font-size: 24rpx;
       &.active {
         color: #2CBC7B;
-        border: 1rpx solid #2CBC7B;
+        border: 2rpx solid #2CBC7B;
       }
     }
   }

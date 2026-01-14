@@ -11,15 +11,16 @@
 
 <script lang="ts" setup>
 import { httpGet } from '@/utils/http'
+import { getImageUrl } from '@/utils/image'
 
-const ReloadIcon = 'http://115.190.57.206/static/home/reload.png'
+const ReloadIcon = getImageUrl('/home/reload.png')
 
-// const EndPointIcon = 'http://115.190.57.206/static/common/end-point.png'
+// const EndPointIcon = getImageUrl('/common/end-point.png')
 // 不同状态车辆图标
-const ArrowRed = 'http://115.190.57.206/static/network/arrow-red.png'
-const ArrowGray = 'http://115.190.57.206/static/network/arrow-gray.png'
-const ArrayGreen = 'http://115.190.57.206/static/network/arrow-green.png'
-// const StartPointIcon = 'http://115.190.57.206/static/common/start-point.png'
+const ArrowRed = getImageUrl('/network/arrow-red.png')
+const ArrowGray = getImageUrl('/network/arrow-gray.png')
+const ArrayGreen = getImageUrl('/network/arrow-green.png')
+// const StartPointIcon = getImageUrl('/common/start-point.png')
 
 // 使用ref定义响应式数据
 const scale = ref(18)

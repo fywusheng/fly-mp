@@ -169,7 +169,7 @@ export function getEnvBaseUploadUrl() {
 export function getLocation() {
   return new Promise((resolve, reject) => {
     uni.getLocation({
-      type: 'wgs84',
+      type: 'gcj02',
       success: (res) => {
         resolve(res)
       },

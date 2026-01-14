@@ -10,10 +10,11 @@
 
 <script lang="ts" setup>
 import { httpGet, httpPost, httpPut } from '@/utils/http'
+import { getImageUrl } from '@/utils/image'
 
-const ShareIcon = 'http://115.190.57.206/static/common/share.png'
-const SuccessDefault = 'http://115.190.57.206/static/mine/success-default.png'
-const YellowTips = 'http://115.190.57.206/static/mine/yellow-tips.png'
+const ShareIcon = getImageUrl('/common/share.png')
+const SuccessDefault = getImageUrl('/mine/success-default.png')
+const YellowTips = getImageUrl('/mine/yellow-tips.png')
 
 const name = ref('') // 车辆名称
 const memberName = ref('') // 姓名

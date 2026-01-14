@@ -138,6 +138,7 @@ function openPrivacyContract() {
       .agree {
         background: #07c160;
         color: #fff;
+        padding: 0;
       }
     }
   }

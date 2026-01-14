@@ -11,11 +11,12 @@
 <script lang="ts" setup>
 import { getColorImg } from '@/utils'
 import { httpGet } from '@/utils/http'
+import { getImageUrl } from '@/utils/image'
 
-const GreenCar = 'http://115.190.57.206/static/mine/car-green.png'
-const RedCar = 'http://115.190.57.206/static/mine/car-red.png'
-const White = 'http://115.190.57.206/static/mine/car-white.png'
-const EditIcon = 'http://115.190.57.206/static/mine/edit.png'
+const GreenCar = getImageUrl('/mine/car-green.png')
+const RedCar = getImageUrl('/mine/car-red.png')
+const White = getImageUrl('/mine/car-white.png')
+const EditIcon = getImageUrl('/mine/edit.png')
 const carList = ref([]) // 车辆列表
 
 onShow(() => {

@@ -28,6 +28,7 @@ export function useLocationListener() {
       // 2. 开启后台定位
       await new Promise<void>((resolve, reject) => {
         wx.startLocationUpdateBackground({
+          type: 'gcj02',
           success: () => {
             console.log('✅ 后台定位已开启')
             resolve()

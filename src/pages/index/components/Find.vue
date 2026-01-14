@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useCarStore } from '@/store'
 import { httpGet } from '@/utils/http'
+import { getImageUrl } from '@/utils/image'
 
 defineOptions({
   name: 'Find',
@@ -12,12 +13,12 @@ const props = defineProps({
   },
 })
 
-const BgIcon = 'http://115.190.57.206/static/find/bg.png'
-const DescIcon = 'http://115.190.57.206/static/find/desc.png'
-const FlyLogoIcon = 'http://115.190.57.206/static/find/fly-logo.png'
-const FlyIcon = 'http://115.190.57.206/static/find/fly.png'
-const HelloTextIcon = 'http://115.190.57.206/static/find/helloText.png'
-const LineIcon = 'http://115.190.57.206/static/find/line.png'
+const BgIcon = getImageUrl('/find/bg.png')
+const DescIcon = getImageUrl('/find/desc.png')
+const FlyLogoIcon = getImageUrl('/find/fly-logo.png')
+const FlyIcon = getImageUrl('/find/fly.png')
+const HelloTextIcon = getImageUrl('/find/helloText.png')
+const LineIcon = getImageUrl('/find/line.png')
 
 // 获取胶囊位置信息
 const menuButtonInfo = uni.getMenuButtonBoundingClientRect()

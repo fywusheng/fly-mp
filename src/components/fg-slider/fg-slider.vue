@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, getCurrentInstance, onMounted, ref, watch } from 'vue'
+import { getImageUrl } from '@/utils/image'
 
 const props = withDefaults(defineProps<Props>(), {
   modelValue: () => 0,
@@ -29,7 +30,7 @@ const emit = defineEmits<{
   'change': [value: number | number[]]
   'changing': [value: number | number[]]
 }>()
-const CircleIcon = 'http://115.190.57.206/static/car/circle.png'
+const CircleIcon = getImageUrl('/car/circle.png')
 interface Props {
   modelValue?: number | number[]
   barHeight?: number | string

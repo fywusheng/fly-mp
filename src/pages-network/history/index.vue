@@ -13,8 +13,9 @@
 <script lang="ts" setup>
 import { useCarStore } from '@/store/car'
 import { httpGet } from '@/utils/http'
+import { getImageUrl } from '@/utils/image'
 
-const MapArrow = 'http://115.190.57.206/static/network/location.png'
+const MapArrow = getImageUrl('/network/location.png')
 
 const state = ref<'loading' | 'finished' | 'error'>('loading')
 const time = ref<number>(Date.now()) // 单选日期（时间戳）
@@ -24,10 +25,10 @@ const page = ref(1) // 当前页码
 const size = 20
 const startDate = ref('')
 const endDate = ref('')
-// 仅允许最近3天（含今天）
+// 仅允许最近30天（含今天）
 const ONE_DAY = 24 * 60 * 60 * 1000
 const maxDate = ref<number>(Date.now())
-const minDate = ref<number>(Date.now() - 2 * ONE_DAY)
+const minDate = ref<number>(Date.now() - 29 * ONE_DAY)
 const stayingInfo = ref<any[]>([]) // 历史停留列表信息
 
 onLoad((e) => {
@@ -153,17 +154,6 @@ function timeFormat(timestamp: number) {
   return `${year}-${month}-${day}`
 }
 
-// 格式化日期显示（YYYY年MM月DD日）
-function formatDate(dateStr: string) {
-  if (!dateStr)
-    return ''
-  const date = new Date(dateStr)
-  const year = date.getFullYear()
-  const month = date.getMonth() + 1
-  const day = date.getDate()
-  return `${year}年${month}月${day}日`
-}
-
 // 日期确定事件
 function handleConfirm({ value }) {
   // 单选日期：起止同一天
@@ -182,6 +172,18 @@ function goHistoryInfo(item: any) {
     url: `/pages-network/history-info/index?rideId=${item.parkingId}`,
   })
 }
+// 格式化时间显示 为 YYYY-MM-DD HH:mm:ss
+function formatTime(timestamp: number) {
+  const date = new Date(timestamp)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+  const seconds = String(date.getSeconds()).padStart(2, '0')
+
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
+}
 </script>
 
 <template>
@@ -196,13 +198,16 @@ function goHistoryInfo(item: any) {
           @click="goHistoryInfo(item)"
         >
           <view class="flex items-center">
-            <image
+            <!-- <image
               class="mr-29rpx h-30rpx w-25rpx"
               :src="MapArrow"
               mode="scaleToFill"
-            />
+            /> -->
+            <view class="mr-56rpx text-24rpx text-[#333333] font-bold">
+              停车时间
+            </view>
             <view class="address-text">
-              {{ item.address || '地址信息未知' }}
+              {{ formatTime(item.startTime) }}-{{ item.endTime ? formatTime(item.endTime).split(' ')[1] : '' }}
             </view>
           </view>
           <view>
@@ -272,6 +277,8 @@ function goHistoryInfo(item: any) {
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+      font-size: 24rpx;
+      color: #333333;
     }
 
     .card-item {

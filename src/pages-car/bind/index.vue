@@ -11,9 +11,10 @@
 <script lang="ts" setup>
 import { getColorImg } from '@/utils'
 import { httpGet } from '@/utils/http'
+import { getImageUrl } from '@/utils/image'
 
-const ScanDescIcon = 'http://115.190.57.206/static/car/scan-desc.png'
-const ScanIcon = 'http://115.190.57.206/static/car/scan.png'
+const ScanDescIcon = getImageUrl('/car/scan-desc.png')
+const ScanIcon = getImageUrl('/car/scan.png')
 
 const code = ref('')
 const name = ref('')

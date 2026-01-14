@@ -1,16 +1,18 @@
 <script lang="ts" setup>
+import { getImageUrl } from '@/utils/image'
+
 const props = defineProps<{
   info: { latitude: number, longitude: number, ridingStatus: string }
 }>()
 const emit = defineEmits<{
   (e: 'mapClick'): void
 }>()
-const MapWait = 'http://115.190.57.206/static/home/map-wait.png'
-const MapArrow = 'http://115.190.57.206/static/home/map-arrow.png'
+const MapWait = getImageUrl('/home/map-wait.png')
+const MapArrow = getImageUrl('/home/map-arrow.png')
 
-const ArrowRed = 'http://115.190.57.206/static/network/arrow-red.png'
-const ArrowGray = 'http://115.190.57.206/static/network/arrow-gray.png'
-const ArrayGreen = 'http://115.190.57.206/static/network/arrow-green.png'
+const ArrowRed = getImageUrl('/network/arrow-red.png')
+const ArrowGray = getImageUrl('/network/arrow-gray.png')
+const ArrayGreen = getImageUrl('/network/arrow-green.png')
 
 // 缓存地图上下文
 let mapCtx: any = null

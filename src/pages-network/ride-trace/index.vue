@@ -22,10 +22,10 @@ const page = ref(1) // 当前页码
 const size = 20
 const startDate = ref('')
 const endDate = ref('')
-// 仅允许最近3天（含今天）
+// 仅允许最近30天（含今天）
 const ONE_DAY = 24 * 60 * 60 * 1000
 const maxDate = ref<number>(Date.now())
-const minDate = ref<number>(Date.now() - 2 * ONE_DAY)
+const minDate = ref<number>(Date.now() - 29 * ONE_DAY)
 const ridingInfo = ref<any[]>([]) // 骑行列表信息
 
 onLoad((e) => {
@@ -178,20 +178,6 @@ function timeFormat(timestamp: number) {
   return `${year}-${month}-${day}`
 }
 
-// 格式化时间显示（YYYY/MM/DD HH:mm:ss）
-function formatDateTime(dateStr: string) {
-  if (!dateStr)
-    return ''
-  const date = new Date(dateStr)
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  const hours = String(date.getHours()).padStart(2, '0')
-  const minutes = String(date.getMinutes()).padStart(2, '0')
-  const seconds = String(date.getSeconds()).padStart(2, '0')
-  return `${year}/${month}/${day}  ${hours}:${minutes}:${seconds}`
-}
-
 // 格式化骑行时长（秒转 HH:mm:ss）
 function formatDuration(seconds: number) {
   if (!seconds)
@@ -218,7 +204,7 @@ function formatDuration(seconds: number) {
               查看轨迹
             </view>
           </view>
-          <view class="card-item-middle box-border flex flex-col px-29rpx py-40rpx">
+          <!-- <view class="card-item-middle box-border flex flex-col px-29rpx py-40rpx">
             <view class="flex items-center">
               <view class="mr-20rpx h-20rpx w-20rpx rounded-10rpx bg-[#DB6477]" />
               <view>{{ item.startAddress || '--' }}</view>
@@ -227,7 +213,7 @@ function formatDuration(seconds: number) {
               <view class="mr-20rpx h-20rpx w-20rpx rounded-10rpx bg-[#2CBC7B]" />
               <view>{{ item.endAddress || '--' }}</view>
             </view>
-          </view>
+          </view> -->
           <view class="box-border w-100% flex items-center justify-between px-29rpx py-25rpx">
             <view class="flex flex-col items-center justify-center text-24rpx text-[#333333]">
               <view>{{ ((item.distance || 0) * 1000).toFixed(0) }}m</view>

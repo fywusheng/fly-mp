@@ -15,6 +15,7 @@ import { useBluetooth } from '@/composables/useBluetooth'
 import { useAppStore, useCarStore } from '@/store'
 import { debounce } from '@/utils'
 import { httpGet, httpPost } from '@/utils/http'
+import { getImageUrl } from '@/utils/image'
 
 // ✅ 初始化蓝牙管理
 const {
@@ -34,12 +35,15 @@ const carStore = useCarStore()
 // app信息 networkType 手机设备是否连接网络
 const appStore = useAppStore()
 
-const PointIcon = 'http://115.190.57.206/static/car/point.png'
+const PointIcon = getImageUrl('/car/point.png')
 const isInductionCar = ref(true) // 感应控车
 const distance = ref(1)
 const updateCarStatusDebounced = debounce(updateCarStatus, 500) // 更新车辆状态
 // 车辆状态
 const carState = ref({
+  status: 0, // 4g设备状态：0-离线，1-在线
+  batteryVoltageType: 48, // 电池电压类型（48/60/72）
+  batteryLevel: 0, // 电池电量百分比 (0–100
   isStarted: false, // 车辆是否已启动。`true`：已启动  - `false`：未启动
   isLocked: true, // 车辆是否处于锁车状态。  - `true`：已锁车  - `false`：未锁车
   isArmed: false, // 车辆是否已设防（防盗报警激活）。  - `true`：已设防  - `false`：未设防
@@ -60,7 +64,7 @@ onLoad((e) => {
   carInfo = JSON.parse(decodeURIComponent(e.info))
   console.log('解析后的车辆信息', carInfo)
 
-  // 如果是一体机车辆且有网络，获取车辆状态
+  // 如果是一体机车辆且有网络且设备类型是4G在线，获取车辆状态
   if (carStore.network && useNetwork.value) {
     // 4G车辆状态获取
     getCarInfo(carInfo.deviceNo)
@@ -81,6 +85,13 @@ onUnload(() => {
 function getCarInfo(deviceNo?: string) {
   httpGet(`/device/v2/devices/${deviceNo}/status`).then((res) => {
     console.log('获取车辆状态信息成功:', res)
+
+    // 4g设备不在线不更新状态
+    if ((res.data as any).status === 0) {
+      console.log('4G设备不在线，状态不更新')
+      return
+    }
+
     carState.value = {
       ...carState.value,
       ...res.data as any,
@@ -180,12 +191,13 @@ function updateCarStatus() {
 }
 // 设置感应控车状态改变
 function setKeyless(e: any) {
-  // ✅ 判断控车方式：有网 && 是4G设备 → 使用4G控车，否则使用蓝牙控车
+  // ✅ 判断控车方式：有网 && 是4G设备 && 设备在线 → 使用4G控车，否则使用蓝牙控车
   const hasNetwork = appStore.hasNetwork // 手机是否有网络
   const is4GDevice = carStore.network // 车辆是否是4G设备
+  const deviceOnline = carState.value.status === 1 // 车辆是否在线
 
   // ✅ 开启/关闭感应功能
-  if (hasNetwork && is4GDevice && useNetwork.value) {
+  if (hasNetwork && is4GDevice && deviceOnline && useNetwork.value) {
     controlBike(e.value ? 'keylessOn' : 'keylessOff').then((res: any) => {
       if (res.code !== '200') {
         uni.showModal({
@@ -222,11 +234,12 @@ function setKeylessRange(range: number) {
       commandType = 'keylesslevel1'
       break
   }
-  // ✅ 判断控车方式：有网 && 是4G设备 → 使用4G控车，否则使用蓝牙控车
+  // ✅ 判断控车方式：有网 && 是4G设备 && 设备在线 → 使用4G控车，否则使用蓝牙控车
   const hasNetwork = appStore.hasNetwork // 手机是否有网络
   const is4GDevice = carStore.network // 车辆是否是4G设备
+  const deviceOnline = carState.value.status === 1 // 车辆是否在线
 
-  if (hasNetwork && is4GDevice && useNetwork.value) {
+  if (hasNetwork && is4GDevice && deviceOnline && useNetwork.value) {
     controlBike(commandType).then((res: any) => {
       if (res.code !== '200') {
         uni.showModal({

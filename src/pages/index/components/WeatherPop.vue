@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { ref, watch } from 'vue'
 import { getPopWeatherIcon, getWeatherIcon } from '@/utils/common'
+import { getImageUrl } from '@/utils/image'
 
 // 定义 props
 const props = defineProps<{
@@ -20,8 +21,8 @@ const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
 }>()
 
-const TopIcon = 'http://115.190.57.206/static/home/top-bg.png'
-const SunIcon = 'http://115.190.57.206/static/home/sun.png'
+const TopIcon = getImageUrl('/home/top-bg.png')
+const SunIcon = getImageUrl('/home/sun.png')
 
 // 内部状态，与父组件的 v-model 同步
 const show = ref(props.modelValue)

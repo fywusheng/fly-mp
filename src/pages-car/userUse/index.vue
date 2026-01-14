@@ -9,8 +9,10 @@
 </route>
 
 <script lang="ts" setup>
-const UserBind = 'http://115.190.57.206/static/mine/user-bind.png'
-const UserUnbind = 'http://115.190.57.206/static/mine/user-unbind.png'
+import { getImageUrl } from '@/utils/image'
+
+const UserBind = getImageUrl('/mine/user-bind.png')
+const UserUnbind = getImageUrl('/mine/user-unbind.png')
 
 const tabs = ref(['绑定', '解绑'])
 const tab = ref('绑定')

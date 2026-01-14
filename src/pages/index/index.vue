@@ -12,6 +12,7 @@
 
 <script lang="ts" setup>
 import { useAppStore, useCarStore } from '@/store'
+import { getImageUrl } from '@/utils/image'
 // 4G+蓝牙
 import Find from './components/Find.vue'
 import Home from './components/Home.vue'
@@ -44,26 +45,26 @@ const FourTabbarItems: TabbarItem[] = [
   {
     name: 'home',
     title: '骑行',
-    icon: 'http://115.190.57.206/static/tabbar/home.png',
-    activeIcon: 'http://115.190.57.206/static/tabbar/home-active.png',
+    icon: getImageUrl('/tabbar/home.png'),
+    activeIcon: getImageUrl('/tabbar/home-active.png'),
   },
   {
     name: 'find',
     title: '发现',
-    icon: 'http://115.190.57.206/static/tabbar/find.png',
-    activeIcon: 'http://115.190.57.206/static/tabbar/find-active.png',
+    icon: getImageUrl('/tabbar/find.png'),
+    activeIcon: getImageUrl('/tabbar/find-active.png'),
   },
   {
     name: 'infor',
     title: '数据',
-    icon: 'http://115.190.57.206/static/tabbar/data.png',
-    activeIcon: 'http://115.190.57.206/static/tabbar/data-active.png',
+    icon: getImageUrl('/tabbar/data.png'),
+    activeIcon: getImageUrl('/tabbar/data-active.png'),
   },
   {
     name: 'mine',
     title: '我的',
-    icon: 'http://115.190.57.206/static/tabbar/mine.png',
-    activeIcon: 'http://115.190.57.206/static/tabbar/mine-active.png',
+    icon: getImageUrl('/tabbar/mine.png'),
+    activeIcon: getImageUrl('/tabbar/mine-active.png'),
   },
 ]
 
@@ -72,21 +73,21 @@ const BluetoothTabbarItems: TabbarItem[] = [
   {
     name: 'home',
     title: '骑行',
-    icon: 'http://115.190.57.206/static/tabbar/home.png',
-    activeIcon: 'http://115.190.57.206/static/tabbar/home-active.png',
+    icon: getImageUrl('/tabbar/home.png'),
+    activeIcon: getImageUrl('/tabbar/home-active.png'),
   },
 
   {
-    name: 'InforBlue',
+    name: 'inforBlue',
     title: '数据',
-    icon: 'http://115.190.57.206/static/tabbar/data.png',
-    activeIcon: 'http://115.190.57.206/static/tabbar/data-active.png',
+    icon: getImageUrl('/tabbar/data.png'),
+    activeIcon: getImageUrl('/tabbar/data-active.png'),
   },
   {
     name: 'mine',
     title: '我的',
-    icon: 'http://115.190.57.206/static/tabbar/mine.png',
-    activeIcon: 'http://115.190.57.206/static/tabbar/mine-active.png',
+    icon: getImageUrl('/tabbar/mine.png'),
+    activeIcon: getImageUrl('/tabbar/mine-active.png'),
   },
 ]
 
@@ -113,6 +114,7 @@ onLoad((option: Record<string, string>) => {
 onShow(() => {
   // 获取当前网络状态
   appStore.getAppInfo()
+  console.log('用户token', `${uni.getStorageSync('token')}`)
 })
 
 // 设置tabbar
@@ -130,7 +132,7 @@ function setTabItems(network) {
     <Home v-show="tabbar === 'home'" :tab-name="tabbar" />
     <Find v-show="tabbar === 'find'" :tab-name="tabbar" />
     <Infor v-show="tabbar === 'infor'" :tab-name="tabbar" />
-    <InforBlue v-if="tabbar === 'InforBlue'" />
+    <InforBlue v-show="tabbar === 'inforBlue'" :tab-name="tabbar" />
     <Mine v-if="tabbar === 'mine'" />
 
     <!-- 底部导航栏 -->

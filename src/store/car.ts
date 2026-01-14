@@ -7,8 +7,8 @@ interface ICarInfoVo {
   id: number
   hasNetwork: boolean
   hasBluetooth: boolean
+  hasBeidou: number
   bluetoothVendor: string | null
-
   bluetoothDeviceNo: string | null
   bluetoothDeviceType: number | null
   deviceType: number | null
@@ -28,6 +28,8 @@ const userInfoState: ICarInfoVo = {
   // 目前不用了 连接的蓝牙设备类型 number | null 1 华惠 2 E车星 null 无主机
   bluetoothDeviceType: null,
 
+  // 是否支持北斗/卫星定位 number | null 1 支持 0 不支持
+  hasBeidou: 0,
   //  是否支持4G
   hasNetwork: false,
   // 是否支持蓝牙
@@ -47,6 +49,7 @@ const userInfoState: ICarInfoVo = {
    * 5 E车星一体机
    * 6 华惠一体机
    * 7 E车星4G+华惠蓝牙
+   *
    */
   deviceType: null,
 
@@ -60,9 +63,10 @@ export const useCarStore = defineStore(
 
     // 是否4g
     const network = computed(() => Boolean(carInfo.value.hasNetwork))
+    // const network = ref(false)
 
     // 是否蓝牙
-    const bluetooth = computed(() => Boolean(carInfo.value.hasBluetooth))
+    const hasBluetooth = computed(() => Boolean(carInfo.value.hasBluetooth))
 
     // 设置车辆信息
     function setCarInfo(val: ICarInfoVo) {
@@ -84,7 +88,7 @@ export const useCarStore = defineStore(
 
       //  计算属性
       network,
-      bluetooth,
+      hasBluetooth,
 
       // 方法
       setCarInfo,

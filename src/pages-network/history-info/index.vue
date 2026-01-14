@@ -11,8 +11,9 @@
 
 <script lang="ts" setup>
 import { httpGet } from '@/utils/http'
+import { getImageUrl } from '@/utils/image'
 
-const MapArrow = 'http://115.190.57.206/static/network/location-red.png'
+const MapArrow = getImageUrl('/network/location-red.png')
 
 interface ParkingDetailDTO {
   parkingId: string
@@ -127,9 +128,9 @@ function setMapData(trackPoints: ParkingDetailDTO) {
             {{ ridingInfo.startTime }} - {{ ridingInfo.endTime ? ridingInfo.endTime.split(' ')[1] : '--:--:--' }}
           </view>
         </view>
-        <view class="my-31rpx text-30rpx text-[#040404]">
+        <!-- <view class="my-31rpx text-30rpx text-[#040404]">
           {{ ridingInfo.address || '未知地址' }}
-        </view>
+        </view> -->
       </view>
     </view>
   </view>

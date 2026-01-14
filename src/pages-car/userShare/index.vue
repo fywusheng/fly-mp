@@ -9,8 +9,10 @@
 </route>
 
 <script lang="ts" setup>
-const UserShare = 'http://115.190.57.206/static/mine/user-share.png'
-const UserUse = 'http://115.190.57.206/static/mine/user-use.png'
+import { getImageUrl } from '@/utils/image'
+
+const UserShare = getImageUrl('/mine/user-share.png')
+const UserUse = getImageUrl('/mine/user-use.png')
 
 const tabs = ref(['分享', '使用'])
 const tab = ref('分享')

@@ -6,7 +6,7 @@ import 'abortcontroller-polyfill/dist/abortcontroller-polyfill-only'
 usePageAuth()
 
 onLaunch(() => {
-  console.log('App Launch')
+  // console.log('App Launch')
   // 处理隐私协议
   wx.getPrivacySetting({
     success(res) {
@@ -21,10 +21,10 @@ onLaunch(() => {
   })
 })
 onShow(() => {
-  console.log('App Show')
+  // console.log('App Show')
 })
 onHide(() => {
-  console.log('App Hide')
+  // console.log('App Hide')
 })
 </script>
 

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useCarStore } from '@/store'
-import { httpGet } from '@/utils/http'
+import { httpGet, httpPost } from '@/utils/http'
+import { getImageUrl } from '@/utils/image'
 
 defineOptions({
   name: 'Infor',
@@ -11,18 +12,19 @@ const props = defineProps({
   },
 })
 
-const BgIcon = 'http://115.190.57.206/static/infor/bg.png'
-const DataIcon = 'http://115.190.57.206/static/infor/data.png'
-const HistoryIcon = 'http://115.190.57.206/static/infor/history.png'
-const RightIcon = 'http://115.190.57.206/static/infor/right.png'
-const RoundMileageIcon = 'http://115.190.57.206/static/infor/round-mileage.png'
-const RoundTimeIcon = 'http://115.190.57.206/static/infor/round-time.png'
-const TraceIcon = 'http://115.190.57.206/static/infor/track.png'
-const DeviceIcon = 'http://115.190.57.206/static/infor/4g-device.png'
-const DataAive = 'http://115.190.57.206/static/infor/4g-data-active.png'
-const DataUnAive = 'http://115.190.57.206/static/infor/4g-data.png'
-const DataNone = 'http://115.190.57.206/static/infor/4g-data-none.png'
-const Effect = 'http://115.190.57.206/static/infor/effect.png'
+const BgIcon = getImageUrl('/infor/bg.png')
+const DataIcon = getImageUrl('/infor/data.png')
+const HistoryIcon = getImageUrl('/infor/history.png')
+const RightIcon = getImageUrl('/infor/right.png')
+const RoundMileageIcon = getImageUrl('/infor/round-mileage.png')
+const RoundTimeIcon = getImageUrl('/infor/round-time.png')
+const TraceIcon = getImageUrl('/infor/track.png')
+const DeviceIcon = getImageUrl('/infor/4g-device.png')
+const DataAive = getImageUrl('/infor/4g-data-active.png')
+const DataUnAive = getImageUrl('/infor/4g-data.png')
+const DataNone = getImageUrl('/infor/4g-data-none.png')
+const Gift = getImageUrl('/infor/gift.png')
+const Effect = getImageUrl('/infor/effect.png')
 const carStore = useCarStore()
 const dailyStats = ref<any>({
   totalRidingTime: '00:00:00',
@@ -39,12 +41,36 @@ const showCancelBtn = ref(true) // 是否显示取消按钮
 const showConfirmBtn = ref(true) // 是否显示确认按钮
 const closeOnClickModal = ref(true) // 是否点击蒙层关闭弹窗
 
+const hasPending = ref(false) // 是否有待领取体验卡
+const activeCard = ref({
+  activatedAt: '', // 激活时间
+  cardName: '', // 卡名称
+  cardType: '', // 卡类型 DATA, FEATURE 等等
+  claimedAt: '', // 领取时间
+  effective: false, // 是否当前生效（已激活且未过期）
+  effectiveTime: '', // 生效时间
+  expireAt: '', // 过期时间
+  expireDate: '', // 过期日期
+  status: '', // 卡状态 PENDING / ACTIVE / EXPIRED
+})
+
 watch(() => props.tabName, (newVal) => {
   if (newVal === 'infor') {
     getRidingInfo(carStore.carInfo.id)
+    getAuth()
   }
 })
 
+async function getAuth() {
+  const vehicleId = carStore.carInfo.id
+  const res = await httpGet(`/user/card/vehicles/${vehicleId}/cards/check`) as any
+  if (res.code === '200') {
+    hasPending.value = res.data.hasPending
+    activeCard.value = res.data.activeCard || null
+    // hasPending.value = false // 测试代码，始终显示待领取
+    // activeCard.value.effective = false // 测试代码，始终显示未生效
+  }
+}
 // 获取骑行天
 async function getRidingInfo(vehicleId) {
   const res = await httpGet(`/riding/dashboard/riding`, {
@@ -74,36 +100,123 @@ function formatMinutesToTime(minutes) {
 }
 
 function goHistory() {
+  if (!checkhasPending()) {
+    return
+  }
   uni.navigateTo({
     url: '/pages-network/history/index',
   })
 }
 // 去轨迹
 function goTrace() {
+  if (!checkhasPending()) {
+    return
+  }
   uni.navigateTo({
     url: '/pages-network/ride-trace/index',
   })
 }
 
 function goDrive() {
+  if (!checkhasPending()) {
+    return
+  }
   uni.navigateTo({
     url: '/pages-network/drive-data/index',
   })
 }
 
+function checkhasPending() {
+  if (hasPending.value) {
+    messageId.value = 1
+    showCancelBtn.value = true
+    message.value = '您有一张数据服务体验卡待领取'
+    showMessagePopup.value = true
+    return false
+  }
+  else {
+    if (!activeCard.value.effective) {
+      messageId.value = 2
+      showCancelBtn.value = false
+      message.value = '购买VIP服务卡，享受更多畅行体验'
+      showMessagePopup.value = true
+      return false
+    }
+  }
+
+  return true
+}
+
 // 领取数据服务体验卡
 function getCard() {
-  messageId.value = 1
-  message.value = '您有一张数据服务体验卡待领取'
-  showMessagePopup.value = true
+  // 体验卡待领取
+  if (hasPending.value) {
+    messageId.value = 1
+    showCancelBtn.value = true
+    message.value = '您有一张数据服务体验卡待领取'
+    showMessagePopup.value = true
+  }
+  else {
+    // 体验卡已失效，去购买
+    if (!activeCard.value.effective) {
+      messageId.value = 2
+      showCancelBtn.value = false
+      message.value = '购买VIP服务卡，享受更多畅行体验'
+      showMessagePopup.value = true
+    }
+  }
 }
 function handleConfirm() {
-  if(messageId.value === 1){
+  if (messageId.value === 1) {
     console.log('领取数据服务体验卡')
+    getTrialCard()
   }
+  else if (messageId.value === 2) {
+    console.log('去购买数据服务体验卡')
+    showMessagePopup.value = false
+  }
+}
+// 领取数据服务体验卡
+async function getTrialCard() {
+  const vehicleId = carStore.carInfo.id
+  const res = await httpPost(`/user/card/vehicles/${vehicleId}/cards/claim`) as any
+  if (res.code === '200') {
+    getAuth()
+    uni.showToast({
+      title: '领取成功',
+      icon: 'success',
+    })
+  }
+  else {
+    console.error('领取数据服务体验卡失败', res.message)
+    uni.showToast({
+      title: res.message || '领取失败',
+      icon: 'none',
+    })
+  }
+  showMessagePopup.value = false
 }
 function handleCancel() {
   showMessagePopup.value = false
+}
+function getBg() {
+  if (hasPending.value) {
+    return DataAive
+  }
+  if (!hasPending.value && !activeCard.value.effective) {
+    return DataUnAive
+  }
+  return DataAive
+}
+function getCardTitle() {
+  if (hasPending.value) {
+    return '数据服务体验卡'
+  }
+  if (!hasPending.value && !activeCard.value.effective) {
+    return '无有效数据卡'
+  }
+
+  return activeCard.value.effective ? '数据服务体验卡' : '体验卡已失效'
 }
 </script>
 
@@ -222,34 +335,31 @@ function handleCancel() {
         <view class="relative h-180rpx w-325rpx">
           <image
             class="absolute left-0 top-0 h-100% w-100%"
-            :src="DataAive"
+            :src="getBg()"
             mode="scaleToFill"
           />
-           <!-- <image
-            class="absolute left-0 top-0 h-100% w-100%"
-            :src="DataUnAive"
-            mode="scaleToFill"
-          /> -->
 
           <view class="relative z-10 box-border h-100% w-100% px-21rpx pt-29rpx">
-            <view class="unclaimed" @click="getCard">
-              去领取
+            <!-- 待领取 | 已失效 -->
+            <view v-if="hasPending || !activeCard.effective" class="unclaimed" @click="getCard">
+              {{ hasPending ? '待领取' : '去购买' }}
             </view>
             <!-- 生效中 -->
-            <!-- <image
-                class="effect"
-                :src="Effect"
-                mode="scaleToFill"
-            /> -->
+            <image
+              v-if="activeCard && activeCard.effective"
+              class="effect"
+              :src="Effect"
+              mode="scaleToFill"
+            />
             <view class="text-24rpx text-[#ffffff]">
-              数据服务体验卡
+              {{ getCardTitle() }}
             </view>
             <view class="mb-10rpx mt-6rpx h-4rpx w-60rpx bg-[#ffffff]" />
             <view class="mb-9rpx text-18rpx text-[#275C4E]">
               可查询骑行轨迹/停车位置/行驶数据 全国可用
             </view>
-            <view class="h-24rpx w-180rpx flex items-center justify-center rounded-20rpx bg-[#2CBC7B] text-14rpx text-[#ffffff]">
-              有效期至2026-03-31
+            <view v-if=" activeCard && activeCard.effective" class="h-24rpx w-180rpx flex items-center justify-center rounded-20rpx bg-[#2CBC7B] text-14rpx text-[#ffffff]">
+              有效期至{{ activeCard.expireDate || '' }}
             </view>
             <!-- <view class="w-100% flex justify-center items-center">
               <image
@@ -258,7 +368,6 @@ function handleCancel() {
                 mode="scaleToFill"
               />
             </view> -->
-           
           </view>
         </view>
       </view>
@@ -295,6 +404,6 @@ function handleCancel() {
     width: 77rpx;
     height: 34rpx;
   }
-  
+
 }
 </style>

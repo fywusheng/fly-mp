@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { androidOpenAndSearchAndConnect, iosOpenAndSearchAndConnect } from '@/plugin/bleSdk/EVSBikeSDK/EvsBikeSdk'
 import EVSBikeSDK from '@/plugin/bleSdk/EVSBikeSDK/EVSBikeSDK.v1.1.1.js'
 // HUAHUI：华惠SDK
-import hhznBikeSDK from '@/plugin/bleSdk/HHZNBikeSDK/HHZNBikeSDK.v1.0.5.js'
+import hhznBikeSDK from '@/plugin/bleSdk/HHZNBikeSDK/HHZNBikeSDK.v1.0.8.js'
 // 工具方法
 import { initBLuetoothAuth } from '@/utils'
 
@@ -60,18 +60,18 @@ export interface BluetoothStateData {
   state?: Partial<VehicleState>
 }
 
+// ✅ 全局变量：当前使用的SDK实例（模块级别，所有调用共享）
+let currentSDK: any = null
+
+// 当前使用的SDK类型
+const currentSDKType = ref<BluetoothSDKType | null>(null)
+
 /**
  * 蓝牙管理 Composable
  */
 export function useBluetooth() {
   // 蓝牙连接状态
   const status = ref<BluetoothStatus>(BluetoothStatus.DISCONNECTED)
-
-  // 当前使用的SDK类型
-  const currentSDKType = ref<BluetoothSDKType | null>(null)
-
-  // 当前使用的SDK实例
-  let currentSDK: any = null
 
   // 车辆状态
   const vehicleState = ref<VehicleState>({
@@ -168,16 +168,11 @@ export function useBluetooth() {
       // 获取SDK类型
       const sdkType = getSDKTypeFromDeviceInfo(deviceInfo)
       status.value = BluetoothStatus.CONNECTING
+
+      // ✅ 先设置 SDK 类型
       currentSDKType.value = sdkType
 
-      console.log('🔵 开始连接蓝牙设备:', {
-        vendor: deviceInfo.bluetoothVendor,
-        type: sdkType === BluetoothSDKType.ECS ? 'E车星' : '华慧',
-        name: deviceInfo.bluetoothDeviceName,
-        deviceNo: deviceInfo.bluetoothDeviceNo,
-      })
-
-      // 获取对应的SDK实例
+      // ✅ 再获取对应的SDK实例
       currentSDK = getSDKInstance(sdkType)
 
       // 根据SDK类型选择连接方式
@@ -187,13 +182,13 @@ export function useBluetooth() {
         // E车星SDK：搜索并连接
         // iOS和安卓分开处理
         if (uni.getSystemInfoSync().platform === 'android') {
-          console.log('📱 安卓平台，使用安卓连接方法')
+          // console.log('📱 安卓平台，使用安卓连接方法')
           device = await androidOpenAndSearchAndConnect({
             name: deviceInfo.bluetoothDeviceName || deviceInfo.bluetoothDeviceNo,
           }) as { deviceId: string }
         }
         else {
-          console.log('📱 iOS平台，使用iOS连接方法')
+          // console.log('📱 iOS平台，使用iOS连接方法')
           device = await iosOpenAndSearchAndConnect({
             name: deviceInfo.bluetoothDeviceName || deviceInfo.bluetoothDeviceNo,
           }) as { deviceId: string }
@@ -215,7 +210,6 @@ export function useBluetooth() {
       })
 
       status.value = BluetoothStatus.CONNECTED
-      console.log('✅ 蓝牙连接成功')
 
       // 订阅状态变化
       currentSDK.subscribe(handleStateChange)
@@ -223,7 +217,6 @@ export function useBluetooth() {
       // 发送密码验证指令
       const password = deviceInfo.bluetoothDeviceKey || ''
       currentSDK.bleCommandsApi.sendBindOwnerCommand(password)
-      console.log('🔐 发送密码验证指令')
 
       // 监听蓝牙连接状态变化
       wx.onBLEConnectionStateChange((res) => {
@@ -238,8 +231,8 @@ export function useBluetooth() {
     catch (error: any) {
       status.value = BluetoothStatus.DISCONNECTED
       currentSDK?.unsubscribe(handleStateChange)
+      currentSDK = null
       currentSDKType.value = null
-      // console.error('❌ 蓝牙连接失败:', error)
       throw new Error(error.errMsg || error.message || '连接蓝牙失败')
     }
   }
@@ -251,21 +244,60 @@ export function useBluetooth() {
     try {
       if (!currentSDK) {
         console.warn('⚠️ 没有活动的蓝牙连接')
+        // ✅ 即使没有 SDK 实例，也要重置状态
+        status.value = BluetoothStatus.DISCONNECTED
+        currentSDKType.value = null
         return Promise.resolve()
       }
 
-      console.log('🔌 断开蓝牙连接')
-      await currentSDK.disconnect()
-
-      status.value = BluetoothStatus.DISCONNECTED
-      currentSDKType.value = null
+      // 1. 取消订阅状态变化
       currentSDK.unsubscribe(handleStateChange)
 
-      console.log('✅ 蓝牙已断开')
+      // 2. 断开蓝牙连接
+      await currentSDK.disconnect()
+
+      // 3. ✅ 重置所有状态（关键！）
+      status.value = BluetoothStatus.DISCONNECTED
+      currentSDKType.value = null
+      currentSDK = null
+
+      // 4. ✅ 重置车辆状态
+      vehicleState.value = {
+        batteryVoltageType: 48,
+        batteryLevel: 0,
+        isStarted: false,
+        isLocked: true,
+        isArmed: false,
+        isMuteArmOn: false,
+        isKeylessOn: false,
+        keylessType: false,
+        keylessRange: false,
+        warnCount: 0,
+      }
+
       return Promise.resolve()
     }
     catch (error) {
       console.error('❌ 断开蓝牙失败:', error)
+
+      // ⚠️ 即使断开失败，也要强制清理状态
+      status.value = BluetoothStatus.DISCONNECTED
+      currentSDKType.value = null
+      currentSDK = null
+      vehicleState.value = {
+        batteryVoltageType: 48,
+        batteryLevel: 0,
+        isStarted: false,
+        isLocked: true,
+        isArmed: false,
+        isMuteArmOn: false,
+        isKeylessOn: false,
+        keylessType: false,
+        keylessRange: false,
+        warnCount: 0,
+      }
+
+      console.log('⚠️ 断开失败，但已强制清理 SDK 状态')
       throw error
     }
   }
@@ -291,16 +323,7 @@ export function useBluetooth() {
       return
     }
     console.log('🔒 发送锁车指令')
-
-    // 不同SDK的锁车指令不同
-    if (currentSDKType.value === BluetoothSDKType.ECS) {
-      // E车星发送解防指令
-      currentSDK.bleCommandsApi.sendDisarmCommand()
-    }
-    else {
-      // 华慧发送锁车指令
-      currentSDK.bleCommandsApi.sendPowerOffCommand()
-    }
+    currentSDK.bleCommandsApi.sendPowerOffCommand()
   }
 
   /**
@@ -382,9 +405,13 @@ export function useBluetooth() {
    * 发送设置超速报警命令
    */
   function sendSetOverspeedAlarmCommand(value: number) {
-    const sdk = getSDKInstance(currentSDKType.value)
-    if (sdk?.bleCommandsApi?.sendSetOverspeedAlarmCommand) {
-      sdk.bleCommandsApi.sendSetOverspeedAlarmCommand(value)
+    if (!currentSDK) {
+      console.error('❌ SDK 未初始化')
+      return
+    }
+    console.log('⚠️ 发送设置超速报警命令:', value)
+    if (currentSDK?.bleCommandsApi?.sendSetOverspeedAlarmCommand) {
+      currentSDK.bleCommandsApi.sendSetOverspeedAlarmCommand(value)
     }
   }
 
@@ -392,9 +419,13 @@ export function useBluetooth() {
    * 发送学习遥控器命令
    */
   function sendLearnRemoteControlCommand() {
-    const sdk = getSDKInstance(currentSDKType.value)
-    if (sdk?.bleCommandsApi?.sendLearnRemoteControlCommand) {
-      sdk.bleCommandsApi.sendLearnRemoteControlCommand()
+    if (!currentSDK) {
+      console.error('❌ SDK 未初始化')
+      return
+    }
+    console.log('🎮 发送学习遥控器命令')
+    if (currentSDK?.bleCommandsApi?.sendLearnRemoteControlCommand) {
+      currentSDK.bleCommandsApi.sendLearnRemoteControlCommand()
     }
   }
 
@@ -402,9 +433,13 @@ export function useBluetooth() {
    * 发送设置感应启动过期时间命令
    */
   function sendSetKeylessUnlockExpireCommand(expireDate: string) {
-    const sdk = getSDKInstance(currentSDKType.value)
-    if (sdk?.bleCommandsApi?.sendSetKeylessUnlockExpireCommand) {
-      sdk.bleCommandsApi.sendSetKeylessUnlockExpireCommand(expireDate)
+    if (!currentSDK) {
+      console.error('❌ SDK 未初始化')
+      return
+    }
+    console.log('⏰ 发送设置感应启动过期时间命令:', expireDate)
+    if (currentSDK?.bleCommandsApi?.sendSetKeylessUnlockExpireCommand) {
+      currentSDK.bleCommandsApi.sendSetKeylessUnlockExpireCommand(expireDate)
     }
   }
 
@@ -412,9 +447,13 @@ export function useBluetooth() {
    * 发送关闭感应启动命令
    */
   function sendKeylessUnlockCloseCommand() {
-    const sdk = getSDKInstance(currentSDKType.value)
-    if (sdk?.bleCommandsApi?.sendKeylessUnlockCloseCommand) {
-      sdk.bleCommandsApi.sendKeylessUnlockCloseCommand()
+    if (!currentSDK) {
+      console.error('❌ SDK 未初始化')
+      return
+    }
+    console.log('🔒 发送关闭感应启动命令')
+    if (currentSDK?.bleCommandsApi?.sendKeylessUnlockCloseCommand) {
+      currentSDK.bleCommandsApi.sendKeylessUnlockCloseCommand()
     }
   }
 
@@ -422,9 +461,13 @@ export function useBluetooth() {
    * 发送设置感应启动距离命令
    */
   function sendSetKeylessUnlockRangeCommand(range: number) {
-    const sdk = getSDKInstance(currentSDKType.value)
-    if (sdk?.bleCommandsApi?.sendSetKeylessUnlockRangeCommand) {
-      sdk.bleCommandsApi.sendSetKeylessUnlockRangeCommand(range)
+    if (!currentSDK) {
+      console.error('❌ SDK 未初始化')
+      return
+    }
+    console.log('📏 发送设置感应启动距离命令:', range)
+    if (currentSDK?.bleCommandsApi?.sendSetKeylessUnlockRangeCommand) {
+      currentSDK.bleCommandsApi.sendSetKeylessUnlockRangeCommand(range)
     }
   }
 
@@ -432,9 +475,13 @@ export function useBluetooth() {
    * 发送感应启动距离命令
    */
   function sendKeylessUnlockRangeCommand(distance: number) {
-    const sdk = getSDKInstance(currentSDKType.value)
-    if (sdk?.bleCommandsApi?.sendKeylessUnlockRangeCommand) {
-      sdk.bleCommandsApi.sendKeylessUnlockRangeCommand(distance)
+    if (!currentSDK) {
+      console.error('❌ SDK 未初始化')
+      return
+    }
+    console.log('📍 发送感应启动距离命令:', distance)
+    if (currentSDK?.bleCommandsApi?.sendKeylessUnlockRangeCommand) {
+      currentSDK.bleCommandsApi.sendKeylessUnlockRangeCommand(distance)
     }
   }
 

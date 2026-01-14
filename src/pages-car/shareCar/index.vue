@@ -11,8 +11,9 @@
 <script lang="ts" setup>
 import { getColorImg } from '@/utils'
 import { httpDelete, httpGet, httpPost } from '@/utils/http'
+import { getImageUrl } from '@/utils/image'
 
-const EditIcon = 'http://115.190.57.206/static/mine/edit.png'
+const EditIcon = getImageUrl('/mine/edit.png')
 
 const carList = ref([]) // 车辆列表
 const selectCarId = ref('') // 选中的车辆

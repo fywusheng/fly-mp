@@ -12,6 +12,8 @@
 <script lang="ts" setup>
 import { useCarStore, useUserStore } from '@/store'
 
+const token = ref('')
+
 const userStore = useUserStore()
 const carStore = useCarStore()
 
@@ -38,9 +40,23 @@ function loginOut() {
     }, 1000)
   })
 }
-
-function switchDeviceType() {
-  carStore.setNetwork(!carStore.network)
+// token登录
+function loginToken() {
+  // 设置token
+  uni.setStorageSync('token', token.value)
+  // 获取用户信息
+  userStore.getUserInfo().then(() => {
+    uni.showToast({
+      title: '登录成功',
+      icon: 'success',
+      duration: 1000,
+    })
+    setTimeout(() => {
+      uni.reLaunch({
+        url: '/pages/index/index',
+      })
+    }, 1000)
+  })
 }
 </script>
 
@@ -53,8 +69,12 @@ function switchDeviceType() {
       <wd-button block size="large" @click="loginOut">
         退出登录
       </wd-button>
-      <wd-button block size="large" @click="switchDeviceType">
-        切换设备类型
+      <view class="my-30rpx">
+        <wd-input v-model="token" placeholder="请输入内容" />
+      </view>
+
+      <wd-button block size="large" @click="loginToken">
+        token登录
       </wd-button>
     </view>
   </view>
