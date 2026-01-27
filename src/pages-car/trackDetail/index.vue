@@ -56,10 +56,9 @@ const polyline = ref([
     width: 6,
   },
 ])
-
+const showMap = ref(false)
 // 骑行信息
 const ridingInfo = ref<any>({})
-const mapImage = ref('')
 
 onLoad((e) => {
   getTrackInfo(e.rideId)
@@ -86,8 +85,11 @@ async function getTrackInfo(rideId: string) {
 }
 
 function setMapData(trackPoints: Array<{ latitude: number, longitude: number }>) {
-  if (trackPoints.length === 0)
+  if (trackPoints.length === 0){
+    showMap.value = true
     return
+  }
+    
 
   const startPoint = trackPoints[trackPoints.length - 1]
   const endPoint = trackPoints[0]
@@ -108,26 +110,25 @@ function setMapData(trackPoints: Array<{ latitude: number, longitude: number }>)
     latitude: startPoint.latitude,
     longitude: startPoint.longitude,
   }
-  const instance = getCurrentInstance() // 获取组件实
-  const mapCtx = uni.createMapContext('map', instance)
-  // 缩放视野展示所有点
-  mapCtx.includePoints({
-    points: polyline.value[0].points,
-    padding: [20, 20, 360, 20],
-  })
+  showMap.value = true
+  setTimeout(() => {
+    const instance = getCurrentInstance() // 获取组件实
+    const mapCtx = uni.createMapContext('detailMap', instance)
+    // 缩放视野展示所有点
+    mapCtx.includePoints({
+      points: polyline.value[0].points,
+      padding: [20, 20, 360, 20],
+    })
+  }, 500)
+ 
 }
 </script>
 
 <template>
   <view class="track-detail">
-    <image
-      v-if="false"
-      class="absolute left-0 top-0 z-0 h-100% w-100%"
-      :src="mapImage"
-      mode="scaleToFill"
-    />
     <map
-      id="map"
+      v-if="showMap"
+      id="detailMap"
       class="map"
       :latitude="location.latitude"
       :longitude="location.longitude"

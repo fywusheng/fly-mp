@@ -10,6 +10,7 @@ interface ICarInfoVo {
   hasBeidou: number
   bluetoothVendor: string | null
   bluetoothDeviceNo: string | null
+  networkDeviceNo: string | null
   bluetoothDeviceType: number | null
   deviceType: number | null
   bluetoothDeviceName: string | null
@@ -23,8 +24,10 @@ const userInfoState: ICarInfoVo = {
   deviceNo: '',
   id: 0,
 
-  // 连接的蓝牙设备编号
+  // 蓝牙设备编号
   bluetoothDeviceNo: null,
+  // 4g设备编号
+  networkDeviceNo: null,
   // 目前不用了 连接的蓝牙设备类型 number | null 1 华惠 2 E车星 null 无主机
   bluetoothDeviceType: null,
 

@@ -169,7 +169,8 @@ export function getEnvBaseUploadUrl() {
 export function getLocation() {
   return new Promise((resolve, reject) => {
     uni.getLocation({
-      type: 'gcj02',
+      // type: 'wgs84',
+      type: 'gcj02', // 返回可以用于uni.openLocation的经纬度
       success: (res) => {
         resolve(res)
       },
@@ -186,42 +187,58 @@ export function getLocation() {
  */
 export function initLocationAuth() {
   return new Promise((resolve, reject) => {
-    uni.getSetting({
-      success(res) {
-        // 检测地理位置权限
-        if (!res.authSetting['scope.userLocationBackground']) {
-          uni.showModal({
-            title: '请求权限',
-            content: '需要获取您的后台定位权限,如已授权请点击取消',
-            success(res) {
-              if (res.confirm) {
-                uni.openSetting({
-                  success(res) {
-                    if (res.authSetting['scope.userLocationBackground']) {
-                      // 用户同意授权地理位置
-                      resolve(true)
-                    }
-                    else {
-                      reject(new Error('用户拒绝授权地理位置'))
-                    }
-                  },
-                })
-              }
-              else if (res.cancel) {
-                reject(new Error('用户拒绝授权地理位置'))
-              }
-            },
-            fail(err) {
-              reject(err)
-            },
-          })
-        }
-        else {
-          // 已经授权
-          resolve(true)
-        }
+    // 申请位置权限弹窗
+    uni.authorize({
+      scope: 'scope.userLocationBackground',
+      success: (res) => {
+        checkAuth()
+      },
+      fail: (err) => {
+        console.log(err)
+        checkAuth()
       },
     })
+
+    // 检查位置权限
+    function checkAuth() {
+      uni.getSetting({
+        success(res) {
+        // 检测地理位置权限
+          if (!res.authSetting['scope.userLocationBackground']) {
+            uni.showModal({
+              title: '请求权限',
+              content: '需要获取您的后台定位权限,如已授权请点击取消',
+              confirmText: '去设置',
+              success(res) {
+                if (res.confirm) {
+                  uni.openSetting({
+                    success(res) {
+                      if (res.authSetting['scope.userLocationBackground']) {
+                      // 用户同意授权地理位置
+                        resolve(true)
+                      }
+                      else {
+                        reject(new Error('用户拒绝授权地理位置'))
+                      }
+                    },
+                  })
+                }
+                else if (res.cancel) {
+                  reject(new Error('用户拒绝授权地理位置'))
+                }
+              },
+              fail(err) {
+                reject(err)
+              },
+            })
+          }
+          else {
+          // 已经授权
+            resolve(true)
+          }
+        },
+      })
+    }
   })
 }
 /**

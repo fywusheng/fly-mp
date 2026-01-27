@@ -1,42 +1,58 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
+import { useToggleStore } from '@/store'
 
 const privacyContractName = ref('')
 const showPrivacy = ref(false)
+const toggleStore = useToggleStore()
 
 // 初始化隐私弹窗数据
 onMounted(() => {
-  setTimeout(() => {
-    showPrivacy.value = getApp().globalData.showPrivacy
-    privacyContractName.value = getApp().globalData.privacyContractName
-  }, 500)
+  // 初始化隐私协议
+  initPrivacyInfo()
 })
+
+async function initPrivacyInfo() {
+  wx.getPrivacySetting({
+    success: (res) => {
+      if (res.needAuthorization) {
+        privacyContractName.value = res.privacyContractName
+      }
+    },
+  })
+}
 
 // 同意隐私协议
 function handleAgreePrivacyAuthorization() {
-  wx.requirePrivacyAuthorize({
-    success: () => {
-      showPrivacy.value = false
-      getApp().globalData.showPrivacy = false
-    },
+  closeModal()
+  toggleStore.privacyModal.resolvePrivacyAuthorization({
+    buttonId: 'agree-btn',
+    event: 'agree',
   })
 }
 
 // 拒绝隐私协议
 function exitMiniProgram() {
-  // uni.showModal({
-  //   content: '如果拒绝,我们将无法获取您的信息, 包括手机号、位置信息、相册等该小程序十分重要的功能,您确定要拒绝吗?',
-  //   success: (res: any) => {
-  //     if (res.confirm) {
-  //       showPrivacy.value = false
-  //       uni.exitMiniProgram({
-  //         success: () => {
-  //           console.log('退出小程序成功')
-  //         },
-  //       })
-  //     }
-  //   },
-  // })
+  uni.showModal({
+    content: '如果拒绝,我们将无法获取您的信息, 包括手机号、位置信息等该小程序十分重要的功能,您确定要拒绝吗?',
+    success: (res: any) => {
+      if (res.confirm) {
+        showPrivacy.value = false
+        uni.exitMiniProgram({
+          success: () => {
+            console.log('退出小程序成功')
+          },
+        })
+      }
+    },
+  })
+}
+
+/**
+ * 关闭弹窗
+ */
+function closeModal() {
+  toggleStore.togglePrivacyModal(false)
 }
 
 // 跳转协议页面
@@ -53,7 +69,7 @@ function openPrivacyContract() {
 </script>
 
 <template>
-  <view v-if="showPrivacy" class="privacy">
+  <view v-if="toggleStore.privacyModal.show" class="privacy">
     <view class="content">
       <view class="title">
         用户隐私保护提示

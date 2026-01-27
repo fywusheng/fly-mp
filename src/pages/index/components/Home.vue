@@ -1,6 +1,7 @@
 <script setup lang="ts">
 // ✅ 导入蓝牙管理 Composable
 import type { BluetoothDeviceInfo } from '@/composables/useBluetooth'
+import { use } from 'echarts'
 import { BluetoothStatus, useBluetooth } from '@/composables/useBluetooth'
 import { useLocationListener } from '@/composables/useLocationListener'
 import { useRidingTracker } from '@/composables/useRidingTracker'
@@ -22,6 +23,14 @@ const props = defineProps({
     type: String,
   },
 })
+
+type CommandType
+  = | 'lock'
+    | 'unlock'
+    | 'defense'
+    | 'undefense'
+    | 'onekeymuteon'
+    | 'find'
 
 // ✅ 初始化蓝牙管理
 const {
@@ -217,10 +226,10 @@ const mapLocation = ref({
  * 初始化首页资源
  */
 function initHomePage() {
-  // 获取位置和蓝牙权限
-  getLocationAndBlueAuth()
   // 如果已登录，获取车辆列表
   if (userStore.isLoggedIn) {
+    // 获取位置和蓝牙权限
+    getLocationAndBlueAuth()
     getCarList()
   }
 }
@@ -258,7 +267,6 @@ watch(() => carState.value.isLocked, async (newVal, oldVal) => {
 
   // ✅ 只有蓝牙设备才需要上报骑行轨迹（4G设备通过网络获取位置）
   if (carStore.network) {
-    console.log('⚠️ 4G设备，不需要上报骑行轨迹')
     return
   }
 
@@ -314,10 +322,9 @@ watch(() => props.tabName, (newTabName) => {
   if (newTabName === 'home') {
     // 切换到首页，初始化资源
     console.log('✅ 切换到首页')
-    getLocationAndBlueAuth()
-
     // 登录后获取车辆列表
     if (userStore.isLoggedIn) {
+      getLocationAndBlueAuth()
       getCarList()
     }
   }
@@ -361,7 +368,21 @@ onMounted(() => {
   getMaxSliderWidth()
 })
 
-onShow(() => {
+// 异步处理用户同意隐私协议
+function handlePrivacyConfirm() {
+  return new Promise((resolve, reject) => {
+    wx.requirePrivacyAuthorize({
+      success: () => {
+        resolve(true)
+      },
+      fail: (error) => {
+        reject(error)
+      },
+    })
+  })
+}
+onShow(async () => {
+  await handlePrivacyConfirm()
   if (props.tabName === 'home') {
     initHomePage()
   }
@@ -539,66 +560,68 @@ function onItemClick(item) {
 }
 
 // ✅ 统一控车方法：优先4G，回退蓝牙
-async function controlVehicle(commandType: string) {
-  // ✅ 判断控车方式：有网 && 是4G设备 → 使用4G控车，否则使用蓝牙控车
-  const hasNetwork = appStore.hasNetwork // 手机是否有网络
-  const is4GDevice = carStore.network // 车辆是否是4G设备
-  let onlyBlue = [] // 仅蓝牙控车指令
+async function controlVehicle(commandType: CommandType) {
+  const hasNetwork = appStore.hasNetwork
+  const is4GDevice = carStore.network
+  const deviceType = carStore.carInfo.deviceType
+  const isOnline = carState.value.status === 1 // 设备在线
 
-  // E车星蓝牙+华慧4G，优先用蓝牙
-  if (carStore.carInfo.deviceType === 3) {
-    onlyBlue = ['defense', 'undefense', 'onekeymuteon', 'find']
-  }
-  else if (carStore.carInfo.deviceType === 6) {
-    // 华慧一体机，不在线的话只能用蓝牙
-    if (carState.value.status === 0) {
-      onlyBlue = ['lock', 'unlock', 'defense', 'undefense', 'onekeymuteon', 'find']
-    }
-  }
+  const onlyBlueCommands = getOnlyBlueCommands(deviceType, isOnline)
 
-  if (hasNetwork && is4GDevice && !onlyBlue.includes(commandType)) {
-    // 有网且是4G设备，使用4G控车
+  const canUse4G = hasNetwork && is4GDevice && !onlyBlueCommands.includes(commandType)
+
+  if (canUse4G) {
     await controlBike(commandType)
     return
   }
 
-  // 无网或非4G设备，使用蓝牙控车
-  // 检查蓝牙连接状态
+  await controlByBluetooth(commandType)
+}
+
+function getOnlyBlueCommands(
+  deviceType: number,
+  isOnline: boolean,
+): CommandType[] {
+  // E车星蓝牙 + 华慧4G等组合设备
+  if ([3, 7].includes(deviceType)) {
+    return isOnline
+      ? ['defense', 'undefense', 'onekeymuteon', 'find']
+      : ['lock', 'unlock', 'defense', 'undefense', 'onekeymuteon', 'find']
+  }
+
+  // 一体机
+  if ([5, 6].includes(deviceType)) {
+    return isOnline ? [] : ['lock', 'unlock', 'defense', 'undefense', 'onekeymuteon', 'find']
+  }
+
+  return []
+}
+
+// 蓝牙控车
+async function controlByBluetooth(commandType: CommandType) {
   if (bluetoothStatus.value !== BluetoothStatus.CONNECTED) {
     uni.showToast({
       title: '请先连接蓝牙',
       icon: 'none',
       mask: true,
     })
-    if (commandType === 'unlock' || commandType === 'lock') {
-      // 滑块解锁/锁车时重置滑块位置
+
+    if (commandType === 'lock' || commandType === 'unlock') {
       syncSliderPosition()
     }
     return
   }
 
-  // 使用蓝牙控车
-  switch (commandType) {
-    case 'unlock':
-      sendUnlockCommand()
-      break
-    case 'lock':
-      sendLockCommand()
-      break
-    case 'defense':
-      sendArmCommand()
-      break
-    case 'undefense':
-      sendDisarmCommand()
-      break
-    case 'onekeymuteon':
-      // 一键静音等同于设防
-      sendArmCommand()
-      break
-    case 'find':
-      sendFindVehicleCommand()
-      break
+  const commandMap: Record<CommandType, () => void> = {
+    unlock: sendUnlockCommand,
+    lock: sendLockCommand,
+    defense: sendArmCommand,
+    undefense: sendDisarmCommand,
+    onekeymuteon: sendArmCommand,
+    find: sendFindVehicleCommand,
   }
+
+  commandMap[commandType]?.()
 }
 
 // 4g控车指令
@@ -641,9 +664,9 @@ function controlBike(commandType: string) {
     commandType = 'defense'
   }
 
-  const deviceNo = carList.value.find(item => item.id === selectCarId.value)?.deviceNo
+  const networkDeviceNo = carList.value.find(item => item.id === selectCarId.value)?.networkDeviceNo
   return new Promise((resolve, reject) => {
-    httpPost(`/device/v2/devices/${deviceNo}/commands`, { commandType }).then((res) => {
+    httpPost(`/device/v2/devices/${networkDeviceNo}/commands`, { commandType }).then((res) => {
       uni.hideLoading()
       isControling.value = false
       resolve(res)
@@ -655,10 +678,17 @@ function controlBike(commandType: string) {
 
       // 处理无北斗设备上报轨迹信息
       if (result.code === '200' && carStore.carInfo.hasBeidou === 0) {
-      // if (result.code === '200' && carStore.carInfo.deviceType === 6) {
         console.log('🚴‍♂️ 4G无北斗设备，处理上报轨迹')
         uploadRideLocation(commandType === 'unlock', data.rideId).catch((err) => {
           console.error('上传位置失败:', err)
+        })
+      }
+      // 异常处理
+      if (result.code !== '200') {
+        uni.showToast({
+          title: result.message || '操作失败',
+          icon: 'error',
+          duration: 1000,
         })
       }
     }).catch((err) => {
@@ -827,8 +857,8 @@ function setDefaultVehicleId(carsList: any[]) {
 
 // 获取车辆状态信息
 function getCarInfo() {
-  const deviceNo = carList.value.find(item => item.id === selectCarId.value)?.deviceNo
-  httpGet(`/device/v2/devices/${deviceNo}/status`)
+  const networkDeviceNo = carList.value.find(item => item.id === selectCarId.value)?.networkDeviceNo
+  httpGet(`/device/v2/devices/${networkDeviceNo}/status`)
     .then((res) => {
       // console.log('获取车辆状态信息成功:', res.data)
       if (isControling.value) {
@@ -841,7 +871,7 @@ function getCarInfo() {
 
       // 设备不在线不更新状态
       if (data.status === null || data.status === 0) {
-        console.log('⚠️ 华慧一体机离线状态，不更新车辆状态')
+        console.log('4g设备离线状态，不更新车辆状态')
         // return
       }
       else {
@@ -1253,6 +1283,11 @@ function getBatteryIcon() {
     return Bat4
   return Bat5
 }
+
+function toggleLock() {
+  carState.value.isLocked = !carState.value.isLocked
+  syncSliderPosition()
+}
 </script>
 
 <template>
@@ -1457,8 +1492,15 @@ function getBatteryIcon() {
           </view>
         </fg-scroll-x>
       </view>
-
-      <!--  蓝牙车辆位置 -->
+      <!-- <wd-button
+        class="absolute bottom-[-30rpx] left-50% z-10 w-620rpx -translate-x-50%"
+        type="primary"
+        size="large"
+        @click="toggleLock"
+      >
+        切换锁状态
+      </wd-button> -->
+      <!-- 车辆位置 -->
       <view class="flex items-center justify-between px-20rpx">
         <view class="relative box-border w-710rpx rounded-[10rpx] bg-white px-25rpx py-23rpx">
           <view class="flex items-center justify-between">
@@ -1466,8 +1508,8 @@ function getBatteryIcon() {
               <view class="whitespace-nowrap text-30rpx">
                 车辆位置
               </view>
-              <view v-if="!carStore.network">
-                {{ currentRidingInfo.ridingStatus }}
+              <view v-if="userStore.isLoggedIn" class="text-28rpx">
+                {{ currentRidingInfo.rideId ? currentRidingInfo.ridingStatus : '未使用' }}
               </view>
               <view class="flex items-center">
                 <image class="ml-30rpx h-22rpx w-22rpx" :src="ReloadIcon" mode="scaleToFill" />
@@ -1477,14 +1519,7 @@ function getBatteryIcon() {
               </view>
             </view>
           </view>
-          <!-- <view v-if="!carStore.network" class="mt-20rpx flex items-center justify-between color-[#666666]">
-            <view class="text-20rpx">
-              {{ currentRidingInfo.address }}
-            </view>
-            <view class="text-16rpx">
-              骑行人：{{ currentRidingInfo.ridingName }}
-            </view>
-          </view> -->
+
           <!-- 轨迹地图 -->
           <view>
             <HomeMapNetWork v-if="carStore.network" :info="currentRidingInfo" @map-click="goLocationDetail" />
@@ -1492,39 +1527,6 @@ function getBatteryIcon() {
           </view>
         </view>
       </view>
-      <!-- 4g车辆位置 -->
-      <!-- <view v-else class="flex items-center justify-between px-20rpx" @click="goLocationDetail">
-        <view class="relative box-border h-166rpx w-340rpx rounded-[10rpx] bg-white px-25rpx py-23rpx">
-          <view class="flex items-center">
-            <view class="whitespace-nowrap text-30rpx">
-              车辆位置
-            </view>
-            <image class="ml-72rpx h-22rpx w-22rpx" :src="ReloadIcon" mode="scaleToFill" @click.stop="reloadLocation" />
-            <view class="ml-24rpx whitespace-nowrap text-28rpx" @click.stop="reloadLocation">
-              刷新
-            </view>
-          </view>
-          <view class="mt-24rpx w-258rpx text-23rpx">
-            {{ currentRidingInfo.address }}
-          </view>
-          <image class="absolute bottom-12rpx right-14rpx h-48rpx w-52rpx" :src="LocationIcon" mode="scaleToFill" />
-        </view>
-
-        <view class="relative box-border h-166rpx w-340rpx rounded-[10rpx] bg-white px-25rpx py-23rpx" @click="goNotice">
-          <view class="flex items-center justify-between">
-            <view class="whitespace-nowrap text-30rpx">
-              警告信息
-            </view>
-            <view class="notice-count">
-              {{ carState.warnCount > 99 ? '···' : carState.warnCount }}
-            </view>
-          </view>
-          <view class="mt-24rpx w-258rpx text-23rpx text-gray-500">
-            及时掌握车辆动态
-          </view>
-          <image class="absolute bottom-12rpx right-14rpx h-55rpx w-55rpx" :src="WarnNoticeIcon" mode="scaleToFill" />
-        </view>
-      </view>  -->
     </view>
   </view>
 

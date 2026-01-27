@@ -96,7 +96,7 @@ watchEffect(async () => {
     //  获取车辆设置
     if (carStore.network && useNetwork.value) {
       // 4G车辆状态获取
-      getCarInfo(selectCar.deviceNo)
+      getCarInfo(selectCar.networkDeviceNo)
     }
     else {
       // 获取车辆设置
@@ -296,9 +296,9 @@ function controlBike(commandType: string) {
     title: '指令发送中...',
     mask: true,
   })
-  const deviceNo = carList.value.find(car => car.id === selectCarId.value).deviceNo
+  const networkDeviceNo = carList.value.find(car => car.id === selectCarId.value).networkDeviceNo
   return new Promise((resolve, reject) => {
-    httpPost(`/device/v2/devices/${deviceNo}/commands`, { commandType }).then((res) => {
+    httpPost(`/device/v2/devices/${networkDeviceNo}/commands`, { commandType }).then((res) => {
       uni.hideLoading()
 
       resolve(res)

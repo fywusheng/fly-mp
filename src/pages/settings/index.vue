@@ -16,6 +16,8 @@ const token = ref('')
 
 const userStore = useUserStore()
 const carStore = useCarStore()
+// 版本号
+const appVersion = 'V2.06'
 
 // 退出登录
 function loginOut() {
@@ -63,19 +65,18 @@ function loginToken() {
 <template>
   <view class="settings">
     <view class="mt-20rpx overflow-hidden rounded-10px">
-      <wd-cell title="版本信息" value="V1.08" />
+      <wd-cell title="版本信息" :value="appVersion" />
     </view>
     <view class="mt-100rpx">
       <wd-button block size="large" @click="loginOut">
         退出登录
       </wd-button>
-      <view class="my-30rpx">
+      <!-- <view class="my-30rpx">
         <wd-input v-model="token" placeholder="请输入内容" />
       </view>
-
       <wd-button block size="large" @click="loginToken">
         token登录
-      </wd-button>
+      </wd-button> -->
     </view>
   </view>
 </template>

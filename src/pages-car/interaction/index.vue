@@ -67,7 +67,7 @@ onLoad((e) => {
   // 如果是一体机车辆且有网络且设备类型是4G在线，获取车辆状态
   if (carStore.network && useNetwork.value) {
     // 4G车辆状态获取
-    getCarInfo(carInfo.deviceNo)
+    getCarInfo(carInfo.networkDeviceNo)
   }
 
   // 连接蓝牙
@@ -108,9 +108,9 @@ function controlBike(commandType: string) {
     title: '指令发送中...',
     mask: true,
   })
-  const deviceNo = carInfo.deviceNo
+  const networkDeviceNo = carInfo.networkDeviceNo
   return new Promise((resolve, reject) => {
-    httpPost(`/device/v2/devices/${deviceNo}/commands`, { commandType }).then((res) => {
+    httpPost(`/device/v2/devices/${networkDeviceNo}/commands`, { commandType }).then((res) => {
       uni.hideLoading()
 
       resolve(res)

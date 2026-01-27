@@ -369,7 +369,7 @@ export function useRidingTracker(config: RidingTrackerConfig = {}) {
 
       // 保存到Storage
       uni.setStorageSync('ridePoints', JSON.stringify(existingRecords))
-      // log(`✅ 轨迹已保存到Storage : ${JSON.stringify(rideRecord)}`)
+      log(`✅ 轨迹已保存到Storage : ${JSON.stringify(rideRecord)}`)
     }
     catch (error: any) {
       log('❌ 保存轨迹到Storage失败:', error)

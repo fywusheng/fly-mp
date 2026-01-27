@@ -28,7 +28,8 @@ export function useLocationListener() {
       // 2. 开启后台定位
       await new Promise<void>((resolve, reject) => {
         wx.startLocationUpdateBackground({
-          type: 'gcj02',
+          // type: 'wgs84',
+          type: 'gcj02', // 返回可以用于uni.openLocation的经纬度
           success: () => {
             console.log('✅ 后台定位已开启')
             resolve()

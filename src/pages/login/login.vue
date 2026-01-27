@@ -44,6 +44,7 @@ async function onGetPhoneNumber(e: any) {
       uni.showToast({
         title: res.message || '登录失败',
         duration: 2000,
+        icon: 'none',
       })
     }
   }

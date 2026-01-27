@@ -25,6 +25,7 @@ const DataUnAive = getImageUrl('/infor/ble-data.png')
 const DataNone = getImageUrl('/infor/4g-data-none.png')
 const Effect = getImageUrl('/infor/effect.png')
 const Gift = getImageUrl('/infor/gift.png')
+const Search = getImageUrl('/common/search.png')
 
 // 获取胶囊位置信息
 const menuButtonInfo = uni.getMenuButtonBoundingClientRect()
@@ -102,7 +103,9 @@ watch(() => props.tabName, (newVal) => {
 
 // 上拉加载更多
 onReachBottom(() => {
-  loadMoreRidingRecords()
+  if (props.tabName === 'inforBlue' && userStore.isLoggedIn) {
+    loadMoreRidingRecords()
+  }
 })
 
 async function getAuth() {
@@ -165,7 +168,10 @@ function getCurrentLocation() {
 // 获取骑行数据
 async function getRidingData(isLoadMore = false) {
   if (!userStore.isLoggedIn) {
-    console.warn('用户未登录，无法获取骑行数据')
+    uni.showToast({
+      title: '请先登录',
+      icon: 'none',
+    })
     return
   }
 
@@ -200,7 +206,7 @@ async function getRidingData(isLoadMore = false) {
       page: page.value,
       size: size.value,
       date: dayjs(date.value).format('YYYY-MM-DD'),
-      vehicleId: userStore.userInfo?.defaultVehicleId,
+      vehicleId: carStore.carInfo.id,
     })
 
     if (!isLoadMore) {
@@ -357,6 +363,14 @@ async function deleteRidingRecord(item): Promise<void> {
 }
 
 function checkhasPending() {
+  if (!userStore.isLoggedIn) {
+    uni.showToast({
+      title: '请先登录',
+      icon: 'none',
+    })
+    return false
+  }
+
   if (hasPending.value) {
     messageId.value = 1
     showCancelBtn.value = true
@@ -379,6 +393,14 @@ function checkhasPending() {
 
 // 领取数据服务体验卡
 function getCard() {
+  debugger
+  if (!userStore.isLoggedIn) {
+    uni.showToast({
+      title: '请先登录',
+      icon: 'none',
+    })
+    return
+  }
   // 体验卡待领取
   if (hasPending.value) {
     messageId.value = 1
@@ -660,9 +682,10 @@ function loadMoreRidingRecords() {
 
       <!-- 空状态 -->
       <view v-if="ridingRecords.length === 0 && loadMoreState !== 'loading'" class="empty-container">
-        <view class="text-center text-24rpx text-[#999999]">
+        <!-- <view class="text-center text-24rpx text-[#999999]">
           暂无骑行记录
-        </view>
+        </view> -->
+        <wd-status-tip :image="Search" tip="当前搜索无结果" />
       </view>
     </view>
 

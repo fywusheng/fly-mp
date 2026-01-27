@@ -46,7 +46,7 @@ const markers = ref([
 // 骑行轨迹
 const polyline = ref([
   {
-    points: [{ latitude: 40.040129, longitude: 116.274968 }, { latitude: 40.038974, longitude: 116.275214 }, { latitude: 40.038974, longitude: 116.275214 }, { latitude: 40.038565000000006, longitude: 116.272683 }, { latitude: 40.03848200000001, longitude: 116.27209500000001 }, { latitude: 40.03836100000001, longitude: 116.27074 }, { latitude: 40.03832700000001, longitude: 116.270515 }, { latitude: 40.03807400000001, longitude: 116.268038 }, { latitude: 40.03801400000001, longitude: 116.26763600000001 }, { latitude: 40.03801400000001, longitude: 116.26763600000001 }, { latitude: 40.03790800000001, longitude: 116.267508 }, { latitude: 40.03450300000001, longitude: 116.270961 }, { latitude: 40.03419900000001, longitude: 116.271221 }, { latitude: 40.03396500000001, longitude: 116.271401 }, { latitude: 40.03245000000001, longitude: 116.272472 }],
+    points: [],
     color: '#239AF6',
     width: 6,
   },
@@ -57,32 +57,8 @@ const ridingInfo = ref<any>({})
 
 onLoad((e) => {
   getTrackInfo(e.rideId)
-  // const instance = getCurrentInstance()?.proxy as { getOpenerEventChannel?: () => UniApp.EventChannel }
-  // if (instance?.getOpenerEventChannel) {
-  //   const eventChannel = instance.getOpenerEventChannel()
-  //   eventChannel.on('rideData', (info: any) => {
-  //     ridingInfo.value = info
-  //     getTrackInfo(info.rideId)
-  //   })
-  // }
-  // const instance = getCurrentInstance() // 获取组件实
-  // const mapCtx = uni.createMapContext('map', instance)
-  // // 缩放视野展示所有点
-  // mapCtx.includePoints({
-  //   points: polyline.value[0].points,
-  //   padding: [20, 20, 360, 20],
-  // })
 })
 
-// onMounted(() => {
-// const instance = getCurrentInstance() // 获取组件实
-// const mapCtx = uni.createMapContext('map', instance)
-// // 缩放视野展示所有点
-// mapCtx.includePoints({
-//   points: polyline.value[0].points,
-//   padding: [20, 20, 360, 20],
-// })
-// })
 // 获取骑行数据
 async function getTrackInfo(rideId: string) {
   try {
@@ -111,7 +87,8 @@ async function getTrackInfo(rideId: string) {
 function setMapData(trackPoints: Array<{ latitude: number, longitude: number }>, ridingStatus: string) {
   if (trackPoints.length === 0)
     return
-  // if (ridingStatus !== '行驶中') {
+
+  // 取第一个点作为当前位置
   const endPoint = trackPoints[0]
   markers.value[0] = {
     ...markers.value[0],
@@ -119,9 +96,7 @@ function setMapData(trackPoints: Array<{ latitude: number, longitude: number }>,
     latitude: endPoint.latitude,
     longitude: endPoint.longitude,
   }
-  // 清空轨迹
-  polyline.value[0].points = []
-  // 取第一个点作为当前位置
+
   location.value = {
     latitude: endPoint.latitude,
     longitude: endPoint.longitude,
@@ -133,33 +108,6 @@ function setMapData(trackPoints: Array<{ latitude: number, longitude: number }>,
     latitude: endPoint.latitude,
     longitude: endPoint.longitude,
   })
-  // }
-  // else {
-  // // 有轨迹
-  // const startPoint = trackPoints[trackPoints.length - 1]
-  // const endPoint = trackPoints[0]
-  // // 处理成功的轨迹数据
-  // polyline.value[0].points = trackPoints
-  // // 设置终点标记
-  // markers.value[0] = {
-  //   ...markers.value[0],
-  //   iconPath: ArrayGreen,
-  //   latitude: endPoint.latitude,
-  //   longitude: endPoint.longitude,
-  // }
-  // // 取第一个点作为当前位置
-  // location.value = {
-  //   latitude: startPoint.latitude,
-  //   longitude: startPoint.longitude,
-  // }
-  // const instance = getCurrentInstance() // 获取组件实
-  // const mapCtx = uni.createMapContext('map', instance)
-  // // 缩放视野展示所有点
-  // mapCtx.includePoints({
-  //   points: polyline.value[0].points,
-  //   padding: [20, 20, 360, 20],
-  // })
-  // }
 }
 </script>
 

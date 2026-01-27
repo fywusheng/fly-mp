@@ -156,6 +156,9 @@ export function useBluetooth() {
       }
 
       if (!deviceInfo.bluetoothDeviceName && !deviceInfo.bluetoothDeviceNo) {
+        if (!deviceInfo.bluetoothDeviceName) {
+          uni.showToast({ title: '缺少蓝牙设备名称', icon: 'none', duration: 1000 })
+        }
         throw new Error('缺少蓝牙设备名称或设备号')
       }
 
@@ -181,16 +184,16 @@ export function useBluetooth() {
       if (sdkType === BluetoothSDKType.ECS) {
         // E车星SDK：搜索并连接
         // iOS和安卓分开处理
-        if (uni.getSystemInfoSync().platform === 'android') {
-          // console.log('📱 安卓平台，使用安卓连接方法')
+        if (uni.getDeviceInfo().platform === 'android') {
+          console.log('📱 安卓平台，使用安卓连接方法')
           device = await androidOpenAndSearchAndConnect({
-            name: deviceInfo.bluetoothDeviceName || deviceInfo.bluetoothDeviceNo,
+            name: deviceInfo.bluetoothDeviceName,
           }) as { deviceId: string }
         }
         else {
-          // console.log('📱 iOS平台，使用iOS连接方法')
+          console.log('📱 iOS平台，使用iOS连接方法')
           device = await iosOpenAndSearchAndConnect({
-            name: deviceInfo.bluetoothDeviceName || deviceInfo.bluetoothDeviceNo,
+            name: deviceInfo.bluetoothDeviceName,
           }) as { deviceId: string }
         }
         console.log('🔍 E车星设备 ID:', device.deviceId)

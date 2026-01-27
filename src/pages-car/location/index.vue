@@ -3,13 +3,14 @@
   layout: 'default',
   style: {
     navigationStyle: 'default',
-    navigationBarTitleText: '轨迹详情',
+    navigationBarTitleText: '车辆位置',
     navigationBarBackgroundColor: '#ffffff',
   },
 }
 </route>
 
 <script lang="ts" setup>
+import { getCurrentInstance, onMounted } from 'vue'
 import { httpGet } from '@/utils/http'
 import { getImageUrl } from '@/utils/image'
 
@@ -39,21 +40,27 @@ const markers = ref([
   },
 
 ])
-const polyline = ref([
-  {
-    points: [],
-    // points: [{ latitude: 40.040129, longitude: 116.274968 }, { latitude: 40.038974, longitude: 116.275214 }, { latitude: 40.038974, longitude: 116.275214 }, { latitude: 40.038565000000006, longitude: 116.272683 }, { latitude: 40.03848200000001, longitude: 116.27209500000001 }, { latitude: 40.03836100000001, longitude: 116.27074 }, { latitude: 40.03832700000001, longitude: 116.270515 }, { latitude: 40.03807400000001, longitude: 116.268038 }, { latitude: 40.03801400000001, longitude: 116.26763600000001 }, { latitude: 40.03801400000001, longitude: 116.26763600000001 }, { latitude: 40.03790800000001, longitude: 116.267508 }, { latitude: 40.03450300000001, longitude: 116.270961 }, { latitude: 40.03419900000001, longitude: 116.271221 }, { latitude: 40.03396500000001, longitude: 116.271401 }, { latitude: 40.03245000000001, longitude: 116.272472 }],
-    color: '#239AF6',
-    width: 6,
-  },
-])
 
 // 骑行信息
 const ridingInfo = ref<any>({})
-const mapImage = ref('')
+const showMap = ref(false)
+let mapCtx: any = null
+
+// 默认位置：天安门
+const DEFAULT_LOCATION = {
+  latitude: 39.9087,
+  longitude: 116.3975,
+}
 
 onLoad((e) => {
   getTrackInfo(e.rideId)
+  // setTimeout(() => {
+     
+    // uni.setNavigationBarTitle({
+    //   title: e.title || '车辆位置',
+    // })
+  // }, 500)
+ 
   // const instance = getCurrentInstance()?.proxy as { getOpenerEventChannel?: () => UniApp.EventChannel }
   // if (instance?.getOpenerEventChannel) {
   //   const eventChannel = instance.getOpenerEventChannel()
@@ -64,19 +71,25 @@ onLoad((e) => {
   // }
 })
 
-// onMounted(() => {
-// const instance = getCurrentInstance() // 获取组件实
-// const mapCtx = uni.createMapContext('map', instance)
-// // 缩放视野展示所有点
-// mapCtx.includePoints({
-//   points: polyline.value[0].points,
-//   padding: [20, 20, 360, 20],
-// })
-// })
+onReady(() => {
+  const instance = getCurrentInstance()
+  if (instance) {
+    mapCtx = uni.createMapContext('localtionMap', instance)
+  }
+  else {
+    console.error('无法获取组件实例')
+  }
+})
+
 // 获取骑行数据
 async function getTrackInfo(rideId: string) {
   try {
+    uni.showLoading({
+      title: '加载中...',
+      mask: true,
+    })
     const res = await httpGet(`/riding/ride/track/detail/${rideId}`)
+    uni.hideLoading()
     if (res.code === '200') {
       ridingInfo.value = res.data
       console.log('轨迹详情:', res.data)
@@ -84,7 +97,6 @@ async function getTrackInfo(rideId: string) {
       setMapData(trackPoints)
     }
     else {
-      polyline.value[0].points = []
       console.error('获取轨迹信息失败', res.message)
     }
   }
@@ -94,56 +106,57 @@ async function getTrackInfo(rideId: string) {
 }
 
 function setMapData(trackPoints: Array<{ latitude: number, longitude: number }>) {
-  if (trackPoints.length === 0)
+  if (!trackPoints || trackPoints.length === 0) {
+    // 默认位置
+    location.value = DEFAULT_LOCATION
+    markers.value[0] = {
+      ...markers.value[0],
+      width: 0,
+      height: 0,
+      latitude: 0,
+      longitude: 0,
+    }
+    showMap.value = true
+    // moveToLocation(DEFAULT_LOCATION)
     return
+  }
 
-  // const startPoint = trackPoints[trackPoints.length - 1]
+  // 取最后一个点作为当前位置
   const endPoint = trackPoints[trackPoints.length - 1]
-  // const endPoint = trackPoints[0]
-
-  // 处理成功的轨迹数据
-  polyline.value[0].points = []
+  location.value = {
+    latitude: endPoint.latitude,
+    longitude: endPoint.longitude,
+  }
   markers.value[0] = {
     ...markers.value[0],
     latitude: endPoint.latitude,
     longitude: endPoint.longitude,
   }
+  showMap.value = true
+  // moveToLocation(location.value)
+}
 
-  // 取第一个点作为当前位置
-  location.value = {
-    latitude: endPoint.latitude,
-    longitude: endPoint.longitude,
+function moveToLocation(target: { latitude: number, longitude: number }) {
+  if (mapCtx) {
+    setTimeout(() => {
+      mapCtx.moveToLocation(target)
+    }, 500)
   }
-  const instance = getCurrentInstance() // 获取组件实
-  const mapCtx = uni.createMapContext('map', instance)
-  // 移动到中心点
-  mapCtx.moveToLocation({
-    latitude: endPoint.latitude,
-    longitude: endPoint.longitude,
-  })
-  // 缩放视野展示所有点
-  // mapCtx.includePoints({
-  //   points: polyline.value[0].points,
-  //   padding: [20, 20, 360, 20],
-  // })
+  else {
+    console.error('地图上下文未初始化')
+  }
 }
 </script>
 
 <template>
   <view class="track-detail">
-    <image
-      v-if="false"
-      class="absolute left-0 top-0 z-0 h-100% w-100%"
-      :src="mapImage"
-      mode="scaleToFill"
-    />
     <map
-      id="map"
+      v-if="showMap"
+      id="localtionMap"
       class="map"
       :latitude="location.latitude"
       :longitude="location.longitude"
       :markers="markers"
-      :polyline="polyline"
       :scale="scale"
     />
     <!-- <view class="absolute bottom-120rpx left-0 z-100">

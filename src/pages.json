@@ -117,7 +117,7 @@
           "layout": "default",
           "style": {
             "navigationStyle": "default",
-            "navigationBarTitleText": "轨迹详情",
+            "navigationBarTitleText": "车辆位置",
             "navigationBarBackgroundColor": "#ffffff"
           }
         },

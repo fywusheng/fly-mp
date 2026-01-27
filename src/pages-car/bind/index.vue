@@ -53,12 +53,17 @@ function onConfirm({ value, selectedItems }) {
 function onScanClick() {
   uni.scanCode({
     success: (res) => {
-      console.log('扫码结果:', res)
       // 设备编号+&+蓝牙名称+&+出厂日期
       // 1905070061BA&EV12C-1961BA&250919001
       // 扫描内容你只要读取第一段字符串、显示第一段字符串、保存第一段字符串
       const content = res.result
-      code.value = content.includes('&') ? content.split('&')[0] : content
+      if (content.includes('&')) {
+        code.value = content.split('&')[0]
+        name.value = content.split('&')[1]
+      }
+      else {
+        code.value = content
+      }
     },
     fail: (err) => {
       console.log(err)

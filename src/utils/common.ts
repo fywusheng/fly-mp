@@ -117,6 +117,8 @@ export function getWeatherIcon(weather: string): string {
     return getImageUrl('/weather/haze.png')
   if (weather.includes('雾'))
     return getImageUrl('/weather/fog.png')
+  if (weather.includes('雪'))
+    return getImageUrl('/weather/snow.png')
   return weatherIconMap[weather] || getImageUrl('/weather/sun.png')
 }
 
@@ -141,6 +143,8 @@ export function getPopWeatherIcon(weather: string): string {
     return getImageUrl('/weather/haze-bg.png')
   if (weather.includes('雾'))
     return getImageUrl('/weather/fog-bg.png')
+  if (weather.includes('雪'))
+    return getImageUrl('/weather/snow-bg.png')
   return weatherIconMap[weather] || ''
 }
 
