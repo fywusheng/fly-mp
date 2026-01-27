@@ -17,7 +17,7 @@ const token = ref('')
 const userStore = useUserStore()
 const carStore = useCarStore()
 // 版本号
-const appVersion = 'V2.06'
+const appVersion = 'V2.0.6'
 
 // 退出登录
 function loginOut() {
