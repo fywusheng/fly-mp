@@ -600,7 +600,7 @@ function loadMoreRidingRecords() {
               {{ dailyStats.maxSpeed }}
             </view>
             <view class="text-18rpx color-[#666666]">
-              最高时速(km/h)
+              平均时速(km/h)
             </view>
             <view class="mt-10rpx h-2rpx w-68rpx bg-[#DB6477]" />
           </view>
@@ -666,7 +666,7 @@ function loadMoreRidingRecords() {
             <view class="my-20rpx h-2rpx w-100% bg-[#E6E6E6]" />
             <view class="mt-0rpx flex items-center justify-between px-29rpx text-20rpx color-[#666666]">
               <view>骑行时间：{{ item.ridingTime }}</view>
-              <view>最高时速：{{ item.maxSpeed }}km/h</view>
+              <view>平均时速：{{ item.maxSpeed }}km/h</view>
               <view>骑行人：{{ item.rideName }}</view>
             </view>
           </view>
