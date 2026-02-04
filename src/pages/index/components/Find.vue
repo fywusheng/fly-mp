@@ -39,7 +39,7 @@ watch(() => props.tabName, (newVal) => {
 async function getDayOffset(deviceId) {
   const res = await httpGet(`/device/v2/devices/${deviceId}/status`)
   if (res.code === '200') {
-    days.value = (res.data as any).companionshipDays
+    days.value = (res.data as any).companionshipDays || 0
   }
   else {
     console.error('获取骑行天数失败', res.message)

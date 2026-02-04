@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // ✅ 导入蓝牙管理 Composable
 import type { BluetoothDeviceInfo } from '@/composables/useBluetooth'
-import { use } from 'echarts'
+import { useQueue } from 'wot-design-uni'
 import { BluetoothStatus, useBluetooth } from '@/composables/useBluetooth'
 import { useLocationListener } from '@/composables/useLocationListener'
 import { useRidingTracker } from '@/composables/useRidingTracker'
@@ -17,12 +17,12 @@ import WeatherPop from './WeatherPop.vue'
 defineOptions({
   name: 'Home',
 })
-
 const props = defineProps({
   tabName: {
     type: String,
   },
 })
+const { closeOutside } = useQueue()
 
 type CommandType
   = | 'lock'
@@ -244,11 +244,6 @@ function cleanupHomePage() {
   if (carStore.hasBluetooth && carStore.carInfo.bluetoothVendor === 'ECS') {
     disconnect()
   }
-
-  // 停止位置监听
-  // if (isListening.value) {
-  //   stopListening()
-  // }
 
   // ✅ 清除定时器
   if (getCarInfoTimer) {
@@ -1044,14 +1039,14 @@ function showCarPicker() {
 }
 
 // 切换车辆
-async function handleConfirmCar({ value, selectedItems }) {
+async function handleConfirmCar({ value, selectedItem }) {
   console.log('🚗 ========== 开始切换车辆 ==========')
   // 设置选中车辆
   selectCarId.value = value
   // 存储选中车辆颜色
   uni.setStorageSync('selectColorCode', colorCode.value)
   // 设置车辆信息
-  carStore.setCarInfo(selectedItems)
+  carStore.setCarInfo(selectedItem)
 
   // ✅ 清除旧定时器
   if (getCarInfoTimer) {
@@ -1297,13 +1292,25 @@ function toggleLock() {
       <template #left>
         <view>
           <!-- ✅ 点击触发车辆选择器 -->
-          <view v-if="userStore.isLoggedIn" @click="showCarPicker">
+          <!-- <view v-if="userStore.isLoggedIn" @click="showCarPicker">
             <span class="text-30rpx font-bold">{{ currentCarName }}</span>
             <image
               class="ml-16rpx h-15rpx w-30rpx"
               :src="DownIcon"
               mode="aspectFit"
             />
+          </view> -->
+          <view v-if="userStore.isLoggedIn" @click="closeOutside">
+            <wd-drop-menu custom-class="fg-drop-menu">
+              <wd-drop-menu-item
+                v-if="selectCarId"
+                v-model="selectCarId"
+                label-key="vehicleName"
+                value-key="id"
+                :options="carList"
+                @change="handleConfirmCar"
+              />
+            </wd-drop-menu>
           </view>
           <view v-else @click="goLogin ">
             登录
@@ -1552,7 +1559,7 @@ function toggleLock() {
   <fg-message v-model:show="showMessagePopup" :duration="duration" :show-cancel-btn="showCancelBtn" :show-confirm-btn="showConfirmBtn" :close-on-click-modal="closeOnClickModal" :message-id="messageId" @cancel="handleCancel" @confirm="handleConfirm" />
 
   <!-- ✅ 车辆选择器（移到外层，避免层级问题） -->
-  <view>
+  <!-- <view>
     <wd-picker
       ref="carPickerRef"
       v-model="selectCarId"
@@ -1565,7 +1572,7 @@ function toggleLock() {
       @confirm="handleConfirmCar"
       @cancel="pickerClass = 'transparent-picker'"
     />
-  </view>
+  </view> -->
 </template>
 
 <style lang="scss" scoped>
@@ -1636,6 +1643,7 @@ function toggleLock() {
       font-weight: 500;
     }
   }
+
 }
 .grid {
   display: flex;

@@ -78,3 +78,11 @@ scroll-view ::-webkit-scrollbar {
   height: 0 !important;
   overflow: hidden !important;
 }
+
+.fg-drop-menu {
+  .wd-drop-menu__list {
+    background-color: unset !important;
+    font-size: 28rpx;
+    font-weight: bold;
+  }
+}

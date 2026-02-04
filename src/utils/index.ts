@@ -207,7 +207,7 @@ export function initLocationAuth() {
           if (!res.authSetting['scope.userLocationBackground']) {
             uni.showModal({
               title: '请求权限',
-              content: '需要获取您的后台定位权限,如已授权请点击取消',
+              content: '为保证功能体验，请设置您的位置信息为使用小程序时和离开后',
               confirmText: '去设置',
               success(res) {
                 if (res.confirm) {
