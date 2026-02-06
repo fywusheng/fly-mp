@@ -88,8 +88,8 @@ function setMapData(trackPoints: Array<{ latitude: number, longitude: number }>,
   if (trackPoints.length === 0)
     return
 
-  // 取第一个点作为当前位置
-  const endPoint = trackPoints[0]
+  // 取最后一个点作为当前位置
+  const endPoint = trackPoints[trackPoints.length - 1]
   markers.value[0] = {
     ...markers.value[0],
     iconPath: ridingStatus === '已泊车' ? ArrowRed : ridingStatus === '行驶中' ? ArrayGreen : ArrowGray,
