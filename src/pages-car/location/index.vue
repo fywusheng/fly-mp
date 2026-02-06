@@ -10,7 +10,7 @@
 </route>
 
 <script lang="ts" setup>
-import { getCurrentInstance, onMounted } from 'vue'
+import { getCurrentInstance } from 'vue'
 import { httpGet } from '@/utils/http'
 import { getImageUrl } from '@/utils/image'
 
@@ -55,12 +55,12 @@ const DEFAULT_LOCATION = {
 onLoad((e) => {
   getTrackInfo(e.rideId)
   // setTimeout(() => {
-     
-    // uni.setNavigationBarTitle({
-    //   title: e.title || '车辆位置',
-    // })
+
+  // uni.setNavigationBarTitle({
+  //   title: e.title || '车辆位置',
+  // })
   // }, 500)
- 
+
   // const instance = getCurrentInstance()?.proxy as { getOpenerEventChannel?: () => UniApp.EventChannel }
   // if (instance?.getOpenerEventChannel) {
   //   const eventChannel = instance.getOpenerEventChannel()

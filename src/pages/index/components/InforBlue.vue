@@ -393,7 +393,6 @@ function checkhasPending() {
 
 // 领取数据服务体验卡
 function getCard() {
-  debugger
   if (!userStore.isLoggedIn) {
     uni.showToast({
       title: '请先登录',
