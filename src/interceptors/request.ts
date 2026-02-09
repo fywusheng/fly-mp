@@ -69,6 +69,9 @@ const httpInterceptor = {
       console.log('Token已自动续期')
       userStore.refreshToken(newToken)
     }
+    if (response.data.code === '10001') {
+      uni.navigateTo({ url: '/pages/login/login' })
+    }
     return response
   },
 }
