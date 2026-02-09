@@ -69,8 +69,15 @@ const httpInterceptor = {
       console.log('Token已自动续期')
       userStore.refreshToken(newToken)
     }
-    if (response.data.code === '10001') {
-      uni.navigateTo({ url: '/pages/login/login' })
+    if (response?.data?.code === '10001') {
+      uni.showToast({
+        title: '登录已过期，请重新登录',
+        icon: 'none',
+      })
+      // 延迟跳转
+      setTimeout(() => {
+        uni.navigateTo({ url: '/pages/login/login' })
+      }, 800)
     }
     return response
   },
