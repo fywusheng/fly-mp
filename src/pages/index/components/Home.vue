@@ -784,7 +784,16 @@ function getLocationAndWeather() {
 // 获取车辆列表
 async function getCarList() {
   const res = await httpGet('/device/vehicle/user/complete')
-  carList.value = (res.data as any).resultList
+
+  if (res.code !== '200') {
+    uni.showToast({
+      title: res.message,
+      icon: 'none',
+    })
+    return
+  }
+
+  carList.value = (res.data as any).resultList || []
   // console.log('获取车辆列表成功:', res.data.resultList)
   // 没有车辆，提示去绑定
   if (carList.value.length === 0) {
