@@ -284,15 +284,16 @@ export function iosOpenAndSearchAndConnect(options) {
 export function initBluetoothAndroid(deviceId?: string) {
   return new Promise((resolve, reject) => {
     // 1. 获取系统信息，检查蓝牙和定位开关
-    const sysInfo = wx.getSystemInfoSync()
+    const sysInfo = wx.getSystemSetting()
+    const deviceInfo = wx.getDeviceInfo()
 
     if (!sysInfo.bluetoothEnabled) {
-      return reject({ msg: '请先开启手机蓝牙开关' })
+      return reject(new Error ('请先开启手机蓝牙开关'))
     }
 
     // 安卓搜索蓝牙必须开启系统定位(GPS)
-    if (sysInfo.platform === 'android' && !sysInfo.locationEnabled) {
-      return reject({ msg: '安卓机型请务必开启手机GPS定位开关' })
+    if (deviceInfo.platform === 'android' && !sysInfo.locationEnabled) {
+      return reject(new Error('安卓机型请务必开启手机GPS定位开关'))
     }
 
     // 2. 调用微信 API 初始化
