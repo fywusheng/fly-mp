@@ -1,6 +1,6 @@
 import { ref } from 'vue'
 // ECS：E车星SDK
-import { androidOpenAndSearchAndConnect, iosOpenAndSearchAndConnect } from '@/plugin/bleSdk/EVSBikeSDK/EvsBikeSdk'
+import { androidOpenAndSearchAndConnect, initBluetoothAndroid, iosOpenAndSearchAndConnect } from '@/plugin/bleSdk/EVSBikeSDK/EvsBikeSdk'
 import EVSBikeSDK from '@/plugin/bleSdk/EVSBikeSDK/EVSBikeSDK.v1.1.1.js'
 // HUAHUI：华惠SDK
 import hhznBikeSDK from '@/plugin/bleSdk/HHZNBikeSDK/HHZNBikeSDK.v1.0.8.js'
@@ -32,6 +32,7 @@ export interface BluetoothDeviceInfo {
   bluetoothVendor?: 'ECS' | 'HUAHUI' | null // 蓝牙厂商（字符串）：ECS=E车星，HUAHUI=华惠
   bluetoothDeviceName: string | null
   bluetoothDeviceKey: string | null
+  bluetoothMac?: string | null // 可选：蓝牙MAC地址，部分设备可能需要
 }
 
 /**
@@ -180,15 +181,19 @@ export function useBluetooth() {
 
       // 根据SDK类型选择连接方式
       let device: { deviceId: string }
+      // 注意：E车星SDK需要先搜索设备获取deviceId，华慧SDK直接使用设备名称连接
+      const platform = uni.getDeviceInfo().platform
 
       if (sdkType === BluetoothSDKType.ECS) {
         // E车星SDK：搜索并连接
         // iOS和安卓分开处理
-        if (uni.getDeviceInfo().platform === 'android') {
+        if (platform === 'android') {
           console.log('📱 安卓平台，使用安卓连接方法')
-          device = await androidOpenAndSearchAndConnect({
-            name: deviceInfo.bluetoothDeviceName,
-          }) as { deviceId: string }
+          // device = await androidOpenAndSearchAndConnect({
+          //   name: deviceInfo.bluetoothDeviceName,
+          // }) as { deviceId: string }
+          await initBluetoothAndroid(deviceInfo.bluetoothMac)
+          device = { deviceId: deviceInfo.bluetoothMac }
         }
         else {
           console.log('📱 iOS平台，使用iOS连接方法')
@@ -200,9 +205,7 @@ export function useBluetooth() {
       }
       else {
         // 华慧SDK：直接使用设备名称连接
-        device = {
-          deviceId: deviceInfo.bluetoothDeviceName || '',
-        }
+        device = { deviceId: deviceInfo.bluetoothDeviceName }
         console.log('🔍 华慧设备 ID:', device.deviceId)
       }
 
@@ -216,6 +219,16 @@ export function useBluetooth() {
 
       // 订阅状态变化
       currentSDK.subscribe(handleStateChange)
+
+      // 注意：该接口兼容性较差，且仅限安卓
+      if (platform === 'android' && wx.makeBluetoothPair && sdkType === BluetoothSDKType.ECS) {
+        wx.makeBluetoothPair({
+          deviceId: deviceInfo.bluetoothMac,
+          pin: '123456', // 如果是固定 PIN 码，可选
+          success: res => console.log('配对请求发送成功'),
+          fail: err => console.error('配对失败', err),
+        })
+      }
 
       // 发送密码验证指令
       const password = deviceInfo.bluetoothDeviceKey || ''

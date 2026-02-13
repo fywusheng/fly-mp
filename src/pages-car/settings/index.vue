@@ -127,6 +127,7 @@ async function connectBle() {
       bluetoothVendor: selectedCar.bluetoothVendor,
       bluetoothDeviceName: selectedCar.bluetoothDeviceName || '',
       bluetoothDeviceKey: selectedCar.bluetoothDeviceKey || '',
+      bluetoothMac: selectedCar.bluetoothMac || '',
     }
 
     // 使用composable连接蓝牙

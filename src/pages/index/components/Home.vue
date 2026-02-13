@@ -241,9 +241,9 @@ function cleanupHomePage() {
   console.log('🧹 清理首页资源')
 
   // E车星断开蓝牙连接
-  if (carStore.hasBluetooth && carStore.carInfo.bluetoothVendor === 'ECS') {
-    disconnect()
-  }
+  // if (carStore.hasBluetooth && carStore.carInfo.bluetoothVendor === 'ECS') {
+  //   disconnect()
+  // }
 
   // ✅ 清除定时器
   if (getCarInfoTimer) {
@@ -478,6 +478,7 @@ function toggleBluetooth() {
     connectBle()
   }
   else {
+    console.log('正在断开蓝牙连接')
     disconnect()
   }
 }
@@ -820,8 +821,14 @@ async function getCarList() {
     if (carStore.network) {
       getCarInfo()
     }
+
+    // 蓝牙未连接就开始连接
+    if (carStore.hasBluetooth && bluetoothStatus.value === BluetoothStatus.DISCONNECTED) {
+      connectBle()
+    }
+
     // 自动连接蓝牙
-    connectBle()
+    // connectBle()
   }
 }
 // 默认选中车辆
@@ -942,6 +949,7 @@ async function connectBle() {
       // bluetoothDeviceKey: selectedCarInfo.id === 126372 ? 'C9AC662B' : selectedCarInfo.bluetoothDeviceKey || '',
       bluetoothDeviceName: selectedCarInfo.bluetoothDeviceName || '',
       bluetoothDeviceKey: selectedCarInfo.bluetoothDeviceKey || '',
+      bluetoothMac: selectedCarInfo.bluetoothMac || '',
     }
 
     console.log('🔵 开始连接蓝牙，设备信息:', {
@@ -1525,7 +1533,8 @@ function toggleLock() {
                 车辆位置
               </view>
               <view v-if="userStore.isLoggedIn" class="text-28rpx">
-                {{ currentRidingInfo.rideId ? currentRidingInfo.ridingStatus : '未使用' }}
+                <!-- {{ currentRidingInfo.rideId ? currentRidingInfo.ridingStatus : '未使用' }} -->
+                {{ carState.isLocked ? '已泊车' : '骑行中' }}
               </view>
               <view class="flex items-center">
                 <image class="ml-30rpx h-22rpx w-22rpx" :src="ReloadIcon" mode="scaleToFill" />

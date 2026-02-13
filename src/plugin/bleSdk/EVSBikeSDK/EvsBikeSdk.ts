@@ -277,3 +277,74 @@ export function iosOpenAndSearchAndConnect(options) {
     }
   })
 }
+
+/**
+ * 安卓蓝牙深度初始化
+ */
+export function initBluetoothAndroid(deviceId?: string) {
+  return new Promise((resolve, reject) => {
+    // 1. 获取系统信息，检查蓝牙和定位开关
+    const sysInfo = wx.getSystemInfoSync()
+
+    if (!sysInfo.bluetoothEnabled) {
+      return reject({ msg: '请先开启手机蓝牙开关' })
+    }
+
+    // 安卓搜索蓝牙必须开启系统定位(GPS)
+    if (sysInfo.platform === 'android' && !sysInfo.locationEnabled) {
+      return reject({ msg: '安卓机型请务必开启手机GPS定位开关' })
+    }
+
+    // 2. 调用微信 API 初始化
+    wx.openBluetoothAdapter({
+      // mode: 'central', // 明确指定为主机模式
+      success: (res) => {
+        console.log('蓝牙适配器初始化成功')
+        // 监听蓝牙状态变化（如中途用户关了蓝牙）
+        watchBluetoothState()
+
+        // 注意：如果之前已经连着设备了，SDK 可能会连接失败（因为微信这边还占着），所以这里主动断开一下（如果有的话）
+        wx.closeBLEConnection({
+          deviceId,
+          complete: () => {
+            // 关键延迟：给安卓底层一点时间释放句柄
+            setTimeout(() => {
+              console.log('设备已断开，返回给 SDK')
+              resolve(res)
+            }, 200)
+          },
+        })
+        // resolve(res)
+      },
+      fail: (err) => {
+        // 如果已经初始化过了，直接算成功
+        if (err.errCode === 10001 || err.errMsg.includes('already opened')) {
+          // resolve(err)
+          // 注意：如果之前已经连着设备了，SDK 可能会连接失败（因为微信这边还占着），所以这里主动断开一下（如果有的话）
+          wx.closeBLEConnection({
+            deviceId,
+            complete: () => {
+            // 关键延迟：给安卓底层一点时间释放句柄
+              setTimeout(() => {
+                console.log('设备已断开，返回给 SDK')
+                resolve(err)
+              }, 200)
+            },
+          })
+        }
+        else {
+          console.error('初始化失败', err)
+          reject(err)
+        }
+      },
+    })
+  })
+}
+
+function watchBluetoothState() {
+  wx.onBluetoothAdapterStateChange((res) => {
+    if (!res.available) {
+      console.warn('蓝牙适配器不可用，请检查蓝牙开关')
+    }
+  })
+}

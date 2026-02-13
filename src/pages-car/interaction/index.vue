@@ -135,6 +135,7 @@ async function connectBle() {
       bluetoothVendor: carInfo.bluetoothVendor,
       bluetoothDeviceName: carInfo.bluetoothDeviceName || '',
       bluetoothDeviceKey: carInfo.bluetoothDeviceKey || '',
+      bluetoothMac: carInfo.bluetoothMac || '',
     }
 
     // 使用composable连接蓝牙
