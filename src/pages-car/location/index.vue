@@ -18,6 +18,10 @@ const MapArrow = getImageUrl('/home/map-arrow.png')
 
 const EndPointIcon = getImageUrl('/common/end-point.png')
 const StartPointIcon = getImageUrl('/common/start-point.png')
+// 不同状态车辆图标
+const ArrowRed = getImageUrl('/network/arrow-red.png')
+const ArrowGray = getImageUrl('/network/arrow-gray.png')
+const ArrayGreen = getImageUrl('/network/arrow-green.png')
 
 // 使用ref定义响应式数据
 const scale = ref(18)
@@ -53,7 +57,21 @@ const DEFAULT_LOCATION = {
 }
 
 onLoad((e) => {
-  getTrackInfo(e.rideId)
+  // getTrackInfo(e.rideId)
+  location.value = {
+    latitude: e.latitude,
+    longitude: e.longitude,
+  }
+  markers.value[0] = {
+    ...markers.value[0],
+    iconPath: e.ridingStatus === '已泊车' ? ArrowRed : e.ridingStatus === '行驶中' ? ArrayGreen : ArrowGray,
+    latitude: e.latitude,
+    longitude: e.longitude,
+  }
+  setTimeout(() => {
+    showMap.value = true
+  }, 300)
+
   // setTimeout(() => {
 
   // uni.setNavigationBarTitle({

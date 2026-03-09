@@ -3,6 +3,7 @@ import { getImageUrl } from '@/utils/image'
 
 const props = defineProps<{
   ridingTrack: Array<{ latitude: number, longitude: number }>
+  status: string
   location: { latitude: number, longitude: number }
 }>()
 const emit = defineEmits<{
@@ -11,11 +12,14 @@ const emit = defineEmits<{
 
 const MapWait = getImageUrl('/home/map-wait.png')
 const MapArrow = getImageUrl('/home/map-arrow.png')
+const ArrowRed = getImageUrl('/network/arrow-red.png')
+const ArrowGray = getImageUrl('/network/arrow-gray.png')
+const ArrayGreen = getImageUrl('/network/arrow-green.png')
 
 // 缓存地图上下文
 let mapCtx: any = null
 // 使用ref定义响应式数据
-const scale = ref(17)
+const scale = ref(16)
 const location = ref({
   latitude: 39.9087,
   longitude: 116.3975,
@@ -38,6 +42,8 @@ const DEFAULT_LOCATION = {
   latitude: 39.9087,
   longitude: 116.3975,
 }
+
+const showMap = ref(false)
 
 onMounted(() => {
   const instance = getCurrentInstance() // 获取组件实
@@ -70,6 +76,7 @@ function updateMap(newTrack: Array<{ latitude: number, longitude: number }>) {
   location.value = lastPoint
   markers.value[0] = {
     ...markers.value[0],
+    iconPath: props.status === '已泊车' ? ArrowRed : props.status === '行驶中' ? ArrayGreen : ArrowGray,
     width: 44,
     height: 44,
     latitude: lastPoint.latitude,
@@ -81,8 +88,9 @@ function updateMap(newTrack: Array<{ latitude: number, longitude: number }>) {
 function moveToLocation(target: { latitude: number, longitude: number }) {
   if (mapCtx) {
     setTimeout(() => {
-      mapCtx.moveToLocation(target)
-    }, 500)
+      // mapCtx.moveToLocation(target)
+      showMap.value = true
+    }, 300)
   }
   else {
     console.error('地图上下文未初始化')
@@ -97,6 +105,7 @@ function clickMap() {
 <template>
   <view class="mt-17rpx h-240rpx w-660rpx">
     <map
+      v-if="showMap"
       id="homeMap"
       class="map"
       :latitude="location.latitude"

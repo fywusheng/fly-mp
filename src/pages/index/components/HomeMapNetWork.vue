@@ -27,8 +27,8 @@ const markers = ref([{
   id: 1,
   latitude: 40.040129,
   longitude: 116.274968,
-  width: Number.parseInt((45 / 1.5).toString()),
-  height: Number.parseInt((45 / 1.5).toString()),
+  width: 44,
+  height: 44,
   iconPath: MapWait,
   anchor: {
     x: 0.5,
@@ -45,6 +45,8 @@ const polyline = ref([
   },
 ])
 
+const showMap = ref(false)
+
 onMounted(() => {
   const instance = getCurrentInstance() // 获取组件实
   mapCtx = uni.createMapContext('networkMap', instance)
@@ -60,9 +62,12 @@ watch(() => props.info, (newInfo) => {
     markers.value[0].longitude = newInfo.longitude
     markers.value[0].iconPath = newInfo.ridingStatus === '已泊车' ? ArrowRed : newInfo.ridingStatus === '行驶中' ? ArrayGreen : ArrowGray
     // 更新地图中心位置
-    if (mapCtx) {
-      mapCtx.moveToLocation()
-    }
+    // if (mapCtx) {
+    //   mapCtx.moveToLocation()
+    // }
+    setTimeout(() => {
+      showMap.value = true
+    }, 300)
   }
 }, { immediate: true })
 
@@ -74,6 +79,7 @@ function clickMap() {
 <template>
   <view class="mt-17rpx h-240rpx w-660rpx">
     <map
+      v-if="showMap"
       id="networkMap"
       class="map"
       :latitude="location.latitude"

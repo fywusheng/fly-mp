@@ -1178,9 +1178,19 @@ function goLocationDetail() {
     })
     return
   }
-  uni.navigateTo({
-    url: `/pages-network/localtion/index?rideId=${currentRidingInfo.value.rideId}`,
-  })
+
+  const lastPoint = currentRidingInfo.value
+  console.log(lastPoint, '发送位置信息')
+
+  if (lastPoint && lastPoint.rideId) {
+    uni.navigateTo({
+      url: `/pages-car/location/index?latitude=${lastPoint.latitude}&longitude=${lastPoint.longitude}&ridingStatus=${lastPoint.ridingStatus}`,
+    })
+  }
+
+  // uni.navigateTo({
+  //   url: `/pages-network/localtion/index?rideId=${currentRidingInfo.value.rideId}`,
+  // })
 }
 
 function goLogin() {
@@ -1205,9 +1215,15 @@ function goDetail() {
     })
     return
   }
-  uni.navigateTo({
-    url: `/pages-car/location/index?rideId=${currentRidingInfo.value.rideId}`,
-  })
+
+  const ridingTrack = currentRidingInfo.value.ridingTrack || []
+
+  if (ridingTrack.length > 0) {
+    const lastPoint = ridingTrack[ridingTrack.length - 1]
+    uni.navigateTo({
+      url: `/pages-car/location/index?latitude=${lastPoint.latitude}&longitude=${lastPoint.longitude}&ridingStatus=${currentRidingInfo.value.ridingStatus}`,
+    })
+  }
 }
 
 function goNotice() {
@@ -1548,7 +1564,7 @@ function toggleLock() {
           <!-- 轨迹地图 -->
           <view>
             <HomeMapNetWork v-if="carStore.network" :info="currentRidingInfo" @map-click="goLocationDetail" />
-            <HomeMap v-else :location="mapLocation" :riding-track="currentRidingInfo.ridingTrack" @map-click="goDetail" />
+            <HomeMap v-else :location="mapLocation" :status="currentRidingInfo.ridingStatus" :riding-track="currentRidingInfo.ridingTrack" @map-click="goDetail" />
           </view>
         </view>
       </view>
