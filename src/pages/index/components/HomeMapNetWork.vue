@@ -69,6 +69,9 @@ watch(() => props.info, (newInfo) => {
       showMap.value = true
     }, 300)
   }
+  else {
+    showMap.value = true
+  }
 }, { immediate: true })
 
 function clickMap() {
