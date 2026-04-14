@@ -10,6 +10,7 @@ import { debounce, getColorImg, getLocation, initLocationAuth } from '@/utils'
 import { getWeatherIcon } from '@/utils/common'
 import { httpGet, httpPost } from '@/utils/http'
 import { getImageUrl } from '@/utils/image'
+import HomeAdBanner from './HomeAdBanner.vue'
 import HomeMap from './HomeMap.vue'
 import HomeMapNetWork from './HomeMapNetWork.vue'
 import WeatherPop from './WeatherPop.vue'
@@ -81,8 +82,6 @@ const Bat2 = getImageUrl('/home/bat-2.png')
 const Bat3 = getImageUrl('/home/bat-3.png')
 const Bat4 = getImageUrl('/home/bat-4.png')
 const Bat5 = getImageUrl('/home/bat-5.png')
-
-const pickerClass = ref('transparent-picker')
 
 // 用户信息
 const userStore = useUserStore()
@@ -183,14 +182,16 @@ const updateCarStatusDebounced = debounce(updateCarStatus, 500)
 // 弹出框相关
 const carList = ref([])
 const selectCarId = ref<number>() // 选中车辆ID
-const carPickerRef = ref() // ✅ 车辆选择器引用
 
 // message弹窗
 const showMessagePopup = ref(false) // 控制弹窗显示
 const messageId = ref<number>(0) // 弹窗ID
 const duration = ref(0) // 弹窗持续时间
+const title = ref('') // 弹窗标题
+const messageContent = ref<string>('') // 弹窗内容
 const showCancelBtn = ref(true) // 是否显示取消按钮
 const showConfirmBtn = ref(true) // 是否显示确认按钮
+const confirmText = ref('') // 确认按钮文本
 const closeOnClickModal = ref(true) // 是否点击蒙层关闭弹窗
 
 const batteryVoltageType = ref(48) // 电池类型
@@ -394,9 +395,28 @@ function handleCancel() {
 
 function handleConfirm() {
   showMessagePopup.value = false
+  if (messageId.value === 1) {
+    console.log('去开通')
+  }
+  if (messageId.value === 2) {
+    console.log('取消')
+  }
 }
 
 function handleShowBatPopup() {
+  // 没有开会员提示弹窗,先写死，后面再改
+  if (true) {
+    title.value = '开通超级会员'
+    messageContent.value = '实时查看电量'
+    confirmText.value = '去开通'
+    messageId.value = 1
+    duration.value = 0
+    showCancelBtn.value = false
+    showConfirmBtn.value = true
+    closeOnClickModal.value = true
+    showMessagePopup.value = true
+    return false
+  }
   batteryVoltageType.value = carState.value.batteryVoltageType || 48 // 默认48V
   showBatPopup.value = true
 }
@@ -1042,19 +1062,6 @@ async function disconnect() {
   }
 }
 
-// ✅ 显示车辆选择器
-function showCarPicker() {
-  if (!carList.value.length) {
-    uni.showToast({
-      title: '暂无车辆',
-      icon: 'none',
-    })
-    return
-  }
-  pickerClass.value = ''
-  carPickerRef.value?.open()
-}
-
 // 切换车辆
 async function handleConfirmCar({ value, selectedItem }) {
   console.log('🚗 ========== 开始切换车辆 ==========')
@@ -1178,6 +1185,10 @@ function goLocationDetail() {
     })
     return
   }
+  if (true) {
+    console.log('去开通')
+    return false
+  }
 
   const lastPoint = currentRidingInfo.value
   console.log(lastPoint, '发送位置信息')
@@ -1187,10 +1198,6 @@ function goLocationDetail() {
       url: `/pages-car/location/index?latitude=${lastPoint.latitude}&longitude=${lastPoint.longitude}&ridingStatus=${lastPoint.ridingStatus}`,
     })
   }
-
-  // uni.navigateTo({
-  //   url: `/pages-network/localtion/index?rideId=${currentRidingInfo.value.rideId}`,
-  // })
 }
 
 function goLogin() {
@@ -1215,6 +1222,11 @@ function goDetail() {
     })
     return
   }
+  // 会员检测，先写死，后面再改
+  if (true) {
+    console.log('去开通')
+    return false
+  }
 
   const ridingTrack = currentRidingInfo.value.ridingTrack || []
 
@@ -1234,6 +1246,20 @@ function goNotice() {
       mask: true,
     })
     return
+  }
+
+  // 没有开会员提示弹窗,先写死，后面再改
+  if (true) {
+    title.value = '开通超级会员'
+    messageContent.value = '告警信息实时推送'
+    confirmText.value = '去开通'
+    messageId.value = 2
+    duration.value = 0
+    showCancelBtn.value = false
+    showConfirmBtn.value = true
+    closeOnClickModal.value = true
+    showMessagePopup.value = true
+    return false
   }
   if (carState.value.warnCount === 0) {
     return
@@ -1324,15 +1350,6 @@ function toggleLock() {
     <wd-navbar custom-class="navbar" safe-area-inset-top fixed custom-style="background-color: transparent !important;">
       <template #left>
         <view>
-          <!-- ✅ 点击触发车辆选择器 -->
-          <!-- <view v-if="userStore.isLoggedIn" @click="showCarPicker">
-            <span class="text-30rpx font-bold">{{ currentCarName }}</span>
-            <image
-              class="ml-16rpx h-15rpx w-30rpx"
-              :src="DownIcon"
-              mode="aspectFit"
-            />
-          </view> -->
           <view v-if="userStore.isLoggedIn" @click="closeOutside">
             <wd-drop-menu custom-class="fg-drop-menu">
               <wd-drop-menu-item
@@ -1360,18 +1377,6 @@ function toggleLock() {
 
       <!-- 我的车辆&蓝牙状态 -->
       <view class="car relative z-3 h-90rpx flex items-center justify-between px-29rpx" :style="{ paddingTop: `${menuButtonInfo?.top + menuButtonInfo.height + 0}px` }">
-        <!-- ✅ 点击触发车辆选择器 -->
-        <!-- <view v-if="userStore.isLoggedIn" @click="showCarPicker">
-          <span class="text-30rpx font-bold">{{ currentCarName }}</span>
-          <image
-            class="ml-16rpx h-15rpx w-30rpx"
-            :src="DownIcon"
-            mode="aspectFit"
-          />
-        </view>
-        <view v-else @click="goLogin ">
-          登录
-        </view> -->
         <template v-if="weatherInfo && weatherInfo.wea">
           <!-- 占位 -->
           <view />
@@ -1549,7 +1554,6 @@ function toggleLock() {
                 车辆位置
               </view>
               <view v-if="userStore.isLoggedIn" class="text-28rpx">
-                <!-- {{ currentRidingInfo.rideId ? currentRidingInfo.ridingStatus : '未使用' }} -->
                 {{ carState.isLocked ? '已泊车' : '骑行中' }}
               </view>
               <view class="flex items-center">
@@ -1563,11 +1567,34 @@ function toggleLock() {
 
           <!-- 轨迹地图 -->
           <view>
-            <HomeMapNetWork v-if="carStore.network" :info="currentRidingInfo" @map-click="goLocationDetail" />
-            <HomeMap v-else :location="mapLocation" :status="currentRidingInfo.ridingStatus" :riding-track="currentRidingInfo.ridingTrack" @map-click="goDetail" />
+            <HomeMapNetWork
+              v-if="carStore.network"
+              :info="currentRidingInfo"
+              :is-unactivated="true"
+              @map-click="goLocationDetail"
+            />
+            <HomeMap
+              v-else
+              :location="mapLocation"
+              :status="currentRidingInfo.ridingStatus"
+              :riding-track="currentRidingInfo.ridingTrack"
+              :is-unactivated="true"
+              @map-click="goDetail"
+            />
           </view>
         </view>
       </view>
+
+      <!-- 广告位 -->
+      <HomeAdBanner
+        item-width="260rpx"
+        item-height="180rpx"
+        :list="[
+          { imageUrl: 'https://static.feigeinfo.com/static/home/top-bg.png', link: 'https://www.baidu.com' },
+          { imageUrl: 'https://static.feigeinfo.com/static/home/top-bg.png', link: 'https://www.baidu.com' },
+          { imageUrl: 'https://static.feigeinfo.com/static/home/top-bg.png', link: 'https://www.baidu.com' },
+        ]"
+      />
     </view>
   </view>
 
@@ -1590,28 +1617,12 @@ function toggleLock() {
   </fg-message>
 
   <!-- 操作提示弹窗 -->
-  <fg-message v-model:show="showMessagePopup" :duration="duration" :show-cancel-btn="showCancelBtn" :show-confirm-btn="showConfirmBtn" :close-on-click-modal="closeOnClickModal" :message-id="messageId" @cancel="handleCancel" @confirm="handleConfirm" />
-
-  <!-- ✅ 车辆选择器（移到外层，避免层级问题） -->
-  <!-- <view>
-    <wd-picker
-      ref="carPickerRef"
-      v-model="selectCarId"
-      :close-on-click-modal="false"
-      :z-index="999999"
-      label-key="vehicleName"
-      value-key="id"
-      :columns="carList"
-      :custom-class="pickerClass"
-      @confirm="handleConfirmCar"
-      @cancel="pickerClass = 'transparent-picker'"
-    />
-  </view> -->
+  <fg-message v-model:show="showMessagePopup" :title="title" :message="messageContent" :duration="duration" :show-cancel-btn="showCancelBtn" :show-confirm-btn="showConfirmBtn" :close-on-click-modal="closeOnClickModal" :message-id="messageId" :confirm-text="confirmText" @cancel="handleCancel" @confirm="handleConfirm" />
 </template>
 
 <style lang="scss" scoped>
 .Home {
-  height: 100vh;
+  height: 1834rpx;
   padding-bottom: 40rpx;
   width: 100vw;
   overflow: hidden;
@@ -1727,13 +1738,5 @@ function toggleLock() {
        color: #2CBD7C;
     }
   }
-}
-</style>
-
-<style>
-.transparent-picker {
-  opacity: 0 !important;
-  height: 0 !important;
-  overflow: hidden !important;
 }
 </style>

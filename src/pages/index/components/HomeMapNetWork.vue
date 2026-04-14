@@ -3,6 +3,7 @@ import { getImageUrl } from '@/utils/image'
 
 const props = defineProps<{
   info: { latitude: number, longitude: number, ridingStatus: string }
+  isUnactivated?: boolean // 是否未开通状态
 }>()
 const emit = defineEmits<{
   (e: 'mapClick'): void
@@ -80,7 +81,8 @@ function clickMap() {
 </script>
 
 <template>
-  <view class="mt-17rpx h-240rpx w-660rpx">
+  <view class="relative mt-17rpx h-240rpx w-660rpx">
+    <!-- 地图 -->
     <map
       v-if="showMap"
       id="networkMap"
@@ -92,6 +94,15 @@ function clickMap() {
       :scale="scale"
       @tap="clickMap"
     />
+
+    <!-- 未开通蒙层 -->
+    <view v-if="isUnactivated" class="unactivated-overlay" @tap="clickMap">
+      <view class="unactivated-content">
+        <text class="unactivated-text">
+          未开通
+        </text>
+      </view>
+    </view>
   </view>
 </template>
 
@@ -99,5 +110,32 @@ function clickMap() {
 .map {
   width: 100%;
   height: 100%;
+}
+
+.unactivated-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12rpx;
+  z-index: 10;
+}
+
+.unactivated-content {
+  color: #333333;
+  padding: 20rpx 40rpx;
+  border-radius: 8rpx;
+}
+
+.unactivated-text {
+  font-size: 40rpx;
+  color: #333333;
+  font-weight: bold;
+  white-space: nowrap;
 }
 </style>

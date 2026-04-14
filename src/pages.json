@@ -43,6 +43,10 @@
         "navigationBarTitleText": "设置",
         "navigationBarBackgroundColor": "#ffffff"
       }
+    },
+    {
+      "path": "pages/webview/index",
+      "type": "page"
     }
   ],
   "subPackages": [
@@ -307,6 +311,26 @@
             "navigationStyle": "default",
             "navigationBarTitleText": "查看轨迹",
             "navigationBarBackgroundColor": "#ffffff"
+          }
+        },
+        {
+          "path": "smart-service/index",
+          "type": "home",
+          "layout": "tabbar",
+          "style": {
+            "navigationStyle": "custom",
+            "navigationBarTitleText": "智能服务",
+            "backgroundColor": "#6EA6F6"
+          }
+        },
+        {
+          "path": "smart-service-open/index",
+          "type": "home",
+          "layout": "tabbar",
+          "style": {
+            "navigationStyle": "custom",
+            "navigationBarTitleText": "智能服务",
+            "backgroundColor": "#6EA6F6"
           }
         }
       ]

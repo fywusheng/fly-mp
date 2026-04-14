@@ -2,6 +2,7 @@
 import { useCarStore } from '@/store'
 import { httpGet, httpPost } from '@/utils/http'
 import { getImageUrl } from '@/utils/image'
+import HomeAdBanner from './HomeAdBanner.vue'
 
 defineOptions({
   name: 'Infor',
@@ -25,6 +26,9 @@ const DataUnAive = getImageUrl('/infor/4g-data.png')
 const DataNone = getImageUrl('/infor/4g-data-none.png')
 const Gift = getImageUrl('/infor/gift.png')
 const Effect = getImageUrl('/infor/effect.png')
+const SmartServiceIcon = getImageUrl('/infor/smartServices.png')
+const NearbyStoreIcon = getImageUrl('/infor/nearbyStores.png')
+const TheftReportIcon = getImageUrl('/infor/theftReport.png')
 const carStore = useCarStore()
 const dailyStats = ref<any>({
   totalRidingTime: '00:00:00',
@@ -53,6 +57,22 @@ const activeCard = ref({
   expireDate: '', // 过期日期
   status: '', // 卡状态 PENDING / ACTIVE / EXPIRED
 })
+
+// 车主服务
+const onwerServices = ref<any[]>([
+  {
+    name: '智能服务',
+    icon: SmartServiceIcon,
+  },
+  {
+    name: '附近门店',
+    icon: NearbyStoreIcon,
+  },
+  {
+    name: '失窃上报',
+    icon: TheftReportIcon,
+  },
+])
 
 watch(() => props.tabName, (newVal) => {
   if (newVal === 'infor') {
@@ -218,6 +238,25 @@ function getCardTitle() {
 
   return activeCard.value.effective ? '数据服务体验卡' : '体验卡已失效'
 }
+
+// 车主服务
+function goService(name: string) {
+  if (name === '智能服务') {
+    uni.navigateTo({
+      url: '/pages-network/smart-service/index',
+    })
+  }
+  else if (name === '附近门店') {
+    uni.navigateTo({
+      url: '/pages-network/nearby-store/index',
+    })
+  }
+  else if (name === '失窃上报') {
+    uni.navigateTo({
+      url: '/pages-network/theft-report/index',
+    })
+  }
+}
 </script>
 
 <template>
@@ -321,8 +360,8 @@ function getCardTitle() {
         mode="scaleToFill"
       />
     </view>
-    <!-- 骑行卡 -->
-    <view class="ml-20rpx mt-20rpx box-border w-710rpx rounded-8rpx bg-white px-20rpx pb-9rpx pt-19rpx">
+    <!-- 骑行卡,暂时保留，后期删除 -->
+    <!-- <view class="ml-20rpx mt-20rpx box-border w-710rpx rounded-8rpx bg-white px-20rpx pb-9rpx pt-19rpx">
       <view class="mb-11rpx text-30rpx text-[#333333] font-bold">
         车主服务
       </view>
@@ -340,11 +379,9 @@ function getCardTitle() {
           />
 
           <view class="relative z-10 box-border h-100% w-100% px-21rpx pt-29rpx">
-            <!-- 待领取 | 已失效 -->
             <view v-if="hasPending || !activeCard.effective" class="unclaimed" @click="getCard">
               {{ hasPending ? '待领取' : '去购买' }}
             </view>
-            <!-- 生效中 -->
             <image
               v-if="activeCard && activeCard.effective"
               class="effect"
@@ -361,17 +398,40 @@ function getCardTitle() {
             <view v-if=" activeCard && activeCard.effective" class="h-24rpx w-180rpx flex items-center justify-center rounded-20rpx bg-[#2CBC7B] text-14rpx text-[#ffffff]">
               有效期至{{ activeCard.expireDate || '' }}
             </view>
-            <!-- <view class="w-100% flex justify-center items-center">
-              <image
-                class="w-99rpx h-99rpx"
-                :src="DataNone"
-                mode="scaleToFill"
-              />
-            </view> -->
           </view>
         </view>
       </view>
+    </view> -->
+
+    <!-- 车主服务 -->
+    <view class="ml-20rpx mt-20rpx box-border w-710rpx rounded-8rpx bg-white px-20rpx pb-9rpx pt-19rpx">
+      <view class="mb-11rpx text-30rpx text-[#333333] font-bold">
+        车主服务
+      </view>
+      <view class="mb-30rpx mt-20rpx w-100% flex items-center justify-between">
+        <image
+          v-for="item in onwerServices" :key="item.name"
+          class="h-184rpx w-200rpx"
+          :src="item.icon"
+          mode="scaleToFill"
+          @click="goService(item.name)"
+        />
+      </view>
     </view>
+
+    <!-- 广告位 -->
+    <HomeAdBanner
+      layout="vertical"
+      item-width="345rpx"
+      item-height="190rpx"
+      :columns="2"
+      :list="[
+        { imageUrl: 'https://static.feigeinfo.com/static/home/top-bg.png', link: 'https://www.baidu.com' },
+        { imageUrl: 'https://static.feigeinfo.com/static/home/top-bg.png', link: 'https://www.baidu.com' },
+        { imageUrl: 'https://static.feigeinfo.com/static/home/top-bg.png', link: 'https://www.baidu.com' },
+        { imageUrl: 'https://static.feigeinfo.com/static/home/top-bg.png', link: 'https://www.baidu.com' },
+      ]"
+    />
 
     <!-- 操作提示弹窗 -->
     <fg-message v-model:show="showMessagePopup" :duration="duration" :confirm-text="confirmText" :show-cancel-btn="showCancelBtn" :show-confirm-btn="showConfirmBtn" :close-on-click-modal="closeOnClickModal" :message="message" :message-id="messageId" @cancel="handleCancel" @confirm="handleConfirm" />

@@ -2,6 +2,7 @@
 import { useCarStore } from '@/store'
 import { httpGet } from '@/utils/http'
 import { getImageUrl } from '@/utils/image'
+import HomeAdBanner from './HomeAdBanner.vue'
 
 defineOptions({
   name: 'Find',
@@ -13,11 +14,13 @@ const props = defineProps({
   },
 })
 
-const BgIcon = getImageUrl('/find/bg.png')
+// const BgIcon = getImageUrl('/find/bg.png')
+const BgIcon = getImageUrl('/find/bg-v3.png')
 const DescIcon = getImageUrl('/find/desc.png')
 const FlyLogoIcon = getImageUrl('/find/fly-logo.png')
 const FlyIcon = getImageUrl('/find/fly.png')
-const HelloTextIcon = getImageUrl('/find/helloText.png')
+// const HelloTextIcon = getImageUrl('/find/helloText.png')
+const HelloTextIcon = getImageUrl('/find/text-v3.png')
 const LineIcon = getImageUrl('/find/line.png')
 
 // 获取胶囊位置信息
@@ -50,45 +53,45 @@ async function getDayOffset(deviceId) {
 <template>
   <view class="find">
     <image
-      class="h-1522rpx w-750rpx"
+      class="h-1083rpx w-750rpx"
       :src="BgIcon"
     />
-    <view class="absolute left-28rpx top-0rpx" :style="{ paddingTop: `${navHeight}px` }">
-      <image
-        class="h-31rpx w-240rpx"
-        :src="FlyLogoIcon"
-        mode="scaleToFill"
-      />
-      <image
-        class="ml-51rpx h-95rpx w-56rpx"
-        :src="FlyIcon"
-        mode="scaleToFill"
-      />
-    </view>
+
     <image
-      class="absolute left-275rpx top-360rpx h-343rpx w-206rpx"
+      class="absolute left-260rpx top-300rpx h-121rpx w-217rpx"
       :src="HelloTextIcon"
       mode="scaleToFill"
     />
-    <image
-      class="absolute left-212rpx top-745rpx w-323rpx"
-      :src="DescIcon"
-      mode="widthFix"
-    />
-    <view class="absolute left-212rpx top-789rpx text-[#2E6BC6]">
-      <span class="text-180rpx">{{ days }}</span>
-      <span class="text-40rpx">天</span>
-      <image
-        class="absolute bottom-26rpx left-[-105rpx] w-91rpx"
-        :src="LineIcon"
-        mode="widthFix"
-      />
-      <image
-        class="absolute right-[-62rpx] top-26rpx w-91rpx"
-        :src="LineIcon"
-        mode="widthFix"
-      />
+
+    <view class="absolute left-0rpx top-389rpx w-100% flex items-center justify-center text-[#2E6BC6]">
+      <view class="relative">
+        <span class="text-200rpx">{{ days }}</span>
+        <span class="text-40rpx">天</span>
+        <image
+          class="absolute bottom-72rpx left-[-86rpx] w-56rpx"
+          :src="LineIcon"
+          mode="widthFix"
+        />
+        <image
+          class="absolute right-[-66rpx] top-72rpx w-56rpx"
+          :src="LineIcon"
+          mode="widthFix"
+        />
+      </view>
     </view>
+
+    <!-- 广告位 -->
+    <HomeAdBanner
+      layout="vertical"
+      item-width="690rpx"
+      item-height="230rpx"
+      :columns="1"
+      :list="[
+        { imageUrl: 'https://static.feigeinfo.com/static/home/top-bg.png', link: 'https://www.baidu.com' },
+        { imageUrl: 'https://static.feigeinfo.com/static/home/top-bg.png', link: 'https://www.baidu.com' },
+        { imageUrl: 'https://static.feigeinfo.com/static/home/top-bg.png', link: 'https://www.baidu.com' },
+      ]"
+    />
   </view>
 </template>
 
@@ -97,5 +100,6 @@ async function getDayOffset(deviceId) {
   box-sizing: border-box;
   background: #E4EBF2;
   position: relative;
+  padding-bottom: 20rpx;
 }
 </style>
