@@ -1,17 +1,16 @@
-<route lang="json5" type="page">
-{
+<script lang="ts" setup>
+import { definePage } from '@uni-helper/vite-plugin-uni-pages'
+import { getColorImg } from '@/utils'
+import { httpGet } from '@/utils/http'
+import { getImageUrl } from '@/utils/image'
+
+definePage({
   style: {
     navigationStyle: 'default',
     navigationBarTitleText: '我的车辆',
     navigationBarBackgroundColor: '#ffffff',
   },
-}
-</route>
-
-<script lang="ts" setup>
-import { getColorImg } from '@/utils'
-import { httpGet } from '@/utils/http'
-import { getImageUrl } from '@/utils/image'
+})
 
 const GreenCar = getImageUrl('/mine/car-green.png')
 const RedCar = getImageUrl('/mine/car-red.png')

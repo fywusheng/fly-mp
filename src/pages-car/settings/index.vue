@@ -1,20 +1,19 @@
-<route lang="json5" type="page">
-{
-  style: {
-    navigationStyle: 'default',
-    navigationBarTitleText: '车辆设置',
-    navigationBarBackgroundColor: '#ffffff',
-  },
-}
-</route>
-
 <script lang="ts" setup>
+import { definePage } from '@uni-helper/vite-plugin-uni-pages'
 // ✅ 导入蓝牙管理 Composable
 import type { BluetoothDeviceInfo } from '@/composables/useBluetooth'
 import { BluetoothStatus, useBluetooth } from '@/composables/useBluetooth'
 import { useAppStore, useCarStore, useUserStore } from '@/store'
 import { httpGet, httpPost } from '@/utils/http'
 import { getImageUrl } from '@/utils/image'
+
+definePage({
+  style: {
+    navigationStyle: 'default',
+    navigationBarTitleText: '车辆设置',
+    navigationBarBackgroundColor: '#ffffff',
+  },
+})
 
 const OverSpeed = getImageUrl('/mine/over-speed.png')
 const RemoteControl = getImageUrl('/mine/remote-control.png')

@@ -16,6 +16,7 @@
       "@uni-helper/uni-types",
       "wot-design-uni/global.d.ts",
       "z-paging/types",
+      "@uni-helper/vite-plugin-uni-pages",
       "./src/typings.d.ts"
     ],
     "allowJs": true,
@@ -26,7 +27,7 @@
     "skipLibCheck": true
   },
   "vueCompilerOptions": {
-    "plugins": ["@uni-helper/uni-types/volar-plugin"]
+    "plugins": ["@uni-helper/uni-types/volar-plugin", "@uni-helper/vite-plugin-uni-pages"]
   },
   "include": [
     "src/**/*.ts",

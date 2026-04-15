@@ -1,17 +1,16 @@
-<route lang="json5" type="page">
-{
+<script lang="ts" setup>
+import { definePage } from '@uni-helper/vite-plugin-uni-pages'
+import { httpGet } from '@/utils/http'
+import { getImageUrl } from '@/utils/image'
+
+definePage({
   layout: 'default',
   style: {
     navigationStyle: 'default',
     navigationBarTitleText: '车辆位置',
     navigationBarBackgroundColor: '#ffffff',
   },
-}
-</route>
-
-<script lang="ts" setup>
-import { httpGet } from '@/utils/http'
-import { getImageUrl } from '@/utils/image'
+})
 
 const ReloadIcon = getImageUrl('/home/reload.png')
 

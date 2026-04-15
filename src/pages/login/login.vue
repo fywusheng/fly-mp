@@ -1,20 +1,20 @@
-<route lang="json5" type="page">
-{
-  layout: 'default',
-  style: {
-    navigationStyle: 'custom',
-    navigationBarTitleText: '登录',
-  },
-}
-</route>
-
 <script lang="ts" setup>
+import { definePage } from '@uni-helper/vite-plugin-uni-pages'
 import { useUserStore } from '@/store'
 import { getImageUrl } from '@/utils/image'
 
 defineOptions({
   name: 'Login',
 })
+
+definePage({
+  layout: 'default',
+  style: {
+    navigationStyle: 'custom',
+    navigationBarTitleText: '登录',
+  },
+})
+
 const userStore = useUserStore()
 const loading = ref(false)
 const CursorIcon = getImageUrl('/login/cursor.png')

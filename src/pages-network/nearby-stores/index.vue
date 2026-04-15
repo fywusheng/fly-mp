@@ -1,103 +1,16 @@
-<route lang="json5" type="home">
-  {
-    layout: 'tabbar',
-    style: {
-      navigationStyle: 'default',
-      navigationBarTitleText: '附近门店',
-      "backgroundColor": "#ffffff",
-    },
-  }
-</route>
-
-<!-- <script lang="ts" setup>
-import { useUserStore } from '@/store'
-import { getImageUrl } from '@/utils/image'
-
-defineOptions({
-  name: 'SmartService',
-})
-const userStore = useUserStore()
-const CarIcon = getImageUrl('/network/car.png')
-const WeixinPayIcon = getImageUrl('/network/weixin-pay.png')
-const MemberIcon = getImageUrl('/network/member.png')
-const MemberNoIcon = getImageUrl('/network/member-none.png')
-
-// 有会员：true 未开通：false
-const hasMember = ref(false)
-
-// 当前选中的套餐
-const selectedPlan = ref('year')
-
- const activeTab = ref('sale') // 默认选中体验销售
- const storeList = ref([ // 模拟门店数据
-        {
-          name: '五马路店',
-          distance: '563m',
-          address: '天津市南开区南开五马路花园楼6号一楼底商',
-          tags: ['sale'],
-          phone: '13800138000',
-          recommend: false
-        },
-        {
-          name: '多伦道店',
-          distance: '1.4km',
-          address: '天津市和平区多伦道124-126',
-          tags: ['sale'],
-          phone: '13800138001',
-          recommend: true
-        },
-        {
-          name: '大王庄店',
-          distance: '3.4km',
-          address: '天津市河东区大王庄街道九经路冠华公寓1号楼',
-          tags: ['sale', 'maintain'],
-          phone: '13800138002',
-          recommend: false
-        },
-        {
-          name: '榆关道店',
-          distance: '5.6km',
-          address: '天津市河北区榆关道447号小牛电动',
-          tags: ['sale', 'maintain'],
-          phone: '13800138003',
-          recommend: false
-        }
-      ])
-
-// 切换标签
-function switchTab(tabType: string) {
-      activeTab.value = tabType;
-      // 可添加标签筛选逻辑：过滤storeList中对应tag的门店
-    }
-    // 更改城市
-    function changeCity() {
-      uni.showActionSheet({
-        itemList: ['北京市', '上海市', '广州市', '深圳市'],
-        success: (res) => {
-          // 此处可替换为真实城市选择逻辑
-        }
-      });
-    }
-    // 拨打电话
-    function callPhone(phone: string) {
-      uni.makePhoneCall({
-        phoneNumber: phone,
-        fail: () => {
-          uni.showToast({ title: '拨打电话失败', icon: 'none' });
-        }
-      });
-    }
-    // 导航到门店
-    function navigateToStore(address: string) {
-      uni.openLocation({
-        latitude: 39.9042,
-        longitude: 116.4074,
-        address: address,
-      });
-    }
-</script> -->
 <script setup lang="ts">
+import { definePage } from '@uni-helper/vite-plugin-uni-pages'
 import { getImageUrl } from '@/utils/image'
+
+definePage({
+  layout: 'tabbar',
+  style: {
+    navigationStyle: 'default',
+    navigationBarTitleText: '附近门店',
+    backgroundColor: '#ffffff',
+  },
+  type: 'home',
+})
 
 const CarIcon = getImageUrl('/network/car.png')
 const WeixinPayIcon = getImageUrl('/network/weixin-pay.png')

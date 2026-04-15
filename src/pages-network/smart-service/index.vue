@@ -1,21 +1,22 @@
-<route lang="json5" type="home">
-  {
-    layout: 'tabbar',
-    style: {
-      navigationStyle: 'custom',
-      navigationBarTitleText: '智能服务',
-      "backgroundColor": "#6EA6F6",
-    },
-  }
-</route>
-
 <script lang="ts" setup>
+import { definePage } from '@uni-helper/vite-plugin-uni-pages'
 import { useUserStore } from '@/store'
 import { getImageUrl } from '@/utils/image'
 
 defineOptions({
   name: 'SmartService',
 })
+
+definePage({
+  layout: 'tabbar',
+  style: {
+    navigationStyle: 'custom',
+    navigationBarTitleText: '智能服务',
+    backgroundColor: "#6EA6F6",
+  },
+  type: 'home',
+})
+
 const userStore = useUserStore()
 const CarIcon = getImageUrl('/network/car.png')
 const MemberIcon = getImageUrl('/network/member.png')

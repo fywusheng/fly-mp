@@ -1,17 +1,16 @@
-<route lang="json5" type="page">
-{
+<script lang="ts" setup>
+import { definePage } from '@uni-helper/vite-plugin-uni-pages'
+import { useCarStore } from '@/store/car'
+import { httpGet } from '@/utils/http'
+
+definePage({
   layout: 'default',
   style: {
     navigationStyle: 'default',
     navigationBarTitleText: '行驶数据',
     navigationBarBackgroundColor: '#ffffff',
   },
-}
-</route>
-
-<script lang="ts" setup>
-import { useCarStore } from '@/store/car'
-import { httpGet } from '@/utils/http'
+})
 
 const carStore = useCarStore()
 const tabs = ['日', '周', '月']

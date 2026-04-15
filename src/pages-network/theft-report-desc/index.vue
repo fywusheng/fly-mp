@@ -1,15 +1,15 @@
-<route lang="json5" type="page">
-{
+<script setup lang="ts">
+import { definePage } from '@uni-helper/vite-plugin-uni-pages'
+
+definePage({
   layout: 'default',
   style: {
       navigationStyle: 'default',
       navigationBarTitleText: '失窃上报',
-      "backgroundColor": "#ffffff",
+      backgroundColor: "#ffffff",
   }
-}
-</route>
+})
 
-<script setup lang="ts">
 // 失窃流程数据
 const processList = ref([
   {

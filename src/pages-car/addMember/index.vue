@@ -1,16 +1,15 @@
-<route lang="json5" type="page">
-{
+<script lang="ts" setup>
+import { definePage } from '@uni-helper/vite-plugin-uni-pages'
+import { httpGet, httpPost, httpPut } from '@/utils/http'
+import { getImageUrl } from '@/utils/image'
+
+definePage({
   style: {
     navigationStyle: 'default',
     navigationBarTitleText: '成员信息',
     navigationBarBackgroundColor: '#ffffff',
   },
-}
-</route>
-
-<script lang="ts" setup>
-import { httpGet, httpPost, httpPut } from '@/utils/http'
-import { getImageUrl } from '@/utils/image'
+})
 
 const ShareIcon = getImageUrl('/common/share.png')
 const SuccessDefault = getImageUrl('/mine/success-default.png')

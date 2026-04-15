@@ -1,14 +1,5 @@
-<route lang="json5" type="page">
-{
-  style: {
-    navigationStyle: 'default',
-    navigationBarTitleText: '感应控车',
-    navigationBarBackgroundColor: '#ffffff',
-  },
-}
-</route>
-
 <script lang="ts" setup>
+import { definePage } from '@uni-helper/vite-plugin-uni-pages'
 // ✅ 导入蓝牙管理 Composable
 import type { BluetoothDeviceInfo } from '@/composables/useBluetooth'
 import { useBluetooth } from '@/composables/useBluetooth'
@@ -16,6 +7,14 @@ import { useAppStore, useCarStore } from '@/store'
 import { debounce } from '@/utils'
 import { httpGet, httpPost } from '@/utils/http'
 import { getImageUrl } from '@/utils/image'
+
+definePage({
+  style: {
+    navigationStyle: 'default',
+    navigationBarTitleText: '感应控车',
+    navigationBarBackgroundColor: '#ffffff',
+  },
+})
 
 // ✅ 初始化蓝牙管理
 const {

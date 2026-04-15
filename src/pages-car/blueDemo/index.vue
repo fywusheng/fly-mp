@@ -1,16 +1,15 @@
-<route lang="json5" type="page">
-{
+<script lang="ts" setup>
+import { definePage } from '@uni-helper/vite-plugin-uni-pages'
+// import { openAndSearchAndConnect } from '@/utils/EvsBikeSdk'
+
+import hhznBikeSDK from '@/plugin/bleSdk/HHZNBikeSDK/HHZNBikeSDK.v1.0.8.js'
+
+definePage({
   layout: 'default',
   style: {
     navigationBarTitleText: '蓝牙调试',
   },
-}
-</route>
-
-<script lang="ts" setup>
-// import { openAndSearchAndConnect } from '@/utils/EvsBikeSdk'
-
-import hhznBikeSDK from '@/plugin/bleSdk/HHZNBikeSDK/HHZNBikeSDK.v1.0.8.js'
+})
 
 const machineNO = '205091606'
 const machineKey = '10 82 8D 54 AA B7 82 85 15 69 5D AE AF F2 D9 C9 9E 30 47 E4 FD 8F AF 25 87 7D 59 21 E9 E6 5B 69 '

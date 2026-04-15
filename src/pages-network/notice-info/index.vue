@@ -1,15 +1,16 @@
-<route lang="json5" type="page">
-{
+<script lang="ts" setup>
+import { definePage } from '@uni-helper/vite-plugin-uni-pages'
+import { httpGet, httpPost } from '@/utils/http'
+
+definePage({
   layout: 'default',
   style: {
     navigationStyle: 'default',
     navigationBarTitleText: '告警详情',
     navigationBarBackgroundColor: '#ffffff',
   },
-}
-</route>
+})
 
-<script lang="ts" setup>
 const info = ref<any>({})
 onLoad((e) => {
   info.value = JSON.parse(decodeURIComponent(e.info))

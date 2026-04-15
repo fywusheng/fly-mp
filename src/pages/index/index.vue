@@ -1,16 +1,5 @@
-<!-- 使用 type="home" 属性设置首页，其他页面不需要设置，默认为page；推荐使用json5，更强大，且允许注释 -->
-<route lang="json5" type="home">
-{
-  layout: 'tabbar',
-  style: {
-    navigationStyle: 'custom',
-    navigationBarTitleText: '首页',
-    "backgroundColor": "#6EA6F6",
-  },
-}
-</route>
-
 <script lang="ts" setup>
+// import { definePage } from '@uni-helper/vite-plugin-uni-pages'
 import { useAppStore, useCarStore } from '@/store'
 import { getImageUrl } from '@/utils/image'
 // 4G+蓝牙
@@ -32,6 +21,16 @@ interface TabbarItem {
 
 defineOptions({
   name: 'Home',
+})
+
+definePage({
+  layout: 'tabbar',
+  style: {
+    navigationStyle: 'custom',
+    navigationBarTitleText: '首页',
+    backgroundColor: '#6EA6F6',
+  },
+  type: 'home',
 })
 
 const carStore = useCarStore()

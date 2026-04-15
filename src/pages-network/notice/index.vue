@@ -1,5 +1,8 @@
-<route lang="json5" type="page">
-{
+<script lang="ts" setup>
+import { definePage } from '@uni-helper/vite-plugin-uni-pages'
+import { httpGet, httpPost } from '@/utils/http'
+
+definePage({
   layout: 'default',
   style: {
     navigationStyle: 'default',
@@ -7,11 +10,7 @@
     navigationBarBackgroundColor: '#ffffff',
     enablePullDownRefresh: true, // 启用下拉刷新
   },
-}
-</route>
-
-<script lang="ts" setup>
-import { httpGet, httpPost } from '@/utils/http'
+})
 
 const state = ref<'loading' | 'finished' | 'error'>('loading')
 const tabWithBadge = ref(0)

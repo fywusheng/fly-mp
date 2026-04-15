@@ -1,16 +1,15 @@
-<route lang="json5" type="page">
-{
+<script lang="ts" setup>
+import { definePage } from '@uni-helper/vite-plugin-uni-pages'
+import { useUserStore } from '@/store'
+import { httpPost } from '@/utils/http'
+
+definePage({
   style: {
     navigationStyle: 'default',
     navigationBarTitleText: '车主信息',
     navigationBarBackgroundColor: '#ffffff',
   },
-}
-</route>
-
-<script lang="ts" setup>
-import { useUserStore } from '@/store'
-import { httpPost } from '@/utils/http'
+})
 
 const code = ref('')
 const name = ref('')

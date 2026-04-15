@@ -1,17 +1,16 @@
-<route lang="json5" type="page">
-{
+<script lang="ts" setup>
+import { definePage } from '@uni-helper/vite-plugin-uni-pages'
+import { getColorImg } from '@/utils'
+import { httpDelete, httpGet, httpPost } from '@/utils/http'
+import { getImageUrl } from '@/utils/image'
+
+definePage({
   style: {
     navigationStyle: 'default',
     navigationBarTitleText: '分享与解绑',
     navigationBarBackgroundColor: '#ffffff',
   },
-}
-</route>
-
-<script lang="ts" setup>
-import { getColorImg } from '@/utils'
-import { httpDelete, httpGet, httpPost } from '@/utils/http'
-import { getImageUrl } from '@/utils/image'
+})
 
 const EditIcon = getImageUrl('/mine/edit.png')
 

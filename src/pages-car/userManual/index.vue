@@ -1,15 +1,14 @@
-<route lang="json5" type="page">
-{
+<script lang="ts" setup>
+import { definePage } from '@uni-helper/vite-plugin-uni-pages'
+import { getImageUrl } from '@/utils/image'
+
+definePage({
   style: {
     navigationStyle: 'default',
     navigationBarTitleText: '使用手册',
     navigationBarBackgroundColor: '#ffffff',
   },
-}
-</route>
-
-<script lang="ts" setup>
-import { getImageUrl } from '@/utils/image'
+})
 
 const QuestionBind = getImageUrl('/mine/question-bind.png')
 const QuestionDesk = getImageUrl('/mine/question-desk.png')

@@ -1,16 +1,15 @@
-<route lang="json5" type="page">
-{
+<script lang="ts" setup>
+import { definePage } from '@uni-helper/vite-plugin-uni-pages'
+import { useCarStore, useUserStore } from '@/store'
+
+definePage({
   layout: 'default',
   style: {
     navigationStyle: 'default',
     navigationBarTitleText: '设置',
     navigationBarBackgroundColor: '#ffffff',
   },
-}
-</route>
-
-<script lang="ts" setup>
-import { useCarStore, useUserStore } from '@/store'
+})
 
 const token = ref('')
 

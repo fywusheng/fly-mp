@@ -1,15 +1,14 @@
-<route lang="json5" type="page">
-{
+<script lang="ts" setup>
+import { definePage } from '@uni-helper/vite-plugin-uni-pages'
+import { getImageUrl } from '@/utils/image'
+
+definePage({
   style: {
     navigationStyle: 'default',
     navigationBarTitleText: '飞鸽电动车',
     navigationBarBackgroundColor: '#ffffff',
   },
-}
-</route>
-
-<script lang="ts" setup>
-import { getImageUrl } from '@/utils/image'
+})
 
 const UserStart = getImageUrl('/mine/user-start.png')
 // import UserUse from getImageUrl('/mine/user-use.png')

@@ -1,17 +1,16 @@
-<route lang="json5" type="page">
-{
+<script setup lang="ts">
+import { definePage } from '@uni-helper/vite-plugin-uni-pages'
+import dayjs from 'dayjs'
+import { getImageUrl } from '@/utils/image'
+
+definePage({
   layout: 'default',
   style: {
       navigationStyle: 'default',
       navigationBarTitleText: '失窃上报',
-      "backgroundColor": "#ffffff",
+      backgroundColor: "#ffffff",
   }
-}
-</route>
-
-<script setup lang="ts">
-import dayjs from 'dayjs'
-import { getImageUrl } from '@/utils/image'
+})
 
 const DateIcon = getImageUrl('/network/date.png')
 

@@ -1,5 +1,10 @@
-<route lang="json5" type="page">
-{
+<script lang="ts" setup>
+import { definePage } from '@uni-helper/vite-plugin-uni-pages'
+import { useCarStore } from '@/store/car'
+import { httpGet } from '@/utils/http'
+import { getImageUrl } from '@/utils/image'
+
+definePage({
   layout: 'default',
   style: {
     navigationStyle: 'default',
@@ -7,13 +12,7 @@
     navigationBarBackgroundColor: '#ffffff',
     enablePullDownRefresh: true, // 启用下拉刷新
   },
-}
-</route>
-
-<script lang="ts" setup>
-import { useCarStore } from '@/store/car'
-import { httpGet } from '@/utils/http'
-import { getImageUrl } from '@/utils/image'
+})
 
 const MapArrow = getImageUrl('/network/location.png')
 

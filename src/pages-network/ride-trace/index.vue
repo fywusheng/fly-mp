@@ -1,5 +1,9 @@
-<route lang="json5" type="page">
-{
+<script lang="ts" setup>
+import { definePage } from '@uni-helper/vite-plugin-uni-pages'
+import { useCarStore } from '@/store/car'
+import { httpGet } from '@/utils/http'
+
+definePage({
   layout: 'default',
   style: {
     navigationStyle: 'default',
@@ -7,12 +11,7 @@
     navigationBarBackgroundColor: '#ffffff',
     enablePullDownRefresh: true, // 启用下拉刷新
   },
-}
-</route>
-
-<script lang="ts" setup>
-import { useCarStore } from '@/store/car'
-import { httpGet } from '@/utils/http'
+})
 
 const state = ref<'loading' | 'finished' | 'error'>('loading')
 const hasMore = ref(true) // 是否还有更多数据
