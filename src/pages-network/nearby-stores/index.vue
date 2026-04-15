@@ -587,14 +587,10 @@ function navigateToStore(address: string) {
 }
 .call-btn {
   background-color: #fff;
-  color: #ff3333;
-  border: 1rpx solid #ff3333;
   margin-right: 62rpx;
 }
 .nav-btn {
   background-color: #fff;
-  color: #2e86de;
-  border: 1rpx solid #2e86de;
   margin-right: 18rpx;
 }
 

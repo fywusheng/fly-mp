@@ -107,9 +107,9 @@ function goSettings() {
     </wd-navbar>
     <!-- 头像和用户名 -->
     <image
-      class="w-750rpx"
+      class="h-508rpx w-750rpx"
       :src="TopBgIcon"
-      mode="widthFix"
+      mode="scaleToFill"
     />
     <view class="absolute left-0 top-210rpx w-100% flex flex-col items-center justify-center">
       <image
