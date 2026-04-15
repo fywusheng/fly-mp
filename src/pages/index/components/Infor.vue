@@ -248,12 +248,12 @@ function goService(name: string) {
   }
   else if (name === '附近门店') {
     uni.navigateTo({
-      url: '/pages-network/nearby-store/index',
+      url: '/pages-network/nearby-stores/index',
     })
   }
   else if (name === '失窃上报') {
     uni.navigateTo({
-      url: '/pages-network/theft-report/index',
+      url: '/pages-network/theft-report-desc/index',
     })
   }
 }

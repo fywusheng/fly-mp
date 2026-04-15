@@ -272,6 +272,16 @@
           }
         },
         {
+          "path": "nearby-stores/index",
+          "type": "home",
+          "layout": "tabbar",
+          "style": {
+            "navigationStyle": "default",
+            "navigationBarTitleText": "附近门店",
+            "backgroundColor": "#ffffff"
+          }
+        },
+        {
           "path": "notice/index",
           "type": "page",
           "layout": "default",
@@ -331,6 +341,26 @@
             "navigationStyle": "custom",
             "navigationBarTitleText": "智能服务",
             "backgroundColor": "#6EA6F6"
+          }
+        },
+        {
+          "path": "theft-report/index",
+          "type": "page",
+          "layout": "default",
+          "style": {
+            "navigationStyle": "default",
+            "navigationBarTitleText": "失窃上报",
+            "backgroundColor": "#ffffff"
+          }
+        },
+        {
+          "path": "theft-report-desc/index",
+          "type": "page",
+          "layout": "default",
+          "style": {
+            "navigationStyle": "default",
+            "navigationBarTitleText": "失窃上报",
+            "backgroundColor": "#ffffff"
           }
         }
       ]

@@ -18,84 +18,60 @@ defineOptions({
 })
 const userStore = useUserStore()
 const CarIcon = getImageUrl('/network/car.png')
+const WeixinPayIcon = getImageUrl('/network/weixin-pay.png')
 const MemberIcon = getImageUrl('/network/member.png')
 const MemberNoIcon = getImageUrl('/network/member-none.png')
-
-const BluetoothLockIcon = getImageUrl('/network/bluetooth-lock.png')
-const ArmDisArmIcon = getImageUrl('/network/arm-disarm.png')
-const MuteIcon = getImageUrl('/network/mute.png')
-const InductionControlIcon = getImageUrl('/network/induction-control.png')
-const FindCarIcon = getImageUrl('/network/find-car.png')
-const WeatherForecastIcon = getImageUrl('/network/weather-forecast.png')
-
-const freeList = ref<any[]>([
-  {
-    icon: BluetoothLockIcon,
-    title: '蓝牙开关车',
-  },
-  {
-    icon: ArmDisArmIcon,
-    title: '解防/设防',
-  },
-  {
-    icon: MuteIcon,
-    title: '一键静音',
-  },
-  {
-    icon: InductionControlIcon,
-    title: '感应控车',
-  },
-  {
-    icon: FindCarIcon,
-    title: '鸣笛寻车',
-  },
-  {
-    icon: WeatherForecastIcon,
-    title: '天气预报',
-  },
-])
 
 // 有会员：true 未开通：false
 const hasMember = ref(false)
 
-// message弹窗
-const showMessagePopup = ref(false) // 控制弹窗显示
-const messageId = ref<number>(0) // 弹窗ID
-const duration = ref(0) // 弹窗持续时间
-const title = ref('') // 弹窗标题
-const messageContent = ref<string>('') // 弹窗内容
-const showCancelBtn = ref(false) // 是否显示取消按钮
-const showConfirmBtn = ref(true) // 是否显示确认按钮
-const confirmText = ref('确定') // 确认按钮文本
-const closeOnClickModal = ref(true) // 是否点击蒙层关闭弹窗
+// 当前选中的套餐
+const selectedPlan = ref('year')
 
-function handleSmartServiceFee() {
-  console.log('智能服务费')
-  title.value = '智能服务费是什么?'
-  messageContent.value = '12321312321'
-  messageId.value = 1
-  showMessagePopup.value = true
-}
-function handleSmartServiceFeeFreePeriod() {
-  console.log('智能服务费免费期限')
-  title.value = '智能服务费免费期限?'
-  messageContent.value = '12321312321'
-  messageId.value = 1
-  showMessagePopup.value = true
-}
-function handleSmartServiceFeeExpired() {
-  title.value = '智能服务费过期有什么影响?'
-  messageContent.value = '12321312321'
-  messageId.value = 1
-  showMessagePopup.value = true
+// 套餐列表
+const plans = ref([
+  {
+    id: 'year',
+    title: '2年卡',
+    desc: '365天有效期',
+    price: '299',
+    originalPrice: '399',
+    discount: '7.5折',
+    recommend: true,
+  },
+  {
+    id: 'years',
+    title: '2年卡',
+    desc: '365天有效期',
+    price: '299',
+    originalPrice: '399',
+    discount: '7.5折',
+    recommend: false,
+  },
+  {
+    id: 'half',
+    title: '半年套餐',
+    desc: '180天有效期',
+    price: '199',
+    originalPrice: '239',
+    discount: '8.3折',
+    recommend: false,
+  },
+  {
+    id: 'month',
+    title: '月度套餐',
+    desc: '30天有效期',
+    price: '39',
+    originalPrice: '49',
+    discount: '8折',
+    recommend: false,
+  },
+])
+
+function handleSelectPlan(planId: string) {
+  selectedPlan.value = planId
 }
 
-function handleCancel() {
-  showMessagePopup.value = false
-}
-function handleConfirm() {
-  showMessagePopup.value = false
-}
 // 开通/续费
 function handleSubmit() {
   if (hasMember.value) {
@@ -147,65 +123,61 @@ function handleClickLeft() {
       </view>
       <!-- 智能服务 -->
       <view class="w-710rpx px-20rpx">
-        <fg-card title="智能服务">
-          <view>
-            <view v-for="item in 4" :key="item" class="mb-60rpx flex">
-              <image
-                class="mr-20rpx h-44rpx w-44rpx"
-                :src="CarIcon"
-                mode="scaleToFill"
-              />
-              <view class="text-24rpx">
-                <view class="mb-9rpx text-[#333333]">
-                  车辆位置
-                </view>
-                <view class="text-[#6E6E6E]">
-                  通过电子地图快速定位车辆位置，再也不用担心找 不到自己的爱车了
-                </view>
+        <fg-card title="选择服务卡套餐">
+          <!-- 套餐列表 -->
+          <view class="plans network">
+            <view
+              v-for="plan in plans"
+              :key="plan.id"
+              class="plan-item"
+              :class="{ active: selectedPlan === plan.id }"
+              @click="handleSelectPlan(plan.id)"
+            >
+              <!-- 推荐标签 -->
+              <view v-if="plan.recommend" class="recommend-badge">推荐</view>
+              <!-- 卡名称 -->
+              <view class="plan-title">{{ plan.title }}</view>
+              <!-- 当前价格 -->
+              <view class="price-row">
+                <text class="currency">¥</text>
+                <text class="amount">{{ plan.price }}</text>
               </view>
+              <!-- 原价 -->
+              <view class="original-price">¥{{ plan.originalPrice }}</view>
+              <!-- 设备类型 -->
+              <view class="discount-tag">蓝牙设备</view>
+             
             </view>
           </view>
-        </fg-card>
-      </view>
-      <!-- 免费服务 -->
-      <view class="mt-20rpx w-710rpx px-20rpx">
-        <fg-card title="免费服务">
-          <view class="grid-container">
-            <view v-for="item in freeList" :key="item.title" class="flex flex-col items-center justify-center">
+          <view class="text-30rpx text-[#333333] mb-63rpx">选择支付方式</view>
+          <view class="mb-64rpx flex align-center justify-between">
+            <view class="flex align-center">
               <image
-                class="h-90rpx w-90rpx"
-                :src="item.icon"
+              class="h-37rpx w-40rpx"
+                :src="WeixinPayIcon"
                 mode="scaleToFill"
               />
-              <view>{{ item.title }}</view>
+              <view class="text-30rpx text-[#333333] ml-25rpx">微信支付</view>
             </view>
+            <wd-icon name="check-circle-filled" size="22px" color="#52ACF9" ></wd-icon>
           </view>
+          <view class="line"></view>
+          <view class="text-30rpx text-[#333333] mb-30rpx">续费规则</view>
+          <view class="text-24rpx text-[#666666]">
+            <view class="mb-10rpx line-height-30rpx" >1.智能服务过期后，将停止提供智能服务功能。</view>
+            <view class="mb-10rpx line-height-30rpx" >2.智能服务过期时间较长后，将无法在小程序内续费。需联系售后客服更换4G云盒，可能会产生额外费用。</view>
+            <view class="mb-10rpx line-height-30rpx" >3.续费成功后，将自动给车辆延期，不支持转让、服务中止及退款。</view>
+          </view>
+          
         </fg-card>
       </view>
-      <!-- 智能服务费相关问题 -->
-      <view
-        class="w-710rpx"
-      >
-        <view class="mt-20rpx overflow-hidden rounded-[10px]">
-          <wd-cell title="智能服务费是什么?" is-link @click="handleSmartServiceFee" />
-        </view>
-
-        <view class="mt-20rpx overflow-hidden rounded-[10px]">
-          <wd-cell title="智能服务费免费期限?" is-link @click="handleSmartServiceFeeFreePeriod" />
-        </view>
-
-        <view class="mt-20rpx overflow-hidden rounded-[10px]">
-          <wd-cell title="智能服务费过期有什么影响?" is-link @click="handleSmartServiceFeeExpired" />
-        </view>
-      </view>
+     
       <!-- 按钮 -->
       <view class="submit-btn" @click="handleSubmit">
-        {{ hasMember ? '续 费' : '开 通' }}
+        ￥{{ plans.find(p => p.id === selectedPlan)?.price || '24.11' }} 立即支付
       </view>
       <!--  -->
     </view>
-     <!-- 操作提示弹窗 -->
-    <fg-message v-model:show="showMessagePopup" :title="title" :message="messageContent" :duration="duration" :show-cancel-btn="showCancelBtn" :show-confirm-btn="showConfirmBtn" :close-on-click-modal="closeOnClickModal" :message-id="messageId" :confirm-text="confirmText" @cancel="handleCancel" @confirm="handleConfirm" />
   </view>
 </template>
 
@@ -253,6 +225,112 @@ function handleClickLeft() {
       grid-template-columns: 1fr 1fr 1fr;
       gap: 20rpx;
     }
+    .plans {
+      display: flex;
+      overflow-x: auto;
+      gap: 16rpx;
+      margin-bottom: 60rpx;
+      &.network {
+        .plan-item {
+          &.active {
+            border-color: #FCAB2A;
+            background: RGBA(252, 171, 42, .1);
+          }
+          .recommend-badge {
+            background-color: #FCAB2A;
+          }
+          .discount-tag {
+            background-color: #FEECCE;
+            color: #FCAB2A;
+          }
+        }
+      }
+    }
+    .plan-item {
+      flex-shrink: 0;
+      position: relative;
+      border: 2rpx solid #E6E6E6;
+      border-radius: 30rpx;
+      padding: 20rpx 16rpx 16rpx;
+      background-color: #fff;
+      transition: all 0.2s;
+      width: 180rpx;
+      height: 230rpx;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      overflow: hidden;
+
+      &.active {
+        border-color: #52ACF9;
+        background: RGBA(82, 172, 249, .1);
+      }
+
+      .recommend-badge {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 80rpx;
+        height: 40rpx;
+        background: #409eff;
+        color: #fff;
+        font-size: 22rpx;
+        text-align: center;
+        line-height: 40rpx;
+        border-bottom-right-radius: 30rpx;
+      }
+
+      .plan-title {
+        font-size: 30rpx;
+        // font-weight: bold;
+        color: #333;
+        margin-bottom: 6rpx;
+      }
+      
+      .price-row {
+        display: flex;
+        align-items: baseline;
+        margin-bottom: 4rpx;
+        color: #333333;
+        font-weight: bold;
+        font-size: 44rpx;
+      }
+
+      .original-price {
+        font-size: 32rpx;
+        color: #999;
+        text-decoration: line-through;
+        margin-bottom: 10rpx;
+      }
+
+      .discount-tag {
+        width: 120rpx;
+        height: 30rpx;
+        background: #CEE8FE;
+        border-radius: 15rpx;
+        font-weight: 400;
+        font-size: 18rpx;
+        color: #52ACF9;
+        line-height: 40rpx;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .selected-icon {
+        position: absolute;
+        top: 12rpx;
+        right: 12rpx;
+        width: 32rpx;
+        height: 32rpx;
+        background-color: #239AF6;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+    }
     .submit-btn {
       width: 710rpx;
       height: 80rpx;
@@ -265,6 +343,13 @@ function handleClickLeft() {
       margin-top: 61rpx;
       margin-bottom: 100rpx;
     }
+  }
+  .line {
+    width: 708rpx;
+    height: 2rpx;
+    background-color: #E6E6E6;
+    margin-bottom: 50rpx;
+    margin-left: -17px;
   }
 
 }
