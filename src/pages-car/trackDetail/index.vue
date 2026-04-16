@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-import { definePage } from '@uni-helper/vite-plugin-uni-pages'
 import { httpGet } from '@/utils/http'
 import { getImageUrl } from '@/utils/image'
 
@@ -84,11 +83,10 @@ async function getTrackInfo(rideId: string) {
 }
 
 function setMapData(trackPoints: Array<{ latitude: number, longitude: number }>) {
-  if (trackPoints.length === 0){
+  if (trackPoints.length === 0) {
     showMap.value = true
     return
   }
-    
 
   const startPoint = trackPoints[trackPoints.length - 1]
   const endPoint = trackPoints[0]
@@ -119,7 +117,6 @@ function setMapData(trackPoints: Array<{ latitude: number, longitude: number }>)
       padding: [20, 20, 360, 20],
     })
   }, 500)
- 
 }
 </script>
 

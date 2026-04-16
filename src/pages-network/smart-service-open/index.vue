@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-import { definePage } from '@uni-helper/vite-plugin-uni-pages'
 import { useUserStore } from '@/store'
 import { getImageUrl } from '@/utils/image'
 
@@ -12,7 +11,7 @@ definePage({
   style: {
     navigationStyle: 'custom',
     navigationBarTitleText: '智能服务',
-    backgroundColor: "#6EA6F6",
+    backgroundColor: '#6EA6F6',
   },
   type: 'home',
 })
@@ -94,7 +93,7 @@ function handleClickLeft() {
 
 <template>
   <view class="smart-service">
-    <wd-navbar title="智能服务" placeholder left-arrow :safe-area-inset-top="true" fixed @click-left="handleClickLeft" custom-style="background-color: transparent !important;" />
+    <wd-navbar title="智能服务" placeholder left-arrow :safe-area-inset-top="true" fixed custom-style="background-color: transparent !important;" @click-left="handleClickLeft" />
     <view class="bg" />
     <view class="content">
       <!-- 会员状态 -->
@@ -135,44 +134,66 @@ function handleClickLeft() {
               @click="handleSelectPlan(plan.id)"
             >
               <!-- 推荐标签 -->
-              <view v-if="plan.recommend" class="recommend-badge">推荐</view>
+              <view v-if="plan.recommend" class="recommend-badge">
+                推荐
+              </view>
               <!-- 卡名称 -->
-              <view class="plan-title">{{ plan.title }}</view>
+              <view class="plan-title">
+                {{ plan.title }}
+              </view>
               <!-- 当前价格 -->
               <view class="price-row">
-                <text class="currency">¥</text>
-                <text class="amount">{{ plan.price }}</text>
+                <text class="currency">
+                  ¥
+                </text>
+                <text class="amount">
+                  {{ plan.price }}
+                </text>
               </view>
               <!-- 原价 -->
-              <view class="original-price">¥{{ plan.originalPrice }}</view>
+              <view class="original-price">
+                ¥{{ plan.originalPrice }}
+              </view>
               <!-- 设备类型 -->
-              <view class="discount-tag">蓝牙设备</view>
-             
+              <view class="discount-tag">
+                蓝牙设备
+              </view>
             </view>
           </view>
-          <view class="text-30rpx text-[#333333] mb-63rpx">选择支付方式</view>
-          <view class="mb-64rpx flex align-center justify-between">
-            <view class="flex align-center">
+          <view class="mb-63rpx text-30rpx text-[#333333]">
+            选择支付方式
+          </view>
+          <view class="align-center mb-64rpx flex justify-between">
+            <view class="align-center flex">
               <image
-              class="h-37rpx w-40rpx"
+                class="h-37rpx w-40rpx"
                 :src="WeixinPayIcon"
                 mode="scaleToFill"
               />
-              <view class="text-30rpx text-[#333333] ml-25rpx">微信支付</view>
+              <view class="ml-25rpx text-30rpx text-[#333333]">
+                微信支付
+              </view>
             </view>
-            <wd-icon name="check-circle-filled" size="22px" color="#52ACF9" ></wd-icon>
+            <wd-icon name="check-circle-filled" size="22px" color="#52ACF9" />
           </view>
-          <view class="line"></view>
-          <view class="text-30rpx text-[#333333] mb-30rpx">续费规则</view>
+          <view class="line" />
+          <view class="mb-30rpx text-30rpx text-[#333333]">
+            续费规则
+          </view>
           <view class="text-24rpx text-[#666666]">
-            <view class="mb-10rpx line-height-30rpx" >1.智能服务过期后，将停止提供智能服务功能。</view>
-            <view class="mb-10rpx line-height-30rpx" >2.智能服务过期时间较长后，将无法在小程序内续费。需联系售后客服更换4G云盒，可能会产生额外费用。</view>
-            <view class="mb-10rpx line-height-30rpx" >3.续费成功后，将自动给车辆延期，不支持转让、服务中止及退款。</view>
+            <view class="mb-10rpx line-height-30rpx">
+              1.智能服务过期后，将停止提供智能服务功能。
+            </view>
+            <view class="mb-10rpx line-height-30rpx">
+              2.智能服务过期时间较长后，将无法在小程序内续费。需联系售后客服更换4G云盒，可能会产生额外费用。
+            </view>
+            <view class="mb-10rpx line-height-30rpx">
+              3.续费成功后，将自动给车辆延期，不支持转让、服务中止及退款。
+            </view>
           </view>
-          
         </fg-card>
       </view>
-     
+
       <!-- 按钮 -->
       <view class="submit-btn" @click="handleSubmit">
         ￥{{ plans.find(p => p.id === selectedPlan)?.price || '24.11' }} 立即支付
@@ -288,7 +309,7 @@ function handleClickLeft() {
         color: #333;
         margin-bottom: 6rpx;
       }
-      
+
       .price-row {
         display: flex;
         align-items: baseline;

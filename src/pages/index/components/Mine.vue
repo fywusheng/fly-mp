@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useUserStore } from '@/store'
 import { getImageUrl } from '@/utils/image'
+import HomeAdBanner from './HomeAdBanner.vue'
 
 defineOptions({
   name: 'MineBlue',
@@ -12,6 +13,7 @@ const AvatarIcon = getImageUrl('/mine/avatar.png')
 const BindIcon = getImageUrl('/mine/bind.png')
 const BlueAvatarIcon = getImageUrl('/mine/blue-avatar.png')
 const CarSettingIcon = getImageUrl('/mine/car-setting.png')
+const TipsIcon = getImageUrl('/mine/tips-icon.png')
 const CustomerServiceIcon = getImageUrl('/mine/customer-service.png')
 const FamilyIcon = getImageUrl('/mine/family.png')
 const MyCarIcon = getImageUrl('/mine/my-car.png')
@@ -20,6 +22,10 @@ const SettingIcon = getImageUrl('/mine/setting.png')
 const ShareIcon = getImageUrl('/mine/share.png')
 const TopBgIcon = getImageUrl('/mine/top-bg.png')
 const UserManualIcon = getImageUrl('/mine/user-manual.png')
+const PointIcon = getImageUrl('/mine/point-icon.png')
+const RectIcon = getImageUrl('/mine/rect-icon.png')
+const StarIcon = getImageUrl('/mine/star-icon.png')
+const OpenIcon = getImageUrl('/mine/open-icon.png')
 
 // 功能列表
 const list = ref([
@@ -87,46 +93,127 @@ function handleListItemClick(item) {
 
 function goSettings() {
   uni.navigateTo({
-    url: '/pages/settings/index',
+    url: '/pages-mine/settings/index',
+  })
+}
+
+function goMessageCenter() {
+  uni.navigateTo({
+    url: '/pages-mine/message-center/index',
+  })
+}
+
+function goPointsDetails() {
+  uni.navigateTo({
+    url: '/pages-mine/points-details/index',
   })
 }
 </script>
 
 <template>
   <view class="mine">
-    <!-- 设置图标 -->
-    <wd-navbar custom-class="navbar" safe-area-inset-top fixed custom-style="background-color: transparent !important;">
-      <template #left>
-        <image
-          class="h-40rpx w-40rpx"
-          :src="SettingIcon"
-          mode="scaleToFill"
-          @click="goSettings"
-        />
-      </template>
-    </wd-navbar>
-    <!-- 头像和用户名 -->
-    <image
-      class="h-508rpx w-750rpx"
-      :src="TopBgIcon"
-      mode="scaleToFill"
-    />
-    <view class="absolute left-0 top-210rpx w-100% flex flex-col items-center justify-center">
+    <!-- 用户信息 -->
+    <view class="relative h-508rpx w-750rpx">
+      <!-- 背景 -->
       <image
-        class="mb-18rpx h-173rpx w-173rpx"
-        :src="BlueAvatarIcon"
+        class="absolute left-0 top-0 h-100% w-100%"
+        :src="TopBgIcon"
         mode="scaleToFill"
       />
-      <view class="whitespace-nowrap text-center text-36rpx text-white">
-        {{ userStore.userInfo && userStore.userInfo.nickname ? userStore.userInfo.nickname : '--' }}
+      <view class="absolute left-0 top-210rpx w-100% flex flex-col items-center justify-center">
+        <view class="w-100% flex items-center justify-end">
+          <image
+            class="mr-60rpx h-40rpx w-40rpx"
+            :src="SettingIcon"
+            mode="scaleToFill"
+            @click="goSettings"
+          />
+          <image
+            class="mr-60rpx h-40rpx w-40rpx"
+            :src="TipsIcon"
+            mode="scaleToFill"
+            @click="goMessageCenter"
+          />
+        </view>
+        <view class="w-100% flex">
+          <image
+            class="mb-18rpx ml-60rpx h-173rpx w-173rpx"
+            :src="BlueAvatarIcon"
+            mode="scaleToFill"
+          />
+          <view class="ml-22rpx text-white">
+            <view class="whitespace-nowrap pt-16rpx text-center text-36rpx">
+              {{ userStore.userInfo && userStore.userInfo.nickname ? userStore.userInfo.nickname : '--' }}
+            </view>
+            <view class="mt-19rpx text-30rpx">
+              普通会员
+            </view>
+
+            <view class="point-label ml-[-20rpx] mt-39rpx flex items-center text-24rpx" @click="goPointsDetails">
+              <image
+                class="mr-10rpx h-44rpx w-44rpx"
+                :src="PointIcon"
+                mode="scaleToFill"
+              />
+              <view>
+                <text>里程积分</text>
+                <text class="text-[#FDEBC9]">
+                  1000
+                </text>
+              </view>
+              <wd-icon class="mr-10rpx" name="arrow-right" size="18px" />
+            </view>
+          </view>
+        </view>
       </view>
     </view>
+
+    <!-- 消息提示 -->
+    <view class="notice-container mx-20rpx mx-20rpx mt-20rpx rounded-8rpx">
+      <wd-notice-bar text="这是一条消息提示信息，这是一条消息提示信息，这是一条消息提示信息" prefix="warn-bold">
+        <template #suffix>
+          <wd-icon name="arrow-right" size="22px" color="#333333" />
+        </template>
+      </wd-notice-bar>
+    </view>
+
+    <view class="relative mx-20rpx mt-20rpx h-120rpx w-710rpx flex items-center justify-between rounded-8rpx">
+      <image
+        class="absolute left-0 top-0 h-100% w-100%"
+        :src="RectIcon"
+        mode="scaleToFill"
+      />
+      <view class="relative z-10 flex items-center justify-center">
+        <image
+          class="ml-29rpx h-49rpx w-52rpx"
+          :src="StarIcon"
+          mode="scaleToFill"
+        />
+        <view class="ml-20rpx flex flex-col">
+          <view class="mb-8rpx text-30rpx text-[#FCAB2A]">
+            智能服务
+          </view>
+          <view class="text-24rpx text-[#333333]">
+            开通VIP会员卡，低至
+            <text class="text-[#FCAB2A]">
+              20元/年
+            </text>
+          </view>
+        </view>
+      </view>
+      <image
+        class="relative z-10 mr-29rpx h-50rpx w-161rpx"
+        :src="OpenIcon"
+        mode="scaleToFill"
+      />
+    </view>
+
     <!-- 功能列表 -->
-    <view class="relative mt-[-45rpx] px-20rpx">
+    <view class="relative mt-20rpx px-20rpx">
       <view
         v-for="item in list"
         :key="item.name"
-        class="mb-20rpx flex items-center justify-between rounded-8rpx bg-white px-40rpx py-45rpx"
+        class="mb-20rpx flex items-center justify-between rounded-20rpx bg-white px-40rpx py-45rpx"
         @click="handleListItemClick(item)"
       >
         <view class="flex items-center">
@@ -140,7 +227,7 @@ function goSettings() {
           </view>
         </view>
         <image
-          class="h-17rpx w-14rpx"
+          class="h-30rpx w-18rpx"
           :src="RightIcon"
           mode="scaleToFill"
         />
@@ -166,12 +253,23 @@ function goSettings() {
         />
       </button>
     </view>
+
+    <!-- 广告位 -->
+    <HomeAdBanner
+      item-width="260rpx"
+      item-height="180rpx"
+      :list="[
+        { imageUrl: 'https://static.feigeinfo.com/static/home/top-bg.png', link: 'https://www.baidu.com' },
+        { imageUrl: 'https://static.feigeinfo.com/static/home/top-bg.png', link: 'https://www.baidu.com' },
+        { imageUrl: 'https://static.feigeinfo.com/static/home/top-bg.png', link: 'https://www.baidu.com' },
+      ]"
+    />
   </view>
 </template>
 
 <style lang="scss" scoped>
 .mine {
-  height: calc(100vh - 88rpx);
+  padding-bottom: 20rpx;
   background: #E4EBF2;
   position: relative;
   .custom-btn {
@@ -181,5 +279,27 @@ function goSettings() {
       color: #333;
     }
   }
+  .point-label {
+    height: 60rpx;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    background: #50A4FB;
+    border-radius: 30rpx;
+    padding: 0 10rpx;
+  }
+  .notice-container {
+    :deep(.wd-notice-bar.is-warning) {
+      background: #fff;
+    }
+  }
+}
+</style>
+
+<style>
+.notice-container .wd-notice-bar.is-warning {
+  background: #fff !important;
+  border-radius: 8rpx !important;
+  padding: 0 20rpx !important;
 }
 </style>

@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-import { definePage } from '@uni-helper/vite-plugin-uni-pages'
 import { useCarStore, useUserStore } from '@/store'
 
 definePage({

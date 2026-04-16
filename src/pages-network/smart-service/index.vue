@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-import { definePage } from '@uni-helper/vite-plugin-uni-pages'
 import { useUserStore } from '@/store'
 import { getImageUrl } from '@/utils/image'
 
@@ -12,7 +11,7 @@ definePage({
   style: {
     navigationStyle: 'custom',
     navigationBarTitleText: '智能服务',
-    backgroundColor: "#6EA6F6",
+    backgroundColor: '#6EA6F6',
   },
   type: 'home',
 })
@@ -111,7 +110,7 @@ function handleClickLeft() {
 
 <template>
   <view class="smart-service">
-    <wd-navbar title="智能服务" placeholder left-arrow :safe-area-inset-top="true" fixed @click-left="handleClickLeft" custom-style="background-color: transparent !important;" />
+    <wd-navbar title="智能服务" placeholder left-arrow :safe-area-inset-top="true" fixed custom-style="background-color: transparent !important;" @click-left="handleClickLeft" />
     <view class="bg" />
     <view class="content">
       <!-- 会员状态 -->
@@ -198,7 +197,7 @@ function handleClickLeft() {
       </view>
       <!--  -->
     </view>
-     <!-- 操作提示弹窗 -->
+    <!-- 操作提示弹窗 -->
     <fg-message v-model:show="showMessagePopup" :title="title" :message="messageContent" :duration="duration" :show-cancel-btn="showCancelBtn" :show-confirm-btn="showConfirmBtn" :close-on-click-modal="closeOnClickModal" :message-id="messageId" :confirm-text="confirmText" @cancel="handleCancel" @confirm="handleConfirm" />
   </view>
 </template>

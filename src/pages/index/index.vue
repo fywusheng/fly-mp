@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-// import { definePage } from '@uni-helper/vite-plugin-uni-pages'
 import { useAppStore, useCarStore } from '@/store'
 import { getImageUrl } from '@/utils/image'
 // 4G+蓝牙

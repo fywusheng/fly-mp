@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { definePage } from '@uni-helper/vite-plugin-uni-pages'
 import { getImageUrl } from '@/utils/image'
 
 definePage({

@@ -86,3 +86,9 @@ scroll-view ::-webkit-scrollbar {
     font-weight: bold;
   }
 }
+
+.notice-container .wd-notice-bar.is-warning {
+  background: #FEFCEC !important;
+  padding: 25rpx 30rpx !important;
+  font-size: 24rpx !important;
+}

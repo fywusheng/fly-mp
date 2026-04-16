@@ -1,11 +1,9 @@
 <script lang="ts" setup>
-import { httpGet, httpPost } from '@/utils/http'
-
 definePage({
   layout: 'default',
   style: {
     navigationStyle: 'default',
-    navigationBarTitleText: '告警详情',
+    navigationBarTitleText: '消息详情',
     navigationBarBackgroundColor: '#ffffff',
   },
 })

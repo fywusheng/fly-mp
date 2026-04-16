@@ -1,13 +1,11 @@
 <script setup lang="ts">
-import { definePage } from '@uni-helper/vite-plugin-uni-pages'
-
 definePage({
   layout: 'default',
   style: {
-      navigationStyle: 'default',
-      navigationBarTitleText: '失窃上报',
-      backgroundColor: "#ffffff",
-  }
+    navigationStyle: 'default',
+    navigationBarTitleText: '失窃上报',
+    backgroundColor: '#ffffff',
+  },
 })
 
 // 失窃流程数据
