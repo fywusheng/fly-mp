@@ -26,7 +26,7 @@ onLoad((e) => {
 .track-detail {
   width: 100vw;
   min-height: 100vh;
-  background-color: #FFFFFF;
+  background-color: #ffffff;
   font-size: 24rpx;
   color: #333333;
   padding: 20rpx 60rpx;
