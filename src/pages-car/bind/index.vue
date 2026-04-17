@@ -84,7 +84,7 @@ function onSubmitClick() {
 
   // 进行页面跳转传递数据
   uni.navigateTo({
-    url: `/pages-car/addMaster/index?info= ${encodeURIComponent(
+    url: `/pages-car/bindVinCode/index?info= ${encodeURIComponent(
       JSON.stringify({
         name: name.value,
         brand: brand.value,

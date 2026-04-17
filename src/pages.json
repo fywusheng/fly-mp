@@ -73,6 +73,15 @@
           }
         },
         {
+          "path": "bindVinCode/index",
+          "type": "page",
+          "style": {
+            "navigationStyle": "default",
+            "navigationBarTitleText": "车辆信息",
+            "navigationBarBackgroundColor": "#ffffff"
+          }
+        },
+        {
           "path": "blueDemo/index",
           "type": "page",
           "layout": "default",

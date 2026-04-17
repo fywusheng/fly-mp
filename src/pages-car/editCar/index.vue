@@ -11,12 +11,15 @@ definePage({
   },
 })
 
-const CarGreenIcon = getImageUrl('/mine/bind-car-green.png')
+const ScanIcon = getImageUrl('/mine/scan-icon.png')
 
 const name = ref('')
 const brand = ref('飞鸽')
 const colorCode = ref('')
-let carInfo = {}// 车辆信息
+const vinCode = ref('') // 车架号
+const plateNumber = ref('') // 车牌号
+
+let carInfo = {} // 车辆信息
 
 // 定义columns的类型
 interface Column {
@@ -34,7 +37,9 @@ onMounted(() => {
   // 获取车辆颜色
   getCarColor()
   // 获取车辆信息
-  const instance = getCurrentInstance()?.proxy as { getOpenerEventChannel?: () => UniApp.EventChannel }
+  const instance = getCurrentInstance()?.proxy as {
+    getOpenerEventChannel?: () => UniApp.EventChannel
+  }
   if (instance?.getOpenerEventChannel) {
     const eventChannel = instance.getOpenerEventChannel()
     eventChannel.on('editCar', (info: any) => {
@@ -99,6 +104,19 @@ async function onSubmitClick() {
     })
   }
 }
+
+function onVinClick() {
+  uni.scanCode({
+    onlyFromCamera: true,
+    success: (res) => {
+      console.log('扫描结果:', res)
+      vinCode.value = res.result
+    },
+    fail: (err) => {
+      console.log('扫描失败:', err)
+    },
+  })
+}
 </script>
 
 <template>
@@ -112,16 +130,36 @@ async function onSubmitClick() {
     <view class="runded-[10rpx] mt-20rpx w-711rpx overflow-hidden">
       <view>
         <wd-cell-group border title="车辆信息">
-          <wd-input v-model="name" label-width="30%" type="text" label="车辆名字" placeholder="请输入车辆名称" />
-          <wd-input v-model="brand" label-width="30%" type="text" label="品牌" placeholder="请输入品牌" :readonly="true" />
-          <wd-cell value="内容">
+          <wd-input
+            v-model="name"
+            label-width="30%"
+            type="text"
+            label="车辆名字"
+            placeholder="请输入车辆名称"
+          />
+          <wd-input
+            v-model="brand"
+            label-width="30%"
+            type="text"
+            label="品牌"
+            placeholder="请输入品牌"
+            :readonly="true"
+          />
+          <wd-cell value="颜色">
             <template #title>
               <view class="text-24rpx">
                 颜色
               </view>
             </template>
 
-            <wd-picker v-model="colorCode" :columns="columns" use-default-slot value-key="dictCode" label-key="dictName" @confirm="onConfirm">
+            <wd-picker
+              v-model="colorCode"
+              :columns="columns"
+              use-default-slot
+              value-key="dictCode"
+              label-key="dictName"
+              @confirm="onConfirm"
+            >
               <view class="flex items-center justify-end">
                 <view v-if="color" class="mr-15rpx text-24rpx">
                   {{ color }}
@@ -133,11 +171,33 @@ async function onSubmitClick() {
               </view>
             </wd-picker>
           </wd-cell>
+
+          <wd-input v-model="vinCode" type="text" label="车架号" placeholder="请输入车架号">
+            <template #suffix>
+              <image
+                class="ml-10rpx h-31rpx w-31rpx"
+                :src="ScanIcon"
+                mode="scaleToFill"
+                @click="onVinClick"
+              />
+            </template>
+          </wd-input>
+
+          <wd-input
+            v-model="plateNumber"
+            label-width="30%"
+            type="text"
+            label="车牌号"
+            placeholder="请输入车牌号"
+          />
         </wd-cell-group>
       </view>
     </view>
 
-    <view class="mt-62rpx h-80rpx w-710rpx flex items-center justify-center rounded-[40rpx] bg-[#239AF6] color-white" @click="onSubmitClick">
+    <view
+      class="mt-62rpx h-80rpx w-710rpx flex items-center justify-center rounded-[40rpx] bg-[#239AF6] color-white"
+      @click="onSubmitClick"
+    >
       提 交
     </view>
   </view>
@@ -145,7 +205,7 @@ async function onSubmitClick() {
 
 <style lang="scss" scoped>
 .bind-car {
-  background-color: #DDE3EC;
+  background-color: #dde3ec;
   height: 100vh;
   display: flex;
   flex-direction: column;
@@ -157,7 +217,8 @@ async function onSubmitClick() {
     .wd-input__inner {
       text-align: right;
     }
-    .wd-input__label-inner,.wd-input__inner {
+    .wd-input__label-inner,
+    .wd-input__inner {
       font-size: 24rpx;
     }
   }
