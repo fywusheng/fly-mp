@@ -156,11 +156,13 @@
 </template>
 
 <script>
-import uChartsMp from '@/components/u-charts/u-charts.js';
-import cfu from '@/components/u-charts/config-ucharts.js';
+import uChartsMp from '../u-charts/u-charts.js';
+import cfu from '../u-charts/config-ucharts.js';
 // #ifdef APP-VUE || H5
-import cfe from '@/components/u-charts/config-echarts.js';
+import cfe from '../u-charts/config-echarts.js';
 // #endif
+import QiunLoading from '../qiun-loading/qiun-loading.vue';
+import QiunError from '../qiun-error/qiun-error.vue';
 
 function deepCloneAssign(origin = {}, ...args) {
   for (let i in args) {
@@ -230,6 +232,7 @@ function debounce(fn, wait) {
 }
 
 export default {
+  components: { QiunLoading, QiunError },
   name: 'qiun-data-charts',
   props: {
     type: {
@@ -1177,9 +1180,9 @@ export default {
 
 <!-- #ifdef APP-VUE || H5 -->
 <script module="rdcharts" lang="renderjs">
-import uChartsRD from '@/components/u-charts/u-charts.js';
-import cfu from '@/components/u-charts/config-ucharts.js';
-import cfe from '@/components/u-charts/config-echarts.js';
+import uChartsRD from '../u-charts/u-charts.js';
+import cfu from '../u-charts/config-ucharts.js';
+import cfe from '../u-charts/config-echarts.js';
 
 var that = {};
 var rootdom = null;

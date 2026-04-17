@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { useCarStore } from '@/store/car'
 import { httpGet } from '@/utils/http'
+import QiunCharts from './components/qiun-data-charts/qiun-data-charts.vue'
 
 definePage({
   layout: 'default',
@@ -175,7 +176,7 @@ function goAllDrive() {
           </view>
         </view>
         <view>
-          <qiun-data-charts type="column" :chart-data="chartData" :opts="opts" :canvas2d="true" />
+          <qiun-charts type="column" :chart-data="chartData" :opts="opts" :canvas2d="true" />
         </view>
       </view>
       <view class="card-item p-29rpx">
