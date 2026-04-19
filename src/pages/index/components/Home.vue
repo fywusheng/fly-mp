@@ -10,10 +10,9 @@ import { debounce, getColorImg, getLocation, initLocationAuth } from '@/utils'
 import { getWeatherIcon } from '@/utils/common'
 import { httpGet, httpPost } from '@/utils/http'
 import { getImageUrl } from '@/utils/image'
-import HomeAdBanner from './HomeAdBanner.vue'
-import HomeMap from './HomeMap.vue'
-import HomeMapNetWork from './HomeMapNetWork.vue'
-import WeatherPop from './WeatherPop.vue'
+import HomeAdBanner from '../com-components/HomeAdBanner.vue'
+import HomeMap from '../com-components/HomeMap.vue'
+import WeatherPop from '../com-components/WeatherPop.vue'
 
 defineOptions({
   name: 'Home',
@@ -105,8 +104,8 @@ const {
 })
 
 // 初始化位置监听
-const { isListening, startListening, stopListening, onLocationChange, getCurrentLocation } =
-  useLocationListener()
+const { isListening, startListening, stopListening, onLocationChange, getCurrentLocation }
+  = useLocationListener()
 
 // 天气信息
 const weatherInfo = ref<{
@@ -114,8 +113,8 @@ const weatherInfo = ref<{
   tem: number | string
   tem1: number | string
   tem2: number | string
-  hours?: Array<{ hours: string; wea: string }>
-  simpleWeather?: Array<{ hours: string; wea: string }>
+  hours?: Array<{ hours: string, wea: string }>
+  simpleWeather?: Array<{ hours: string, wea: string }>
 }>({ wea: '', tem: '', tem1: '', tem2: '', simpleWeather: [] })
 // 天气弹窗显示
 const weatherPopVisible = ref(false)
@@ -194,11 +193,11 @@ const showBatPopup = ref(false) // 电池弹窗显示
 
 // 获取选中车辆名称
 const currentCarName = computed(() => {
-  const car = carList.value.find((item) => item.id === selectCarId.value)
+  const car = carList.value.find(item => item.id === selectCarId.value)
   return car ? car.vehicleName : '我的车辆'
 })
 const colorCode = computed(() => {
-  const car = carList.value.find((item) => item.id === selectCarId.value)
+  const car = carList.value.find(item => item.id === selectCarId.value)
   return car ? car.colorCode : ''
 })
 
@@ -282,7 +281,8 @@ watch(
             })
           }
         })
-      } else {
+      }
+      else {
         // 结束骑行
         console.log('🏁 蓝牙设备结束骑行，停止位置监听')
         await endRiding(selectCarId.value, location)
@@ -290,7 +290,8 @@ watch(
         // 停止位置监听（会自动清理所有回调）
         stopListening()
       }
-    } catch (error: any) {
+    }
+    catch (error: any) {
       console.error('❌ 操作失败:', error)
       uni.showToast({
         title: '上报数据失败',
@@ -320,7 +321,8 @@ watch(
         getLocationAndBlueAuth()
         getCarList()
       }
-    } else {
+    }
+    else {
       // 离开首页，清理资源
       console.log('⬅️ 离开首页')
       cleanupHomePage()
@@ -349,7 +351,8 @@ watch(
       if (carStore.hasBluetooth && bluetoothStatus.value === BluetoothStatus.CONNECTED) {
         sendGetVehicleStatusCommand()
       }
-    } else {
+    }
+    else {
       // 恢复网络时，仅在首页且4G设备时开启轮询
       shouldPoll.value = true
       if (props.tabName === 'home' && carStore.network && !getCarInfoTimer) {
@@ -424,7 +427,7 @@ function handleShowBatPopup() {
 
 // 设置电压类型
 async function handleBatConfirm() {
-  const deviceNo = carList.value.find((item) => item.id === selectCarId.value)?.deviceNo
+  const deviceNo = carList.value.find(item => item.id === selectCarId.value)?.deviceNo
   try {
     const res = await httpPost(`/device/vehicle/update`, {
       id: selectCarId.value,
@@ -439,7 +442,8 @@ async function handleBatConfirm() {
       })
       showBatPopup.value = false
     }
-  } catch (err) {
+  }
+  catch (err) {
     console.error('设置电池电压类型失败:', err)
     uni.showToast({
       title: '设置失败，请重试',
@@ -477,7 +481,8 @@ async function getLocationAndBlueAuth() {
     // console.log('开启后台定位权限成功', loc)
     // 获取位置和天气
     hasAuth && getLocationAndWeather()
-  } catch (err) {
+  }
+  catch (err) {
     console.error('开启后台定位权限失败', err)
   }
 }
@@ -496,7 +501,8 @@ function toggleBluetooth() {
 
   if (bluetoothStatus.value === BluetoothStatus.DISCONNECTED) {
     connectBle()
-  } else {
+  }
+  else {
     console.log('正在断开蓝牙连接')
     disconnect()
   }
@@ -506,8 +512,8 @@ function toggleBluetooth() {
 function onItemClick(item) {
   if (!carStore.network) {
     if (
-      bluetoothStatus.value === BluetoothStatus.DISCONNECTED ||
-      bluetoothStatus.value === BluetoothStatus.CONNECTING
+      bluetoothStatus.value === BluetoothStatus.DISCONNECTED
+      || bluetoothStatus.value === BluetoothStatus.CONNECTING
     ) {
       uni.showToast({
         title: '请先连接蓝牙',
@@ -518,7 +524,7 @@ function onItemClick(item) {
     }
   }
 
-  const selectCarInfo = carList.value.find((item) => item.id === selectCarId.value)
+  const selectCarInfo = carList.value.find(item => item.id === selectCarId.value)
 
   switch (item.name) {
     case '车辆设防':
@@ -537,7 +543,8 @@ function onItemClick(item) {
       if (carState.value.isLocked) {
         // ✅ 使用统一控车方法 onekeymuteon  一键静音  onekeymuteoff 解除一键静音
         controlVehicle('onekeymuteon')
-      } else {
+      }
+      else {
         uni.showToast({
           title: '车辆已开启',
           icon: 'none',
@@ -565,7 +572,8 @@ function onItemClick(item) {
         uni.vibrateLong()
         // ✅ 使用统一控车方法
         controlVehicle('find')
-      } else {
+      }
+      else {
         uni.showToast({
           title: '车辆已开启',
           icon: 'none',
@@ -678,7 +686,7 @@ function controlBike(commandType: string) {
   }
 
   const networkDeviceNo = carList.value.find(
-    (item) => item.id === selectCarId.value,
+    item => item.id === selectCarId.value,
   )?.networkDeviceNo
   return new Promise((resolve, reject) => {
     httpPost(`/device/v2/devices/${networkDeviceNo}/commands`, { commandType })
@@ -740,7 +748,8 @@ async function uploadRideLocation(unlock: boolean, rideId: string) {
           })
         }
       })
-    } else {
+    }
+    else {
       // 结束骑行
       console.log('结束骑行，停止位置监听')
       await endRiding(selectCarId.value, location)
@@ -748,7 +757,8 @@ async function uploadRideLocation(unlock: boolean, rideId: string) {
       // 停止位置监听（会自动清理所有回调）
       stopListening()
     }
-  } catch (error: any) {
+  }
+  catch (error: any) {
     console.error('❌ 操作失败:', error)
     uni.showToast({
       title: '上报数据失败',
@@ -764,18 +774,20 @@ function reloadLocation() {
 
 // 获取当前骑行信息
 async function getCurrentRidingInfo(vehicleId = selectCarId.value) {
-  if (!vehicleId) return
+  if (!vehicleId)
+    return
   uni.showLoading({
     title: '加载中...',
     mask: true,
   })
-  const deviceNo = carList.value.find((item) => item.id === vehicleId)?.deviceNo
+  const deviceNo = carList.value.find(item => item.id === vehicleId)?.deviceNo
   // 4g设备的话获取当前车辆位置信息
   if (carStore.network) {
     const res = await httpGet(`/device/v2/devices/${deviceNo}/location/basic`)
     uni.hideLoading()
     currentRidingInfo.value = res.data as any
-  } else {
+  }
+  else {
     const res = await httpGet(`/riding/ride/homepage/vehicle/${vehicleId}`)
     uni.hideLoading()
     currentRidingInfo.value = res.data as any
@@ -832,7 +844,8 @@ async function getCarList() {
         }
       },
     })
-  } else {
+  }
+  else {
     // 有车辆，默认选中车辆
     setDefaultVehicleId(carList.value)
     // 获取当前骑行信息
@@ -866,14 +879,16 @@ function setDefaultVehicleId(carsList: any[]) {
     // 2.1 未设置默认车辆，选中第一辆
     selectCarId.value = carsList[0].id
     carStore.setCarInfo(carsList[0])
-  } else {
+  }
+  else {
     // 2.2 已设置默认车辆，检查是否在列表中
-    const findCar = carsList.find((item) => item.id === defaultVehicleId)
+    const findCar = carsList.find(item => item.id === defaultVehicleId)
 
     if (findCar) {
       selectCarId.value = findCar.id
       carStore.setCarInfo(findCar)
-    } else {
+    }
+    else {
       // 默认车辆不在列表中（可能已删除），选择第一辆
       selectCarId.value = carsList[0].id
       carStore.setCarInfo(carsList[0])
@@ -887,7 +902,7 @@ function setDefaultVehicleId(carsList: any[]) {
 // 获取车辆状态信息
 function getCarInfo() {
   const networkDeviceNo = carList.value.find(
-    (item) => item.id === selectCarId.value,
+    item => item.id === selectCarId.value,
   )?.networkDeviceNo
   httpGet(`/device/v2/devices/${networkDeviceNo}/status`)
     .then((res) => {
@@ -904,7 +919,8 @@ function getCarInfo() {
       if (data.status === null || data.status === 0) {
         console.log('4g设备离线状态，不更新车辆状态')
         // return
-      } else {
+      }
+      else {
         // E车星蓝牙+华慧4G，isKeylessOn 不需要 isArmed 不需要
         if (carStore.carInfo.deviceType === 3) {
           delete data.isKeylessOn
@@ -950,7 +966,7 @@ function getCarInfo() {
 // ✅ 连接蓝牙
 async function connectBle() {
   try {
-    const selectedCarInfo = carList.value.find((item) => item.id === selectCarId.value)
+    const selectedCarInfo = carList.value.find(item => item.id === selectCarId.value)
     if (!selectedCarInfo) {
       uni.showToast({
         title: '请先选择车辆',
@@ -991,7 +1007,8 @@ async function connectBle() {
         offBluetoothStateChange()
       }
     })
-  } catch (err: any) {
+  }
+  catch (err: any) {
     console.log('❌ 连接蓝牙失败:', err)
     // 断开连接时移除监听
     offBluetoothStateChange()
@@ -1038,8 +1055,10 @@ function handleBluetoothStateChange(data: any) {
 
 function updateCarStatus() {
   list.value = list.value.map((item) => {
-    if (item.name === '车辆设防') item.active = carState.value.isArmed
-    if (item.name === '感应控车') item.active = carState.value.isKeylessOn
+    if (item.name === '车辆设防')
+      item.active = carState.value.isArmed
+    if (item.name === '感应控车')
+      item.active = carState.value.isKeylessOn
     return item
   })
 
@@ -1052,7 +1071,8 @@ async function disconnect() {
     await disconnectBluetooth()
     offBluetoothStateChange()
     console.log('断开蓝牙成功')
-  } catch (err) {
+  }
+  catch (err) {
     console.log('断开蓝牙失败:', err)
   }
 }
@@ -1085,7 +1105,8 @@ async function handleConfirmCar({ value, selectedItem }) {
   try {
     const location = await getCurrentLocation()
     await switchVehicle(location)
-  } catch (err) {
+  }
+  catch (err) {
     console.error('切换车辆时重置骑行状态失败:', err)
   }
 
@@ -1113,13 +1134,14 @@ async function handleConfirmCar({ value, selectedItem }) {
   try {
     await disconnect()
     console.log('✅ 蓝牙已完全断开')
-  } catch (err) {
+  }
+  catch (err) {
     console.error('⚠️ 蓝牙断开失败:', err)
   }
 
   // ✅ 延长等待时间，确保蓝牙完全断开并重置
   console.log('⏳ 等待 1 秒，确保蓝牙完全重置...')
-  await new Promise((resolve) => setTimeout(resolve, 1000))
+  await new Promise(resolve => setTimeout(resolve, 1000))
   // 重新连接蓝牙
   connectBle()
 }
@@ -1159,35 +1181,13 @@ function onTouchEnd(event) {
   if (carState.value.isLocked && sliderX.value === maxRight.value) {
     // 解锁操作
     success()
-  } else if (!carState.value.isLocked && sliderX.value === 0) {
+  }
+  else if (!carState.value.isLocked && sliderX.value === 0) {
     // 锁车操作
     success()
-  } else {
+  }
+  else {
     fail()
-  }
-}
-
-function goLocationDetail() {
-  if (!userStore.isLoggedIn) {
-    uni.showToast({
-      title: '请先登录',
-      icon: 'none',
-      mask: true,
-    })
-    return
-  }
-  // if (true) {
-  //   console.log('去开通')
-  //   return false
-  // }
-
-  const lastPoint = currentRidingInfo.value
-  console.log(lastPoint, '发送位置信息')
-
-  if (lastPoint && lastPoint.rideId) {
-    uni.navigateTo({
-      url: `/pages-car/location/index?latitude=${lastPoint.latitude}&longitude=${lastPoint.longitude}&ridingStatus=${lastPoint.ridingStatus}`,
-    })
   }
 }
 
@@ -1196,7 +1196,7 @@ function goLogin() {
     url: '/pages/login/login',
   })
 }
-function goDetail() {
+function goDetail(data: { latitude: number, longitude: number, status: any }) {
   if (!userStore.isLoggedIn) {
     uni.showToast({
       title: '请先登录',
@@ -1211,22 +1211,16 @@ function goDetail() {
       icon: 'none',
       mask: true,
     })
-    return
+    return false
   }
   // 会员检测，先写死，后面再改
   // if (true) {
   //   console.log('去开通')
   //   return false
   // }
-
-  const ridingTrack = currentRidingInfo.value.ridingTrack || []
-
-  if (ridingTrack.length > 0) {
-    const lastPoint = ridingTrack[ridingTrack.length - 1]
-    uni.navigateTo({
-      url: `/pages-car/location/index?latitude=${lastPoint.latitude}&longitude=${lastPoint.longitude}&ridingStatus=${currentRidingInfo.value.ridingStatus}`,
-    })
-  }
+  uni.navigateTo({
+    url: `/pages-car/location/index?latitude=${data.latitude}&longitude=${data?.longitude}&ridingStatus=${data.status}`,
+  })
 }
 
 function goNotice() {
@@ -1267,13 +1261,15 @@ function showWeatherDetail() {
 function getSliderBgStyle() {
   if (carStore.network) {
     return { background: !carState.value.isLocked ? '#2CBC7B' : '#DB6477' }
-  } else {
+  }
+  else {
     if (
-      bluetoothStatus.value === BluetoothStatus.DISCONNECTED ||
-      bluetoothStatus.value === BluetoothStatus.CONNECTING
+      bluetoothStatus.value === BluetoothStatus.DISCONNECTED
+      || bluetoothStatus.value === BluetoothStatus.CONNECTING
     ) {
       return { background: '#E6E6E6' }
-    } else {
+    }
+    else {
       return { background: !carState.value.isLocked ? '#2CBC7B' : '#DB6477' }
     }
   }
@@ -1282,13 +1278,15 @@ function getSliderBgStyle() {
 function getLockIcon() {
   if (carStore.network) {
     return !carState.value.isLocked ? CloseBtnIcon : CloseBtnRedIcon
-  } else {
+  }
+  else {
     if (
-      bluetoothStatus.value === BluetoothStatus.DISCONNECTED ||
-      bluetoothStatus.value === BluetoothStatus.CONNECTING
+      bluetoothStatus.value === BluetoothStatus.DISCONNECTED
+      || bluetoothStatus.value === BluetoothStatus.CONNECTING
     ) {
       return CloseBtnBrayIcon
-    } else {
+    }
+    else {
       return !carState.value.isLocked ? CloseBtnIcon : CloseBtnRedIcon
     }
   }
@@ -1297,13 +1295,15 @@ function getLockIcon() {
 function getSliderColorStyle() {
   if (carStore.network) {
     return '#ffffff'
-  } else {
+  }
+  else {
     if (
-      bluetoothStatus.value === BluetoothStatus.DISCONNECTED ||
-      bluetoothStatus.value === BluetoothStatus.CONNECTING
+      bluetoothStatus.value === BluetoothStatus.DISCONNECTED
+      || bluetoothStatus.value === BluetoothStatus.CONNECTING
     ) {
       return '#333333'
-    } else {
+    }
+    else {
       return '#ffffff'
     }
   }
@@ -1314,15 +1314,21 @@ function getBatteryIcon() {
   }
   let level = Number(carState.value.batteryLevel)
   // 异常值处理与边界规整
-  if (!Number.isFinite(level)) level = 0
+  if (!Number.isFinite(level))
+    level = 0
   level = Math.max(0, Math.min(100, Math.round(level)))
 
   // 阈值映射：0、1-19、20-39、40-59、60-79、80-100
-  if (level === 0) return Bat0
-  if (level <= 19) return Bat1
-  if (level <= 39) return Bat2
-  if (level <= 59) return Bat3
-  if (level <= 79) return Bat4
+  if (level === 0)
+    return Bat0
+  if (level <= 19)
+    return Bat1
+  if (level <= 39)
+    return Bat2
+  if (level <= 59)
+    return Bat3
+  if (level <= 79)
+    return Bat4
   return Bat5
 }
 
@@ -1355,7 +1361,9 @@ function toggleLock() {
               />
             </wd-drop-menu>
           </view>
-          <view v-else @click="goLogin">登录</view>
+          <view v-else @click="goLogin">
+            登录
+          </view>
         </view>
       </template>
     </wd-navbar>
@@ -1381,7 +1389,9 @@ function toggleLock() {
               mode="aspectFit"
             />
             <view class="slide-text flex items-center justify-center">
-              <view class="ml-16rpx text-48rpx">{{ weatherInfo.tem }}°</view>
+              <view class="ml-16rpx text-48rpx">
+                {{ weatherInfo.tem }}°
+              </view>
               <view class="ml-12rpx text-20rpx">
                 <view>{{ weatherInfo.wea }}</view>
                 <view>{{ weatherInfo.tem1 }}°/{{ weatherInfo.tem2 }}°</view>
@@ -1438,7 +1448,9 @@ function toggleLock() {
                 mode="scaleToFill"
                 @click="handleShowBatPopup"
               />
-              <view class="mt-20rpx text-24rpx text-[#333333]">电池电量</view>
+              <view class="mt-20rpx text-24rpx text-[#333333]">
+                电池电量
+              </view>
             </view>
             <view class="flex flex-col items-center justify-center">
               <view class="relative h-80rpx w-80rpx" @click="goNotice">
@@ -1456,7 +1468,9 @@ function toggleLock() {
 
                 <image class="h-80rpx w-80rpx" :src="WarnInfo" mode="scaleToFill" />
               </view>
-              <view class="mt-20rpx text-24rpx text-[#333333]">告警信息</view>
+              <view class="mt-20rpx text-24rpx text-[#333333]">
+                告警信息
+              </view>
             </view>
           </view>
           <image
@@ -1571,7 +1585,9 @@ function toggleLock() {
         <view class="relative box-border w-710rpx rounded-[10rpx] bg-white px-25rpx py-23rpx">
           <view class="flex items-center justify-between">
             <view class="w-100% flex items-center justify-between">
-              <view class="whitespace-nowrap text-30rpx">车辆位置</view>
+              <view class="whitespace-nowrap text-30rpx">
+                车辆位置
+              </view>
               <view v-if="userStore.isLoggedIn" class="text-28rpx">
                 {{ carState.isLocked ? '已泊车' : '骑行中' }}
               </view>
@@ -1589,18 +1605,10 @@ function toggleLock() {
 
           <!-- 轨迹地图 -->
           <view>
-            <HomeMapNetWork
-              v-if="carStore.network"
-              :info="currentRidingInfo"
-              :is-unactivated="true"
-              @map-click="goLocationDetail"
-            />
             <HomeMap
-              v-else
-              :location="mapLocation"
-              :status="currentRidingInfo.ridingStatus"
-              :riding-track="currentRidingInfo.ridingTrack"
               :is-unactivated="true"
+              :network="carStore.network"
+              :info="currentRidingInfo"
               @map-click="goDetail"
             />
           </view>

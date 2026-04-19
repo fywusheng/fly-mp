@@ -38,6 +38,18 @@
     {
       "path": "pages/webview/index",
       "type": "page"
+    },
+    {
+      "path": "pages/index/com-components/HomeAdBanner",
+      "type": "page"
+    },
+    {
+      "path": "pages/index/com-components/HomeMap",
+      "type": "page"
+    },
+    {
+      "path": "pages/index/com-components/WeatherPop",
+      "type": "page"
     }
   ],
   "subPackages": [
