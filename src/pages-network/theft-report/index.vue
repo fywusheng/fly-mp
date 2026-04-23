@@ -172,7 +172,7 @@ async function submitForm() {
               >
                 <view class="w-495rpx flex items-center justify-items-end">
                   <input
-                    v-model="formData.carName"
+                    v-model="carName"
                     class="form-input"
                     type="text"
                     placeholder="从我的车辆列表中选择"
