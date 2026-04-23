@@ -1,7 +1,7 @@
 <script setup lang="ts">
 interface AdItem {
   imageUrl: string
-  link: string
+  linkUrl: string
 }
 
 const props = withDefaults(defineProps<{
@@ -29,25 +29,25 @@ const itemStyle = computed(() => ({
 }))
 
 function onAdClick(item: AdItem) {
-  if (!item.link)
+  if (!item.linkUrl)
     return
 
   // 判断是否为 https 链接
-  const isHttpsUrl = /^https?:\/\//.test(item.link)
+  const isHttpsUrl = /^https?:\/\//.test(item.linkUrl)
 
   if (isHttpsUrl) {
     // 跳转到 webview 页面
     uni.navigateTo({
-      url: `/pages/webview/index?url=${encodeURIComponent(item.link)}`,
+      url: `/pages/webview/index?url=${encodeURIComponent(item.linkUrl)}`,
     })
   }
   else {
     // 普通小程序页面跳转
     uni.navigateTo({
-      url: item.link,
+      url: item.linkUrl,
       fail: () => {
         uni.switchTab({
-          url: item.link,
+          url: item.linkUrl,
           fail: () => {
             uni.showToast({
               title: '跳转失败',
@@ -96,10 +96,11 @@ function onAdClick(item: AdItem) {
 
 .ad-banner-vertical {
   display: grid;
+  justify-content: center;
   gap: 20rpx;
-  padding: 0 20rpx;
+  // padding: 0 20rpx;
   margin-top: 20rpx;
-  grid-template-columns: repeat(v-bind(columns), 1fr);
+  // grid-template-columns: repeat(v-bind(columns), 1fr);
 }
 
 .ad-item {

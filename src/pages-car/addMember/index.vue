@@ -21,10 +21,11 @@ const relationship = ref('') // 关系
 const vehicleId = ref('') // 车辆id
 const memberId = ref('') // 成员id
 
-const viewLocation = ref(false) // 查看车辆位置
-const viewRidingRecord = ref(false) // 查看骑行记录
-const viewHistoricalStop = ref(false) // 查看历史停留
-const viewDrivingData = ref(false) // 查看行驶数据
+// 权限默认为 true
+const canViewLocation = ref(true) // 查看车辆位置
+const canViewRideTrack = ref(true) // 查看骑行记录
+const canViewHistoryStay = ref(true) // 查看历史停留
+const canViewDriveData = ref(true) // 查看行驶数据
 
 const addFlag = ref(false) // 添加成功标志
 const showShare = ref(false) // 分享弹窗
@@ -57,10 +58,10 @@ onMounted(() => {
       memberName.value = info.memberName || ''
       mobile.value = info.mobile || ''
       relationship.value = info.relationship || ''
-      viewLocation.value = !!info.viewLocation
-      viewRidingRecord.value = !!info.viewRidingRecord
-      viewHistoricalStop.value = !!info.viewHistoricalStop
-      viewDrivingData.value = !!info.viewDrivingData
+      canViewLocation.value = !!info.canViewLocation
+      canViewRideTrack.value = !!info.canViewRideTrack
+      canViewHistoryStay.value = !!info.canViewHistoryStay
+      canViewDriveData.value = !!info.canViewDriveData
     })
   }
   getRelationship()
@@ -111,10 +112,10 @@ async function addMemberInfo() {
     memberName: memberName.value,
     mobile: mobile.value,
     relationship: relationship.value,
-    viewLocation: viewLocation.value,
-    viewRidingRecord: viewRidingRecord.value,
-    viewHistoricalStop: viewHistoricalStop.value,
-    viewDrivingData: viewDrivingData.value,
+    canViewLocation: canViewLocation.value,
+    canViewRideTrack: canViewRideTrack.value,
+    canViewHistoryStay: canViewHistoryStay.value,
+    canViewDriveData: canViewDriveData.value,
   })
 
   if (res.code === '200') {
@@ -136,10 +137,10 @@ async function updateCarInfo() {
     memberName: memberName.value,
     mobile: mobile.value,
     relationship: relationship.value,
-    viewLocation: viewLocation.value,
-    viewRidingRecord: viewRidingRecord.value,
-    viewHistoricalStop: viewHistoricalStop.value,
-    viewDrivingData: viewDrivingData.value,
+    canViewLocation: canViewLocation.value,
+    canViewRideTrack: canViewRideTrack.value,
+    canViewHistoryStay: canViewHistoryStay.value,
+    canViewDriveData: canViewDriveData.value,
   })
 
   if (res.code === '200') {
@@ -201,17 +202,17 @@ function onCompleteClick() {
       <view class="mt-28rpx w-711rpx overflow-hidden rounded-10rpx">
         <view class="mt-8rpx">
           <wd-cell-group border title="权限设置">
-            <wd-cell title="查看车辆位置" center>
-              <wd-switch v-model="viewLocation" size="24px" active-color="#2CBD7C" />
-            </wd-cell>
+            <!-- <wd-cell title="查看车辆位置" center>
+              <wd-switch v-model="canViewLocation" size="24px" active-color="#2CBD7C" />
+            </wd-cell> -->
             <wd-cell title="查看骑行记录" center>
-              <wd-switch v-model="viewRidingRecord" size="24px" active-color="#2CBD7C" />
+              <wd-switch v-model="canViewRideTrack" size="24px" active-color="#2CBD7C" />
             </wd-cell>
             <wd-cell title="查看历史停留" center>
-              <wd-switch v-model="viewHistoricalStop" size="24px" active-color="#2CBD7C" />
+              <wd-switch v-model="canViewHistoryStay" size="24px" active-color="#2CBD7C" />
             </wd-cell>
             <wd-cell title="查看行驶数据" center>
-              <wd-switch v-model="viewDrivingData" size="24px" active-color="#2CBD7C" />
+              <wd-switch v-model="canViewDriveData" size="24px" active-color="#2CBD7C" />
             </wd-cell>
           </wd-cell-group>
         </view>

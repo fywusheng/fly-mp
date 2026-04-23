@@ -13,6 +13,9 @@ export interface IUserInfoVo {
   userId: number
   userType: number
   defaultVehicleId: number
+  memberLevel: string
+  serviceExpireTime: string
+  points: number
 }
 
 /**

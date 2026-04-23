@@ -16,6 +16,9 @@ const brand = ref('')
 const colorCode = ref('')
 const phone = ref('')
 const validCode = ref('')
+const vin = ref('')
+const certificateUrl = ref('')
+const plateNumber = ref('')
 
 const userStore = useUserStore()
 
@@ -28,6 +31,9 @@ onMounted(() => {
       name.value = info.name || ''
       brand.value = info.brand || ''
       colorCode.value = info.colorCode || ''
+      vin.value = info.vin || ''
+      certificateUrl.value = info.certificateUrl || ''
+      plateNumber.value = info.plateNumber || ''
     })
   }
 })
@@ -71,8 +77,6 @@ async function sendSmsClick() {
 
 // 绑定车辆
 async function onSubmitClick() {
-  // showShare.value = true
-
   const res = await httpPost('/device/vehicle/bind', {
     deviceNo: code.value, // 车辆编码
     vehicleName: name.value, // 车辆名称
@@ -80,13 +84,14 @@ async function onSubmitClick() {
     // model: 'EV10C', // 车型，暂无
     colorCode: colorCode.value, // 颜色
     // vehicleCode: '', // 暂无
-    // ownerName: '张三',
+    vin: vin.value,
+    certificateUrl: certificateUrl.value,
+    plateNumber: plateNumber.value,
     ownerPhone: phone.value, // 车主手机号
     userId: userStore.userInfo.userId, // 用户id
     code: validCode.value, // 验证码
   })
   if (res.code === '200') {
-    // addFlag.value = true
     uni.showToast({
       title: '绑定成功',
       icon: 'success',
@@ -140,16 +145,12 @@ async function onSubmitClick() {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  // justify-content: center;
   align-items: center;
-  // padding: 16px;
-  // border-radius: 8px;
   .complete-btn,
   .notice-btn {
     background-color: #239AF6;
     color: white;
     border-radius: 40rpx;
-    // padding: 12rpx 24rpx;
     font-size: 28rpx;
     width: 260rpx;
     height: 80rpx;
@@ -162,9 +163,6 @@ async function onSubmitClick() {
     margin-left: 70rpx;
   }
   :deep() {
-    // .wd-input__inner {
-    //   text-align: right;
-    // }
     .wd-input__label-inner,.wd-input__inner {
       font-size: 24rpx;
     }

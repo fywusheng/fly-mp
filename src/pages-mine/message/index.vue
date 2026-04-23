@@ -10,7 +10,7 @@ definePage({
 
 const info = ref<any>({})
 onLoad((e) => {
-  info.value = JSON.parse(decodeURIComponent(e.info))
+  info.value = JSON.parse(decodeURIComponent(e.message))
   console.log('info', info)
 })
 </script>

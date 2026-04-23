@@ -22,6 +22,7 @@ const FlyIcon = getImageUrl('/find/fly.png')
 // const HelloTextIcon = getImageUrl('/find/helloText.png')
 const HelloTextIcon = getImageUrl('/find/text-v3.png')
 const LineIcon = getImageUrl('/find/line.png')
+const adList = ref([])
 
 // 获取胶囊位置信息
 const menuButtonInfo = uni.getMenuButtonBoundingClientRect()
@@ -35,8 +36,23 @@ watch(() => props.tabName, (newVal) => {
   if (newVal === 'find') {
     // 获取骑行天数
     getDayOffset(carStore.carInfo.deviceNo)
+    getAdList()
   }
 })
+
+async function getAdList() {
+  try {
+    const res = await httpGet(`/common/advertisement/list`, {
+      adPosition: 'DISCOVER',
+    })
+    if (res.code === '200') {
+      adList.value = res.data as any[]
+    }
+  }
+  catch (err) {
+    console.error('获取广告列表失败', err)
+  }
+}
 
 // 获取骑行天数
 async function getDayOffset(deviceId) {
@@ -86,11 +102,7 @@ async function getDayOffset(deviceId) {
       item-width="690rpx"
       item-height="230rpx"
       :columns="1"
-      :list="[
-        { imageUrl: 'https://static.feigeinfo.com/static/home/top-bg.png', link: 'https://www.baidu.com' },
-        { imageUrl: 'https://static.feigeinfo.com/static/home/top-bg.png', link: 'https://www.baidu.com' },
-        { imageUrl: 'https://static.feigeinfo.com/static/home/top-bg.png', link: 'https://www.baidu.com' },
-      ]"
+      :list="adList"
     />
   </view>
 </template>
@@ -101,5 +113,6 @@ async function getDayOffset(deviceId) {
   background: #E4EBF2;
   position: relative;
   padding-bottom: 20rpx;
+  min-height: 100%;
 }
 </style>

@@ -1,10 +1,17 @@
 <script setup lang="ts">
 import { useUserStore } from '@/store'
+import { httpGet } from '@/utils/http'
 import { getImageUrl } from '@/utils/image'
 import HomeAdBanner from '../com-components/HomeAdBanner.vue'
 
 defineOptions({
   name: 'MineBlue',
+})
+
+const props = defineProps({
+  tabName: {
+    type: String,
+  },
 })
 
 const userStore = useUserStore()
@@ -26,6 +33,9 @@ const PointIcon = getImageUrl('/mine/point-icon.png')
 const RectIcon = getImageUrl('/mine/rect-icon.png')
 const StarIcon = getImageUrl('/mine/star-icon.png')
 const OpenIcon = getImageUrl('/mine/open-icon.png')
+const adList = ref([])
+const unreadMessageCount = ref(0)
+const notice = ref<{ title: string, content: string }>({ title: '', content: '' })
 
 // 功能列表
 const list = ref([
@@ -51,6 +61,58 @@ const list = ref([
   },
 
 ])
+
+watch(() => props.tabName, (newVal) => {
+  if (newVal === 'mine' && userStore.isLoggedIn) {
+    getAdList()
+    getUnreadMessageCount()
+    getNoticeText()
+  }
+})
+
+// 获取公告
+async function getNoticeText() {
+  try {
+    const res = await httpGet<{ records: Array<{ title: string, content: string }> }>(`/user/mini/message/list`, {
+      pageNum: 1,
+      pageSize: 1,
+    })
+    if (res.code === '200') {
+      notice.value = res.data.records[0]
+    }
+  }
+  catch (err) {
+    console.error('获取公告失败:', err)
+  }
+}
+
+// 获取广告列表
+async function getAdList() {
+  try {
+    const res = await httpGet(`/common/advertisement/list`, {
+      adPosition: 'MINE',
+    })
+    if (res.code === '200') {
+      adList.value = res.data as any[]
+    }
+  }
+  catch (err) {
+    console.error('获取广告列表失败:', err)
+  }
+}
+
+// 获取未读消息数量
+async function getUnreadMessageCount() {
+  try {
+    const res = await httpGet<{ unreadCount: number }>(`/user/mini/message/unread-count`)
+    if (res.code === '200') {
+      unreadMessageCount.value = res.data.unreadCount || 0
+    }
+  }
+  catch (err) {
+    console.error('获取未读消息数量失败:', err)
+  }
+}
 
 function handleListItemClick(item) {
   if (!userStore.userInfo.token) {
@@ -91,6 +153,12 @@ function handleListItemClick(item) {
   }
 }
 
+function goMessage() {
+  uni.navigateTo({
+    url: `/pages-mine/message/index?message=${encodeURIComponent(JSON.stringify(notice.value))}`,
+  })
+}
+
 function goSettings() {
   uni.navigateTo({
     url: '/pages-mine/settings/index',
@@ -108,6 +176,12 @@ function goPointsDetails() {
     url: '/pages-mine/points-details/index',
   })
 }
+
+function goVip() {
+  uni.navigateTo({
+    url: '/pages-network/smart-service/index',
+  })
+}
 </script>
 
 <template>
@@ -121,19 +195,21 @@ function goPointsDetails() {
         mode="scaleToFill"
       />
       <view class="absolute left-0 top-210rpx w-100% flex flex-col items-center justify-center">
-        <view class="w-100% flex items-center justify-end">
+        <view class="relative w-100% flex items-center justify-end pr-100rpx">
           <image
             class="mr-60rpx h-40rpx w-40rpx"
             :src="SettingIcon"
             mode="scaleToFill"
             @click="goSettings"
           />
-          <image
-            class="mr-60rpx h-40rpx w-40rpx"
-            :src="TipsIcon"
-            mode="scaleToFill"
-            @click="goMessageCenter"
-          />
+          <wd-badge :model-value="unreadMessageCount">
+            <image
+              class="h-40rpx w-40rpx"
+              :src="TipsIcon"
+              mode="scaleToFill"
+              @click="goMessageCenter"
+            />
+          </wd-badge>
         </view>
         <view class="w-100% flex">
           <image
@@ -142,11 +218,11 @@ function goPointsDetails() {
             mode="scaleToFill"
           />
           <view class="ml-22rpx text-white">
-            <view class="whitespace-nowrap pt-16rpx text-center text-36rpx">
+            <view class="whitespace-nowrap pt-16rpx text-36rpx">
               {{ userStore.userInfo && userStore.userInfo.nickname ? userStore.userInfo.nickname : '--' }}
             </view>
             <view class="mt-19rpx text-30rpx">
-              普通会员
+              {{ userStore.isMemberVip ? 'VIP会员' : '普通会员' }}
             </view>
 
             <view class="point-label ml-[-20rpx] mt-39rpx flex items-center text-24rpx" @click="goPointsDetails">
@@ -158,7 +234,7 @@ function goPointsDetails() {
               <view>
                 <text>里程积分</text>
                 <text class="text-[#FDEBC9]">
-                  1000
+                  {{ userStore.userInfo.points }}
                 </text>
               </view>
               <wd-icon class="mr-10rpx" name="arrow-right" size="18px" />
@@ -169,15 +245,16 @@ function goPointsDetails() {
     </view>
 
     <!-- 消息提示 -->
-    <view class="notice-container mx-20rpx mx-20rpx mt-20rpx rounded-8rpx">
-      <wd-notice-bar text="这是一条消息提示信息，这是一条消息提示信息，这是一条消息提示信息" prefix="warn-bold">
+    <view v-if="notice.content" class="notice-container mx-20rpx mx-20rpx mt-20rpx rounded-8rpx" @click="goMessage">
+      <wd-notice-bar :text="notice.content" prefix="warn-bold">
         <template #suffix>
           <wd-icon name="arrow-right" size="22px" color="#333333" />
         </template>
       </wd-notice-bar>
     </view>
 
-    <view class="relative mx-20rpx mt-20rpx h-120rpx w-710rpx flex items-center justify-between rounded-8rpx">
+    <!-- 会员开通提示 -->
+    <view v-if="!userStore.isMemberVip" class="relative mx-20rpx mt-20rpx h-120rpx w-710rpx flex items-center justify-between rounded-8rpx" @click="goVip">
       <image
         class="absolute left-0 top-0 h-100% w-100%"
         :src="RectIcon"
@@ -258,11 +335,7 @@ function goPointsDetails() {
     <HomeAdBanner
       item-width="260rpx"
       item-height="180rpx"
-      :list="[
-        { imageUrl: 'https://static.feigeinfo.com/static/home/top-bg.png', link: 'https://www.baidu.com' },
-        { imageUrl: 'https://static.feigeinfo.com/static/home/top-bg.png', link: 'https://www.baidu.com' },
-        { imageUrl: 'https://static.feigeinfo.com/static/home/top-bg.png', link: 'https://www.baidu.com' },
-      ]"
+      :list="adList"
     />
   </view>
 </template>

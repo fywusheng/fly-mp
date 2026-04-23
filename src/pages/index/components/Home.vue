@@ -69,12 +69,14 @@ const WhistleIcon = getImageUrl('/home/whistle.png')
 const BlueOpen = getImageUrl('/home/blue-open.png')
 const BlueClose = getImageUrl('/home/blue-close.png')
 const WarnInfo = getImageUrl('/home/warn-info.png')
+const WarnInfoNormal = getImageUrl('/home/warn-info-normal.png')
 const Bat0 = getImageUrl('/home/bat-0.png')
 const Bat1 = getImageUrl('/home/bat-1.png')
 const Bat2 = getImageUrl('/home/bat-2.png')
 const Bat3 = getImageUrl('/home/bat-3.png')
 const Bat4 = getImageUrl('/home/bat-4.png')
 const Bat5 = getImageUrl('/home/bat-5.png')
+const BatNormal = getImageUrl('/home/bat-normal.png')
 
 // 用户信息
 const userStore = useUserStore()
@@ -118,6 +120,8 @@ const weatherInfo = ref<{
 }>({ wea: '', tem: '', tem1: '', tem2: '', simpleWeather: [] })
 // 天气弹窗显示
 const weatherPopVisible = ref(false)
+// 广告列表
+const adList = ref([])
 
 // 滑动开锁相关
 const startX = ref(0)
@@ -191,11 +195,6 @@ const batteryVoltageType = ref(48) // 电池类型
 const batterTab = ref([48, 60, 72]) // 电池类型tab
 const showBatPopup = ref(false) // 电池弹窗显示
 
-// 获取选中车辆名称
-const currentCarName = computed(() => {
-  const car = carList.value.find(item => item.id === selectCarId.value)
-  return car ? car.vehicleName : '我的车辆'
-})
 const colorCode = computed(() => {
   const car = carList.value.find(item => item.id === selectCarId.value)
   return car ? car.colorCode : ''
@@ -245,8 +244,6 @@ function cleanupHomePage() {
     getCarInfoTimer = null
   }
 }
-
-// ============= 优化后的 watch 监听 =============
 
 /**
  * 监听解锁状态 - 控制骑行轨迹上报（仅蓝牙设备）
@@ -308,11 +305,6 @@ watch(
 watch(
   () => props.tabName,
   (newTabName) => {
-    // console.log('📊 状态变化:', {
-    //   tab: `${oldTabName} -> ${newTabName}`,
-    //   login: `${oldIsLoggedIn} -> ${isLoggedIn}`,
-    // })
-
     if (newTabName === 'home') {
       // 切换到首页，初始化资源
       console.log('✅ 切换到首页')
@@ -385,6 +377,7 @@ onShow(async () => {
   await handlePrivacyConfirm()
   if (props.tabName === 'home') {
     initHomePage()
+    getAdList()
   }
 })
 
@@ -393,34 +386,47 @@ onHide(() => {
   cleanupHomePage()
 })
 
+// 获取广告列表
+async function getAdList() {
+  try {
+    const res = await httpGet(`/common/advertisement/list`, {
+      adPosition: 'RIDE',
+    })
+    if (res.code === '200') {
+      adList.value = res.data as any[]
+    }
+  }
+  catch (err) {
+    console.error('获取广告列表失败:', err)
+  }
+}
+
 function handleCancel() {
   showMessagePopup.value = false
 }
 
 function handleConfirm() {
   showMessagePopup.value = false
-  if (messageId.value === 1) {
-    console.log('去开通')
-  }
-  if (messageId.value === 2) {
-    console.log('取消')
+  if ([1, 2].includes(messageId.value)) {
+    uni.navigateTo({
+      url: '/pages-network/smart-service/index',
+    })
   }
 }
 
 function handleShowBatPopup() {
-  // 没有开会员提示弹窗,先写死，后面再改
-  // if (true) {
-  //   title.value = '开通超级会员'
-  //   messageContent.value = '实时查看电量'
-  //   confirmText.value = '去开通'
-  //   messageId.value = 1
-  //   duration.value = 0
-  //   showCancelBtn.value = false
-  //   showConfirmBtn.value = true
-  //   closeOnClickModal.value = true
-  //   showMessagePopup.value = true
-  //   return false
-  // }
+  if (!userStore.isMemberVip) {
+    title.value = '开通超级会员'
+    messageContent.value = '实时查看电量'
+    confirmText.value = '去开通'
+    messageId.value = 1
+    duration.value = 0
+    showCancelBtn.value = false
+    showConfirmBtn.value = true
+    closeOnClickModal.value = true
+    showMessagePopup.value = true
+    return false
+  }
   batteryVoltageType.value = carState.value.batteryVoltageType || 48 // 默认48V
   showBatPopup.value = true
 }
@@ -647,6 +653,20 @@ async function controlByBluetooth(commandType: CommandType) {
 
 // 4g控车指令
 function controlBike(commandType: string) {
+  // ✅ 判断是否需要开通会员才能使用远程开关车锁
+  if (!userStore.isMemberVip && ['lock', 'unlock'].includes(commandType)) {
+    title.value = '开通超级会员'
+    messageContent.value = '远程开关车锁'
+    confirmText.value = '去开通'
+    messageId.value = 3
+    duration.value = 0
+    showCancelBtn.value = false
+    showConfirmBtn.value = true
+    closeOnClickModal.value = true
+    showMessagePopup.value = true
+    return false
+  }
+
   // ✅ 清除旧定时器
   if (getCarInfoTimer) {
     clearTimeout(getCarInfoTimer)
@@ -1197,27 +1217,16 @@ function goLogin() {
   })
 }
 function goDetail(data: { latitude: number, longitude: number, status: any }) {
-  if (!userStore.isLoggedIn) {
-    uni.showToast({
-      title: '请先登录',
-      icon: 'none',
-      mask: true,
+  if (!userStore.isLoggedIn || !selectCarId.value) {
+    return
+  }
+
+  if (!userStore.isMemberVip) {
+    uni.navigateTo({
+      url: '/pages-network/smart-service/index',
     })
     return
   }
-  if (!selectCarId.value) {
-    uni.showToast({
-      title: '请先选择车辆',
-      icon: 'none',
-      mask: true,
-    })
-    return false
-  }
-  // 会员检测，先写死，后面再改
-  // if (true) {
-  //   console.log('去开通')
-  //   return false
-  // }
   uni.navigateTo({
     url: `/pages-car/location/index?latitude=${data.latitude}&longitude=${data?.longitude}&ridingStatus=${data.status}`,
   })
@@ -1233,19 +1242,18 @@ function goNotice() {
     return
   }
 
-  // 没有开会员提示弹窗,先写死，后面再改
-  // if (true) {
-  //   title.value = '开通超级会员'
-  //   messageContent.value = '告警信息实时推送'
-  //   confirmText.value = '去开通'
-  //   messageId.value = 2
-  //   duration.value = 0
-  //   showCancelBtn.value = false
-  //   showConfirmBtn.value = true
-  //   closeOnClickModal.value = true
-  //   showMessagePopup.value = true
-  //   return false
-  // }
+  if (!userStore.isMemberVip) {
+    title.value = '开通超级会员'
+    messageContent.value = '告警信息实时推送'
+    confirmText.value = '去开通'
+    messageId.value = 2
+    duration.value = 0
+    showCancelBtn.value = false
+    showConfirmBtn.value = true
+    closeOnClickModal.value = true
+    showMessagePopup.value = true
+    return false
+  }
   if (carState.value.warnCount === 0) {
     return
   }
@@ -1311,6 +1319,9 @@ function getSliderColorStyle() {
 function getBatteryIcon() {
   if (!userStore.isLoggedIn) {
     return Bat0
+  }
+  if (!userStore.isMemberVip) {
+    return BatNormal
   }
   let level = Number(carState.value.batteryLevel)
   // 异常值处理与边界规整
@@ -1449,12 +1460,12 @@ function toggleLock() {
                 @click="handleShowBatPopup"
               />
               <view class="mt-20rpx text-24rpx text-[#333333]">
-                电池电量
+                {{ userStore.isMemberVip ? '电池电量' : '电池电量未开通' }}
               </view>
             </view>
             <view class="flex flex-col items-center justify-center">
               <view class="relative h-80rpx w-80rpx" @click="goNotice">
-                <template v-if="carState.warnCount > 0">
+                <template v-if="carState.warnCount > 0 && userStore.isMemberVip">
                   <view
                     v-if="carState.warnCount > 9"
                     class="notice-count more absolute right-0 top-0"
@@ -1466,10 +1477,10 @@ function toggleLock() {
                   </view>
                 </template>
 
-                <image class="h-80rpx w-80rpx" :src="WarnInfo" mode="scaleToFill" />
+                <image class="h-80rpx w-80rpx" :src="userStore.isMemberVip ? WarnInfo : WarnInfoNormal" mode="scaleToFill" />
               </view>
               <view class="mt-20rpx text-24rpx text-[#333333]">
-                告警信息
+                {{ userStore.isMemberVip ? '告警信息' : '告警信息未开通' }}
               </view>
             </view>
           </view>
@@ -1606,7 +1617,7 @@ function toggleLock() {
           <!-- 轨迹地图 -->
           <view>
             <HomeMap
-              :is-unactivated="true"
+              :is-member-vip="userStore.isMemberVip"
               :network="carStore.network"
               :info="currentRidingInfo"
               @map-click="goDetail"
@@ -1619,20 +1630,7 @@ function toggleLock() {
       <HomeAdBanner
         item-width="260rpx"
         item-height="180rpx"
-        :list="[
-          {
-            imageUrl: 'https://static.feigeinfo.com/static/home/top-bg.png',
-            link: 'https://www.baidu.com',
-          },
-          {
-            imageUrl: 'https://static.feigeinfo.com/static/home/top-bg.png',
-            link: 'https://www.baidu.com',
-          },
-          {
-            imageUrl: 'https://static.feigeinfo.com/static/home/top-bg.png',
-            link: 'https://www.baidu.com',
-          },
-        ]"
+        :list="adList"
       />
     </view>
   </view>

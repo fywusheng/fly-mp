@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import dayjs from 'dayjs'
+import { httpGet, httpPost } from '@/utils/http'
 import { getImageUrl } from '@/utils/image'
 
 definePage({
@@ -15,27 +16,21 @@ const DateIcon = getImageUrl('/network/date.png')
 
 // 定义表单数据类型
 interface FormData {
-  carName: string
-  deviceCode: string
-  ownerName: string
-  phone: string
-  theftTime: string
+  mobile: string
+  deviceNo: string
+  reporterName: string
+  theftTimeStart: string
+  theftTimeEnd: string
   theftLocation: string
-}
-
-// 定义车辆列表类型
-interface CarItem {
-  label: string
-  value: string
 }
 
 // 表单数据响应式
 const formData = reactive<FormData>({
-  carName: '',
-  deviceCode: '',
-  ownerName: '',
-  phone: '',
-  theftTime: '',
+  mobile: '',
+  deviceNo: '',
+  reporterName: '',
+  theftTimeStart: '',
+  theftTimeEnd: '',
   theftLocation: '',
 })
 
@@ -43,11 +38,9 @@ const formData = reactive<FormData>({
 const carPickerShow = ref(false)
 const carValue = ref('')
 const carPickerValue = ref('')
-const carList = ref([
-  { label: '雅迪电动车-京A12345', value: 'car1' },
-  { label: '爱玛电动车-京B67890', value: 'car2' },
-  { label: '小牛电动车-京C54321', value: 'car3' },
-])
+const carList = ref([])
+const carName = ref('')
+const theftTime = ref('')
 
 // 日期选择器状态
 const calendarShow = ref(false)
@@ -56,12 +49,25 @@ const calendarValue = ref(0)
 // 初始化
 onMounted(() => {
   // formData.theftTime = `${dayjs().format('YYYY-MM-DD HH:mm:ss')} - ${dayjs().format('YYYY-MM-DD HH:mm:ss')}`
+  getCarList()
 })
+
+// 获取车辆列表
+async function getCarList() {
+  const res = await httpGet('/device/vehicle/user/complete')
+  if (res.code === '200') {
+    carList.value = (res.data as any).resultList || []
+  }
+  else {
+    console.log(res)
+  }
+}
 
 // 车辆选择确认
 function onCarConfirm({ selectedItems }) {
-  formData.carName = selectedItems.label
-  carValue.value = selectedItems.value
+  carName.value = selectedItems.vehicleName
+  formData.deviceNo = selectedItems.deviceNo
+  carValue.value = selectedItems.id
   carPickerShow.value = false
 }
 
@@ -69,17 +75,19 @@ function onCarConfirm({ selectedItems }) {
 function onDateConfirm(date) {
   const startDate = new Date(date.value[0])
   const endDate = new Date(date.value[1])
-  formData.theftTime = `${dayjs(startDate).format('YYYY-MM-DD HH:mm:ss')} - ${dayjs(endDate).format('YYYY-MM-DD HH:mm:ss')}`
+  formData.theftTimeStart = dayjs(startDate).format('YYYY-MM-DD HH:mm:ss')
+  formData.theftTimeEnd = dayjs(endDate).format('YYYY-MM-DD HH:mm:ss')
+  theftTime.value = `${formData.theftTimeStart} - ${formData.theftTimeEnd}`
   calendarShow.value = false
 }
 
 // 表单提交验证
-function submitForm() {
+async function submitForm() {
   // 手机号正则验证
   const phoneReg = /^1[3-9]\d{9}$/
 
   // 必填项验证
-  if (!formData.carName) {
+  if (!formData.deviceNo) {
     uni.showToast({
       title: '请选择车辆名称',
       icon: 'none',
@@ -87,7 +95,7 @@ function submitForm() {
     return
   }
 
-  if (!formData.ownerName) {
+  if (!formData.reporterName) {
     uni.showToast({
       title: '请输入车主姓名',
       icon: 'none',
@@ -95,7 +103,7 @@ function submitForm() {
     return
   }
 
-  if (!formData.phone || !phoneReg.test(formData.phone)) {
+  if (!formData.mobile || !phoneReg.test(formData.mobile)) {
     uni.showToast({
       title: '请输入正确的联系电话',
       icon: 'none',
@@ -103,7 +111,7 @@ function submitForm() {
     return
   }
 
-  if (!formData.theftTime) {
+  if (!theftTime.value) {
     uni.showToast({
       title: '请选择失窃时间',
       icon: 'none',
@@ -118,24 +126,19 @@ function submitForm() {
     })
   }
 
-  // 验证通过，模拟提交
-  // 真实项目中替换为接口请求
-  /*
-  fetch('/api/theft-report', {
-    method: 'POST',
-    body: JSON.stringify(formData),
-    headers: {
-      'Content-Type': 'application/json'
-    }
-  }).then(res => res.json()).then(data => {
-    if (data.success) {
-      alert('上报成功！');
-      goBack();
-    } else {
-      alert('上报失败：' + data.message);
-    }
-  });
-  */
+  const res = await httpPost('/device/mini/theft/report', formData)
+  if (res.code === '200') {
+    uni.showToast({
+      title: '上报成功',
+      icon: 'success',
+    })
+  }
+  else {
+    uni.showToast({
+      title: res.message,
+      icon: 'none',
+    })
+  }
 }
 </script>
 
@@ -162,8 +165,8 @@ function submitForm() {
                 v-model="carPickerValue"
                 :columns="carList"
                 use-default-slot
-                label-key="label"
-                value-key="value"
+                label-key="vehicleName"
+                value-key="id"
                 class="w-100%"
                 @confirm="onCarConfirm"
               >
@@ -190,7 +193,7 @@ function submitForm() {
             </div>
             <div class="form-input-wrap">
               <input
-                v-model="formData.deviceCode"
+                v-model="formData.deviceNo"
                 class="form-input"
                 type="text"
                 placeholder="输入设备编码"
@@ -205,7 +208,7 @@ function submitForm() {
             </div>
             <div class="form-input-wrap">
               <input
-                v-model="formData.ownerName"
+                v-model="formData.reporterName"
                 class="form-input"
                 type="text"
                 placeholder="请输入姓名"
@@ -220,7 +223,7 @@ function submitForm() {
             </div>
             <div class="form-input-wrap">
               <input
-                v-model="formData.phone"
+                v-model="formData.mobile"
                 class="form-input"
                 type="tel"
                 placeholder="请输入联系电话"
@@ -241,7 +244,7 @@ function submitForm() {
               >
                 <view class="w-495rpx flex items-center justify-items-end">
                   <input
-                    v-model="formData.theftTime"
+                    v-model="theftTime"
                     class="form-input"
                     type="text"
                     placeholder="请输入年月日、时间段"

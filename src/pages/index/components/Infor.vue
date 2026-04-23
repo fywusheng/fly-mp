@@ -13,6 +13,17 @@ const props = defineProps({
   },
 })
 
+interface IPermission {
+  isOwner: boolean
+  isMember: boolean
+  memberId: number
+  permissionLevel: number
+  canViewLocation: number
+  canViewRideTrack: number
+  canViewHistoryStay: number
+  canViewDriveData: number
+}
+
 const BgIcon = getImageUrl('/infor/bg.png')
 const DataIcon = getImageUrl('/infor/data.png')
 const HistoryIcon = getImageUrl('/infor/history.png')
@@ -58,6 +69,17 @@ const activeCard = ref({
   status: '', // 卡状态 PENDING / ACTIVE / EXPIRED
 })
 
+const permissions = ref<IPermission>({
+  isOwner: false, // 是否车主
+  isMember: false, // 是否成员
+  memberId: 0,
+  permissionLevel: 0,
+  canViewLocation: 0, // 是否可查看车辆位置
+  canViewRideTrack: 0, // 是否可查看骑行记录
+  canViewHistoryStay: 0, // 是否可查看历史停留
+  canViewDriveData: 0, // 是否可查看行驶数据
+})
+
 // 车主服务
 const onwerServices = ref<any[]>([
   {
@@ -74,12 +96,40 @@ const onwerServices = ref<any[]>([
   },
 ])
 
+const adList = ref<any[]>([])
+
 watch(() => props.tabName, (newVal) => {
   if (newVal === 'infor') {
     getRidingInfo(carStore.carInfo.id)
     getAuth()
+    getAdList()
+    getPermission()
   }
 })
+
+// 获取用户查看权限
+async function getPermission() {
+  const vehicleId = carStore.carInfo.id
+
+  const res = await httpGet<IPermission> (`/user/mini/vehicle-share/members/permission/${vehicleId}`)
+  if (res.code === '200') {
+    permissions.value = res.data
+  }
+}
+
+async function getAdList() {
+  try {
+    const res = await httpGet(`/common/advertisement/list`, {
+      adPosition: 'DATA',
+    })
+    if (res.code === '200') {
+      adList.value = res.data as any[]
+    }
+  }
+  catch (err) {
+    console.error('获取广告列表失败', err)
+  }
+}
 
 async function getAuth() {
   const vehicleId = carStore.carInfo.id
@@ -97,7 +147,6 @@ async function getRidingInfo(vehicleId) {
     vehicleId,
   }) as any
   if (res.code === '200') {
-    console.log('获取骑行数据成功:', res.data.dailyStats)
     res.data.dailyStats.totalRidingTime = formatMinutesToTime(res.data.dailyStats.totalRidingTime)
     dailyStats.value = res.data.dailyStats
   }
@@ -119,8 +168,9 @@ function formatMinutesToTime(minutes) {
   return `${formattedHrs}:${formattedMins}:${formattedSecs}`
 }
 
+// 去历史停留
 function goHistory() {
-  if (!checkhasPending()) {
+  if (!checkhasPending('canViewHistoryStay')) {
     return
   }
   uni.navigateTo({
@@ -129,16 +179,16 @@ function goHistory() {
 }
 // 去轨迹
 function goTrace() {
-  if (!checkhasPending()) {
+  if (!checkhasPending('canViewRideTrack')) {
     return
   }
   uni.navigateTo({
     url: '/pages-network/ride-trace/index',
   })
 }
-
+// 去行驶数据
 function goDrive() {
-  if (!checkhasPending()) {
+  if (!checkhasPending('canViewDriveData')) {
     return
   }
   uni.navigateTo({
@@ -146,23 +196,44 @@ function goDrive() {
   })
 }
 
-function checkhasPending() {
-  if (hasPending.value) {
-    messageId.value = 1
-    showCancelBtn.value = true
-    message.value = '您有一张数据服务体验卡待领取'
-    showMessagePopup.value = true
-    return false
-  }
-  else {
-    if (!activeCard.value.effective) {
-      messageId.value = 2
-      showCancelBtn.value = false
-      message.value = '购买VIP服务卡，享受更多畅行体验'
+function checkhasPending(permission: 'canViewLocation' | 'canViewRideTrack' | 'canViewHistoryStay' | 'canViewDriveData') {
+  // 车主的话需要会员
+  if (permissions.value.isOwner) {
+    if (!permissions.value.isMember) {
+      messageId.value = 3
+      showCancelBtn.value = true
+      message.value = '开通会员可查看'
       showMessagePopup.value = true
       return false
     }
   }
+  else {
+    // 成员的话校验对应权限
+    if (!permissions.value[permission]) {
+      messageId.value = 3
+      showCancelBtn.value = true
+      message.value = '开通会员可查看'
+      showMessagePopup.value = true
+      return false
+    }
+  }
+
+  // if (hasPending.value) {
+  //   messageId.value = 1
+  //   showCancelBtn.value = true
+  //   message.value = '您有一张数据服务体验卡待领取'
+  //   showMessagePopup.value = true
+  //   return false
+  // }
+  // else {
+  //   if (!activeCard.value.effective) {
+  //     messageId.value = 2
+  //     showCancelBtn.value = false
+  //     message.value = '购买VIP服务卡，享受更多畅行体验'
+  //     showMessagePopup.value = true
+  //     return false
+  //   }
+  // }
 
   return true
 }
@@ -186,15 +257,22 @@ function getCard() {
     }
   }
 }
+// 提示弹窗确认
 function handleConfirm() {
-  if (messageId.value === 1) {
-    console.log('领取数据服务体验卡')
-    getTrialCard()
+  if (messageId.value === 3) {
+    uni.navigateTo({
+      url: '/pages-network/smart-service/index',
+    })
   }
-  else if (messageId.value === 2) {
-    console.log('去购买数据服务体验卡')
-    showMessagePopup.value = false
-  }
+  showMessagePopup.value = false
+  // if (messageId.value === 1) {
+  //   console.log('领取数据服务体验卡')
+  //   getTrialCard()
+  // }
+  // else if (messageId.value === 2) {
+  //   console.log('去购买数据服务体验卡')
+  //   showMessagePopup.value = false
+  // }
 }
 // 领取数据服务体验卡
 async function getTrialCard() {
@@ -360,48 +438,6 @@ function goService(name: string) {
         mode="scaleToFill"
       />
     </view>
-    <!-- 骑行卡,暂时保留，后期删除 -->
-    <!-- <view class="ml-20rpx mt-20rpx box-border w-710rpx rounded-8rpx bg-white px-20rpx pb-9rpx pt-19rpx">
-      <view class="mb-11rpx text-30rpx text-[#333333] font-bold">
-        车主服务
-      </view>
-      <view class="w-100% flex items-center justify-between">
-        <image
-          class="h-180rpx w-325rpx"
-          :src="DeviceIcon"
-          mode="scaleToFill"
-        />
-        <view class="relative h-180rpx w-325rpx">
-          <image
-            class="absolute left-0 top-0 h-100% w-100%"
-            :src="getBg()"
-            mode="scaleToFill"
-          />
-
-          <view class="relative z-10 box-border h-100% w-100% px-21rpx pt-29rpx">
-            <view v-if="hasPending || !activeCard.effective" class="unclaimed" @click="getCard">
-              {{ hasPending ? '待领取' : '去购买' }}
-            </view>
-            <image
-              v-if="activeCard && activeCard.effective"
-              class="effect"
-              :src="Effect"
-              mode="scaleToFill"
-            />
-            <view class="text-24rpx text-[#ffffff]">
-              {{ getCardTitle() }}
-            </view>
-            <view class="mb-10rpx mt-6rpx h-4rpx w-60rpx bg-[#ffffff]" />
-            <view class="mb-9rpx text-18rpx text-[#275C4E]">
-              可查询骑行轨迹/停车位置/行驶数据 全国可用
-            </view>
-            <view v-if=" activeCard && activeCard.effective" class="h-24rpx w-180rpx flex items-center justify-center rounded-20rpx bg-[#2CBC7B] text-14rpx text-[#ffffff]">
-              有效期至{{ activeCard.expireDate || '' }}
-            </view>
-          </view>
-        </view>
-      </view>
-    </view> -->
 
     <!-- 车主服务 -->
     <view class="ml-20rpx mt-20rpx box-border w-710rpx rounded-8rpx bg-white px-20rpx pb-9rpx pt-19rpx">
@@ -425,12 +461,7 @@ function goService(name: string) {
       item-width="345rpx"
       item-height="190rpx"
       :columns="2"
-      :list="[
-        { imageUrl: 'https://static.feigeinfo.com/static/home/top-bg.png', link: 'https://www.baidu.com' },
-        { imageUrl: 'https://static.feigeinfo.com/static/home/top-bg.png', link: 'https://www.baidu.com' },
-        { imageUrl: 'https://static.feigeinfo.com/static/home/top-bg.png', link: 'https://www.baidu.com' },
-        { imageUrl: 'https://static.feigeinfo.com/static/home/top-bg.png', link: 'https://www.baidu.com' },
-      ]"
+      :list="adList"
     />
 
     <!-- 操作提示弹窗 -->

@@ -24,6 +24,9 @@ const userInfoState: IUserInfoVo = {
   status: 1,
   userType: 0,
   defaultVehicleId: 0,
+  memberLevel: 'NORMAL', // NORMAL / SVIP
+  serviceExpireTime: '',
+  points: 0,
 }
 
 export const useUserStore = defineStore(
@@ -31,8 +34,18 @@ export const useUserStore = defineStore(
   () => {
     // 定义用户信息
     const userInfo = ref<IUserInfoVo>({ ...userInfoState })
-    // 计算属性
+
+    // 是否登录
     const isLoggedIn = computed(() => Boolean(userInfo.value.token && userInfo.value.userId))
+    // 是否vip会员
+    const isMemberVip = computed(() => {
+      const memberLevel = userInfo.value.memberLevel
+      if (!memberLevel) {
+        return false
+      }
+
+      return userInfo.value.memberLevel === 'SVIP'
+    })
 
     // 设置用户信息
     const setUserInfo = (val: IUserInfoVo) => {
@@ -139,6 +152,7 @@ export const useUserStore = defineStore(
 
       //  计算属性
       isLoggedIn,
+      isMemberVip,
 
       // 方法
       login,

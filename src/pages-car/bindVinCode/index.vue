@@ -12,9 +12,9 @@ definePage({
 const ScanDescIcon = getImageUrl('/car/vin-code-icon.png')
 const ScanIcon = getImageUrl('/car/scan.png')
 
-const vinCode = ref('')
-const productCode = ref('')
-const carNumber = ref('')
+const vin = ref('')
+const certificateUrl = ref('')
+const plateNumber = ref('')
 
 const name = ref('')
 const brand = ref('')
@@ -38,8 +38,8 @@ function onScanClick() {
       // 产品电子合格证：显示扫码解析的字符床，即电子合格证下载路径
       // 车牌号：非必填
       const url = res.result
-      vinCode.value = getVinCode(url)
-      productCode.value = url
+      vin.value = getVinCode(url)
+      certificateUrl.value = url
     },
     fail: (err) => {
       console.log(err)
@@ -58,7 +58,7 @@ function getVinCode(url: string) {
 }
 
 function onSubmitClick() {
-  if (!vinCode.value) {
+  if (!vin.value) {
     uni.showToast({
       title: '请填写完整信息',
       icon: 'none',
@@ -76,9 +76,9 @@ function onSubmitClick() {
         brand: brand.value,
         colorCode: colorCode.value,
         code: code.value,
-        vinCode: vinCode.value,
-        productCode: productCode.value,
-        carNumber: carNumber.value,
+        vin: vin.value,
+        certificateUrl: certificateUrl.value,
+        plateNumber: plateNumber.value,
       })
     },
 
@@ -105,9 +105,9 @@ function onSubmitClick() {
     <view class="mt-60rpx w-711rpx">
       <view class="mt-8rpx overflow-hidden rounded-10rpx">
         <wd-cell-group border>
-          <wd-input v-model="vinCode" required label-width="30%" type="text" label="车架号" placeholder="输入电动车产品合格证上的整车编码 " />
-          <wd-input v-model="productCode" label-width="30%" type="text" label="产品电子合格证" placeholder="" :readonly="true" />
-          <wd-input v-model="carNumber" label-width="30%" type="text" label="车牌号" placeholder="" :readonly="true" />
+          <wd-input v-model="vin" required label-width="30%" type="text" label="车架号" placeholder="输入电动车产品合格证上的整车编码 " />
+          <wd-input v-model="certificateUrl" label-width="30%" type="text" label="产品电子合格证" placeholder="" :readonly="true" />
+          <wd-input v-model="plateNumber" label-width="30%" type="text" label="车牌号" placeholder="" />
         </wd-cell-group>
       </view>
     </view>

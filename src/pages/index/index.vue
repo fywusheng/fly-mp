@@ -74,7 +74,12 @@ const BluetoothTabbarItems: TabbarItem[] = [
     icon: getImageUrl('/tabbar/home.png'),
     activeIcon: getImageUrl('/tabbar/home-active.png'),
   },
-
+  {
+    name: 'find',
+    title: '发现',
+    icon: getImageUrl('/tabbar/find.png'),
+    activeIcon: getImageUrl('/tabbar/find-active.png'),
+  },
   {
     name: 'inforBlue',
     title: '数据',
@@ -122,17 +127,17 @@ function setTabItems(network) {
 </script>
 
 <template>
-  <view class="bg-white">
+  <view class="h-100vh flex flex-col bg-white">
     <!-- 协议弹窗 -->
     <privacyPopup />
-
     <!-- 内容区 -->
-    <Home v-show="tabbar === 'home'" :tab-name="tabbar" />
-    <Find v-show="tabbar === 'find'" :tab-name="tabbar" />
-    <Infor v-show="tabbar === 'infor'" :tab-name="tabbar" />
-    <InforBlue v-show="tabbar === 'inforBlue'" :tab-name="tabbar" />
-    <Mine v-if="tabbar === 'mine'" />
-
+    <view class="flex-1 overflow-y-auto">
+      <Home v-show="tabbar === 'home'" :tab-name="tabbar" />
+      <Find v-show="tabbar === 'find'" :tab-name="tabbar" />
+      <Infor v-show="tabbar === 'infor'" :tab-name="tabbar" />
+      <InforBlue v-show="tabbar === 'inforBlue'" :tab-name="tabbar" />
+      <Mine v-show="tabbar === 'mine'" :tab-name="tabbar" />
+    </view>
     <!-- 底部导航栏 -->
     <wd-tabbar v-model="tabbar" placeholder safe-area-inset-bottom fixed>
       <wd-tabbar-item

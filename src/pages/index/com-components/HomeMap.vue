@@ -5,7 +5,7 @@ import { getImageUrl } from '@/utils/image'
 const props = defineProps<{
   network: boolean // 是否是4g设备
   info: any // 位置信息
-  isUnactivated?: boolean // 是否未开通状态
+  isMemberVip?: boolean // 是否是会员
 }>()
 
 const emit = defineEmits<{
@@ -70,6 +70,15 @@ watch(() => [props.network, props.info], () => {
 
 function updateMap() {
   if (!userStore.isLoggedIn || !hasLocation.value) {
+    location.value = DEFAULT_LOCATION
+    markers.value = []
+    setTimeout(() => {
+      showMap.value = true
+    }, 300)
+    return false
+  }
+
+  if (!props.isMemberVip) {
     location.value = DEFAULT_LOCATION
     markers.value = []
     setTimeout(() => {
@@ -147,7 +156,7 @@ function clickMap() {
       @tap="clickMap"
     />
     <!-- 未开通蒙层 -->
-    <view v-if="isUnactivated" class="unactivated-overlay" @tap="clickMap">
+    <view v-if="!isMemberVip" class="unactivated-overlay" @tap="clickMap">
       <view class="unactivated-content">
         <text class="unactivated-text">
           未开通

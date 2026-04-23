@@ -747,10 +747,9 @@ function loadMoreRidingRecords() {
 
 <style lang="scss" scoped>
 .infor {
-  min-height: calc(100vh - 88rpx);
+  min-height: 100%;
   background: #F2F4F6;
   position: relative;
-  padding-bottom: 88rpx;
   .car-label {
     position: absolute;
     bottom: 0;

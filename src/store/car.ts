@@ -15,6 +15,7 @@ interface ICarInfoVo {
   deviceType: number | null
   bluetoothDeviceName: string | null
   bluetoothDeviceKey: string | null
+  ownerType: number
 }
 
 // 初始化状态
@@ -23,6 +24,8 @@ const userInfoState: ICarInfoVo = {
   network: true,
   deviceNo: '',
   id: 0,
+  // 1 车主 2成员
+  ownerType: 1,
 
   // 蓝牙设备编号
   bluetoothDeviceNo: null,

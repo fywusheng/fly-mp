@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+import { ref } from 'vue'
+import { httpGet, httpPost } from '@/utils/http'
 import { getImageUrl } from '@/utils/image'
 
 defineOptions({
@@ -15,35 +17,84 @@ definePage({
   },
 })
 
-// 消息数据（写死）
-const currentMessages = [
-  {
-    id: 1,
-    title: '系统升级通知',
-    content: '尊敬的用户，系统将于今晚22:00进行升级维护，预计持续2小时，届时部分功能将暂时无法使用，感谢您的理解与支持。',
-    time: '2024-01-15 10:30',
-    isRead: false,
-  },
-  {
-    id: 2,
-    title: '账号安全提醒',
-    content: '您的账号在新设备上登录，如非本人操作，请及时修改密码。',
-    time: '2024-01-14 15:20',
-    isRead: true,
-  },
-  {
-    id: 3,
-    title: '隐私政策更新',
-    content: '我们更新了隐私政策，请阅读并确认您的偏好设置。',
-    time: '2024-01-13 09:00',
-    isRead: true,
-  },
-]
+const currentMessages = ref<any[]>([])
+const pageNum = ref(1)
+const pageSize = ref(20)
+const total = ref(0)
+const loadmoreState = ref<'loading' | 'finished' | 'error'>('loading') // loading, finished, error
+
+async function loadData(reset = false) {
+  if (reset) {
+    pageNum.value = 1
+    currentMessages.value = []
+    loadmoreState.value = 'loading'
+  }
+
+  if (loadmoreState.value === 'finished' && !reset)
+    return
+
+  try {
+    loadmoreState.value = 'loading'
+    const res = await httpGet('/user/mini/message/list', {
+      pageNum: pageNum.value,
+      pageSize: pageSize.value,
+    })
+
+    if (res.code === '200') {
+      const records = res.data?.records || []
+      total.value = res.data?.total || 0
+
+      if (reset) {
+        currentMessages.value = records
+      }
+      else {
+        currentMessages.value = [...currentMessages.value, ...records]
+      }
+
+      if (currentMessages.value.length >= total.value || records.length < pageSize.value) {
+        loadmoreState.value = 'finished'
+      }
+      else {
+        loadmoreState.value = 'loading'
+      }
+    }
+    else {
+      loadmoreState.value = 'error'
+    }
+  }
+  catch (err) {
+    console.error(err)
+    loadmoreState.value = 'error'
+  }
+}
+
+onLoad(() => {
+  loadData(true)
+})
+
+onReachBottom(() => {
+  if (loadmoreState.value === 'finished')
+    return
+  pageNum.value += 1
+  loadData()
+})
 
 // 点击消息
-function onMessageClick(message) {
+async function onMessageClick(message: any) {
+  if (message.readStatus === 0) {
+    try {
+      const res = await httpPost(`/user/mini/message/read/${message.id}`)
+      if (res.code === '200' || res.data === true) {
+        message.readStatus = 1
+      }
+    }
+    catch (e) {
+      console.error('标记已读失败', e)
+    }
+  }
+
   uni.navigateTo({
-    url: `/pages-mine/message/index?message=${JSON.stringify(message)}`,
+    url: `/pages-mine/message/index?message=${encodeURIComponent(JSON.stringify(message))}`,
   })
 }
 </script>
@@ -66,7 +117,7 @@ function onMessageClick(message) {
               mode="scaleToFill"
             />
             <!-- 未读红点 -->
-            <view v-if="!message.isRead" class="unread-badge" />
+            <view v-if="message.readStatus === 0" class="unread-badge" />
           </view>
           <view class="message-content">
             <view class="message-header">
@@ -74,7 +125,7 @@ function onMessageClick(message) {
                 {{ message.title }}
               </text>
               <text class="message-time">
-                {{ message.time }}
+                {{ message.createTime }}
               </text>
             </view>
             <text class="message-desc">
@@ -84,7 +135,7 @@ function onMessageClick(message) {
         </view>
       </view>
       <!-- 加载更多 -->
-      <wd-loadmore custom-class="loadmore" state="loading" />
+      <wd-loadmore custom-class="loadmore" :state="loadmoreState" @reload="loadData" />
     </view>
 
     <!-- 空白 -->

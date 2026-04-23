@@ -13,11 +13,14 @@ definePage({
 
 const ScanIcon = getImageUrl('/mine/scan-icon.png')
 
-const name = ref('')
-const brand = ref('飞鸽')
-const colorCode = ref('')
-const vinCode = ref('') // 车架号
-const plateNumber = ref('') // 车牌号
+const formData = reactive({
+  name: '',
+  brand: '',
+  colorCode: '',
+  vin: '', // 车架号
+  plateNumber: '', // 车牌号
+  certificateUrl: '', // 产品电子合格证
+})
 
 let carInfo = {} // 车辆信息
 
@@ -29,7 +32,7 @@ interface Column {
 const columns = ref<Column[]>([]) // 颜色列表
 
 const color = computed(() => {
-  const found = columns.value.find(item => item.dictCode === colorCode.value)
+  const found = columns.value.find(item => item.dictCode === formData.colorCode)
   return found ? found.dictName : ''
 })
 
@@ -45,9 +48,12 @@ onMounted(() => {
     eventChannel.on('editCar', (info: any) => {
       console.log('接收到的车辆信息:', info)
       carInfo = info
-      name.value = info.vehicleName || ''
-      brand.value = info.brand || '飞鸽'
-      colorCode.value = info.colorCode || ''
+      formData.name = info.vehicleName || ''
+      formData.brand = info.brand || ''
+      formData.colorCode = info.colorCode || ''
+      formData.certificateUrl = info.certificateUrl || ''
+      formData.vin = info.vin || ''
+      formData.plateNumber = info.plateNumber || ''
     })
   }
 })
@@ -65,11 +71,11 @@ function getCarColor() {
 
 function onConfirm({ value, selectedItems }) {
   console.log('选中的车辆颜色:', value, selectedItems)
-  colorCode.value = selectedItems.dictCode
+  formData.colorCode = selectedItems.dictCode
 }
 
 async function onSubmitClick() {
-  if (!name.value || !colorCode.value) {
+  if (!formData.name || !formData.colorCode || !formData.vin) {
     uni.showToast({
       title: '请填写完整信息',
       icon: 'none',
@@ -80,9 +86,12 @@ async function onSubmitClick() {
   // 更新车辆信息
   const res = await httpPost('/device/vehicle/update', {
     ...carInfo,
-    vehicleName: name.value,
-    brand: brand.value,
-    colorCode: colorCode.value,
+    vehicleName: formData.name,
+    brand: formData.brand,
+    colorCode: formData.colorCode,
+    vin: formData.vin,
+    plateNumber: formData.plateNumber,
+    certificateUrl: formData.certificateUrl,
   })
 
   if (res.code === '200') {
@@ -110,12 +119,18 @@ function onVinClick() {
     onlyFromCamera: true,
     success: (res) => {
       console.log('扫描结果:', res)
-      vinCode.value = res.result
+      formData.vin = getVinCode(res.result)
+      formData.certificateUrl = res.result
     },
     fail: (err) => {
       console.log('扫描失败:', err)
     },
   })
+}
+function getVinCode(url: string) {
+  const regex = /vinCode=([A-Za-z0-9]+)/
+  const match = url.match(regex)
+  return match ? match[1] : ''
 }
 </script>
 
@@ -123,22 +138,22 @@ function onVinClick() {
   <view class="bind-car">
     <image
       class="mt-30rpx h-465rpx w-663rpx"
-      :src="getColorImg(colorCode, 'bindCar')"
+      :src="getColorImg(formData.colorCode, 'bindCar')"
       mode="scaleToFill"
     />
 
-    <view class="runded-[10rpx] mt-20rpx w-711rpx overflow-hidden">
+    <view class="mt-20rpx w-711rpx overflow-hidden rounded-10rpx">
       <view>
         <wd-cell-group border title="车辆信息">
           <wd-input
-            v-model="name"
+            v-model="formData.name"
             label-width="30%"
             type="text"
             label="车辆名字"
             placeholder="请输入车辆名称"
           />
           <wd-input
-            v-model="brand"
+            v-model="formData.brand"
             label-width="30%"
             type="text"
             label="品牌"
@@ -153,7 +168,7 @@ function onVinClick() {
             </template>
 
             <wd-picker
-              v-model="colorCode"
+              v-model="formData.colorCode"
               :columns="columns"
               use-default-slot
               value-key="dictCode"
@@ -172,7 +187,7 @@ function onVinClick() {
             </wd-picker>
           </wd-cell>
 
-          <wd-input v-model="vinCode" type="text" label="车架号" placeholder="请输入车架号">
+          <wd-input v-model="formData.vin" type="text" label="车架号" placeholder="请输入车架号" :required="true">
             <template #suffix>
               <image
                 class="ml-10rpx h-31rpx w-31rpx"
@@ -184,7 +199,7 @@ function onVinClick() {
           </wd-input>
 
           <wd-input
-            v-model="plateNumber"
+            v-model="formData.plateNumber"
             label-width="30%"
             type="text"
             label="车牌号"
