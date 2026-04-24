@@ -162,6 +162,7 @@ export const useUserStore = defineStore(
       logout,
       updateInfo,
       refreshToken,
+      removeUserInfo,
     }
   },
   {

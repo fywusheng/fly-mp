@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { resetAuthExpiredRedirect } from '@/interceptors/request'
 import { useUserStore } from '@/store'
 import { getImageUrl } from '@/utils/image'
 
@@ -16,42 +17,56 @@ definePage({
 
 const userStore = useUserStore()
 const loading = ref(false)
+const redirectUrl = ref('')
 const CursorIcon = getImageUrl('/login/cursor.png')
 const LogoIcon = getImageUrl('/login/logo.png')
 const ParticleIcon = getImageUrl('/login/particle.png')
 
+onLoad((options) => {
+  redirectUrl.value = options?.redirect ? decodeURIComponent(String(options.redirect)) : ''
+})
+
 async function onGetPhoneNumber(e: any) {
-  // 处理获取到的手机号
+  if (loading.value) {
+    return
+  }
+
+  if (e.errMsg !== 'getPhoneNumber:ok') {
+    console.log('用户拒绝授权')
+    return
+  }
 
   loading.value = true
-  if (e.errMsg === 'getPhoneNumber:ok') {
-    // 登录
+  try {
     const res = await userStore.wxLogin({ phoneCode: e.code })
-    if (res.code === '200') {
-      // 登录成功
-      uni.showToast({
-        title: '登录成功',
-        icon: 'success',
-        duration: 500,
-      })
-      setTimeout(() => {
-        uni.reLaunch({ url: '/pages/index/index' })
-      }, 500)
-    }
-    else {
-      // 登录失败
+    if (res.code !== '200') {
       uni.showToast({
         title: res.message || '登录失败',
         duration: 2000,
         icon: 'none',
       })
+      return
     }
+
+    resetAuthExpiredRedirect()
+    uni.showToast({
+      title: '登录成功',
+      icon: 'success',
+      duration: 500,
+    })
+    setTimeout(() => {
+      const targetUrl = redirectUrl.value || '/pages/index/index'
+      if (targetUrl === '/pages/index/index') {
+        uni.reLaunch({ url: targetUrl })
+      }
+      else {
+        uni.redirectTo({ url: targetUrl })
+      }
+    }, 500)
   }
-  else {
-    // 用户拒绝授权
-    console.log('用户拒绝授权')
+  finally {
+    loading.value = false
   }
-  loading.value = false
 }
 
 function onCancel() {

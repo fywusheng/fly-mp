@@ -117,7 +117,7 @@ async function getUnreadMessageCount() {
 function handleListItemClick(item) {
   if (!userStore.userInfo.token) {
     uni.navigateTo({
-      url: '/pages/login/login',
+      url: '/pages/login/index',
     })
     return
   }

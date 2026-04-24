@@ -1213,7 +1213,7 @@ function onTouchEnd(event) {
 
 function goLogin() {
   uni.navigateTo({
-    url: '/pages/login/login',
+    url: '/pages/login/index',
   })
 }
 function goDetail(data: { latitude: number, longitude: number, status: any }) {

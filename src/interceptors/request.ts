@@ -11,6 +11,44 @@ export type CustomRequestOptions = UniApp.RequestOptions & {
 
 // 请求基准地址
 const baseUrl = getEnvBaseUrl()
+const loginRoute = import.meta.env.VITE_LOGIN_URL
+let isHandlingAuthExpired = false
+
+export function resetAuthExpiredRedirect() {
+  isHandlingAuthExpired = false
+}
+
+function handleAuthExpired() {
+  if (isHandlingAuthExpired) {
+    return
+  }
+
+  isHandlingAuthExpired = true
+  const userStore = useUserStore()
+  userStore.removeUserInfo()
+
+  const pages = getCurrentPages()
+  const currentPage = pages[pages.length - 1]
+  const currentPath = currentPage?.route ? `/${currentPage.route}` : '/pages/index/index'
+  if (currentPath === loginRoute) {
+    return
+  }
+
+  const currentOptions = (currentPage as any)?.options || {}
+  const queryString = stringifyQuery(currentOptions)
+  const redirect = queryString ? `${currentPath}?${queryString}` : currentPath
+
+  uni.showToast({
+    title: '登录已过期，请重新登录',
+    icon: 'none',
+  })
+
+  setTimeout(() => {
+    uni.redirectTo({
+      url: `${loginRoute}?redirect=${encodeURIComponent(redirect)}`,
+    })
+  }, 800)
+}
 
 // 拦截器配置
 const httpInterceptor = {
@@ -69,15 +107,9 @@ const httpInterceptor = {
       console.log('Token已自动续期')
       userStore.refreshToken(newToken)
     }
-    if (response?.data?.code === '10001') {
-      uni.showToast({
-        title: '登录已过期，请重新登录',
-        icon: 'none',
-      })
-      // 延迟跳转
-      setTimeout(() => {
-        uni.navigateTo({ url: '/pages/login/login' })
-      }, 800)
+    const responseData = response.data as IResData<unknown>
+    if (response.statusCode === 401 || responseData?.code === '10001') {
+      handleAuthExpired()
     }
     return response
   },
