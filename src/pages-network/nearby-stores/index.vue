@@ -35,7 +35,7 @@ interface PickerItem {
 }
 
 const selectedCityValue = ref<string>('')
-const selectedCity = ref('天津市')
+const selectedCity = ref('')
 const cityColumns = ref<[PickerItem[], PickerItem[]]>([[], []])
 const longitude = ref<number>(0)
 const latitude = ref<number>(0)
