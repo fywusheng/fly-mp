@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { getLocation } from '@/utils'
+import { httpGet } from '@/utils/http'
 import { getImageUrl } from '@/utils/image'
 
 definePage({
@@ -11,10 +13,12 @@ definePage({
   type: 'home',
 })
 
-const CarIcon = getImageUrl('/network/car.png')
-const WeixinPayIcon = getImageUrl('/network/weixin-pay.png')
-const MemberIcon = getImageUrl('/network/member.png')
-const MemberNoIcon = getImageUrl('/network/member-none.png')
+interface LocationInfo {
+  provinceCode: string
+  provinceName: string
+  cityCode: string
+  cityName: string
+}
 
 const NearbyArrowIcon = getImageUrl('/network/nearby-arrow.png')
 const NearbyLocationBlankIcon = getImageUrl('/network/nearby-location-blank.png')
@@ -25,98 +29,219 @@ const SaleExperienceIcon = getImageUrl('/network/sale-experience.png')
 const MaintenanceRepairIcon = getImageUrl('/network/maintenance-repair.png')
 
 // 城市选择器相关
+interface PickerItem {
+  label: string
+  value: string
+}
+
 const selectedCityValue = ref<string>('')
 const selectedCity = ref('天津市')
-const cityColumns = [
-  { label: '北京市', value: 'beijing' },
-  { label: '天津市', value: 'tianjin' },
-  { label: '上海市', value: 'shanghai' },
-  { label: '广州市', value: 'guangzhou' },
-  { label: '深圳市', value: 'shenzhen' },
-]
+const cityColumns = ref<[PickerItem[], PickerItem[]]>([[], []])
+const longitude = ref<number>(0)
+const latitude = ref<number>(0)
+const isLoadingData = ref(false)
 
-function openCityPicker() {
-  uni.showToast({ title: '请选择城市', icon: 'none' })
-}
-
-function handleCityConfirm({ selectedItem }: { selectedItem: Array<{ label: string, value: string }> }) {
-  if (selectedItem && selectedItem.length > 0) {
-    selectedCity.value = selectedItem[0].label
-    selectedCityValue.value = selectedItem[0].value
+async function getProvinceList() {
+  try {
+    const res = await httpGet<{ provinceName: string, provinceCode: string }[]>('/common/store/provinces')
+    console.log('获取省份列表成功:', res)
+    if (res.code === '200') {
+      cityColumns.value[0] = res.data.map(item => ({
+        label: item.provinceName,
+        value: item.provinceCode,
+      }))
+    }
+  }
+  catch (error) {
+    console.error('获取省份列表失败:', error)
   }
 }
 
-// 定义门店类型接口
+async function fetchCityList(provinceCode: string): Promise<PickerItem[]> {
+  try {
+    const res = await httpGet<{ cityName: string, cityCode: string }[]>('/common/store/cities', { provinceCode })
+    console.log('获取城市列表成功:', res)
+    if (res.code === '200') {
+      return res.data.map(item => ({
+        label: item.cityName,
+        value: item.cityCode,
+      }))
+    }
+    return []
+  }
+  catch (error) {
+    console.error('获取城市列表失败:', error)
+    return []
+  }
+}
+
+async function onChangeCity(pickerView: any, value: PickerItem[], columnIndex: number, resolve: () => void) {
+  if (columnIndex === 0) {
+    try {
+      const cities = await fetchCityList(value[0].value)
+      pickerView.setColumnData(1, cities)
+    }
+    catch {
+      pickerView.setColumnData(1, [])
+    }
+  }
+  resolve()
+}
+
+// 获取位置信息
+async function getCurrentLocation() {
+  try {
+    const res = await getLocation() as UniApp.GetLocationSuccess
+    console.log('获取位置信息成功:', res)
+    longitude.value = res.longitude
+    latitude.value = res.latitude
+    getLocationInfo(res.longitude, res.latitude)
+  }
+  catch (error) {
+    console.error('获取位置失败:', error)
+    uni.showToast({ title: '定位失败，将显示全部门店', icon: 'none' })
+    selectedCity.value = '全国'
+    selectedCityValue.value = ''
+    await getProvinceList()
+    loadStoreData(true)
+  }
+}
+
+async function getLocationInfo(longitude: number, latitude: number) {
+  try {
+    const res = await httpGet<LocationInfo>('/common/store/locate', { longitude, latitude })
+    console.log('获取位置信息成功:', res)
+    selectedCity.value = res.data.cityName
+    selectedCityValue.value = res.data.cityCode
+
+    await getProvinceList()
+    const cities = await fetchCityList(res.data.provinceCode)
+    cityColumns.value[1] = cities
+
+    loadStoreData(true)
+  }
+  catch (error) {
+    console.error('获取位置信息失败:', error)
+    uni.showToast({ title: '定位失败，将显示全部门店', icon: 'none' })
+    selectedCity.value = '全国'
+    selectedCityValue.value = ''
+    await getProvinceList()
+    loadStoreData(true)
+  }
+}
+
+function handleCityConfirm({ selectedItems }: { selectedItems: PickerItem[] }) {
+  if (selectedItems && selectedItems.length > 0) {
+    selectedCity.value = selectedItems[0].label
+    selectedCityValue.value = selectedItems[0].value
+
+    loadStoreData(true)
+  }
+}
+
+// 门店列表 API 类型
 interface StoreItem {
-  name: string
-  distance: string
-  address: string
-  tags: Array<'sale' | 'maintain'> // 限定标签只能是sale/maintain
-  phone: string
-  recommend: boolean
+  id: number
+  storeName: string
+  fullAddress: string
+  contactPhone: string
+  businessStatus: number
+  businessStatusDesc: string
+  distance: number
+  distanceDesc: string
+  services: string[]
+  longitude: number
+  latitude: number
 }
 
-// 定义标签类型
+interface StoreResponse {
+  total: number
+  pageNum: number
+  pageSize: number
+  list: StoreItem[]
+}
+
+// 门店列表响应式数据
+const storeList = ref<StoreItem[]>([])
+const pageNum = ref(1)
+const pageSize = ref(20)
+const total = ref(0)
+const loadmoreState = ref<'loading' | 'finished' | 'error'>('loading')
+
 type TabType = 'sale' | 'maintain'
+const activeTab = ref<TabType>('sale')
 
-// 响应式数据
-const activeTab = ref<TabType>('sale') // 当前选中的标签
-
-// 完整门店数据（带类型约束）
-const storeList = ref<StoreItem[]>([
-  {
-    name: '五马路店',
-    distance: '563m',
-    address: '天津市南开区南开五马路花园楼6号一楼底商',
-    tags: ['sale'], // 仅体验销售
-    phone: '13800138000',
-    recommend: false,
-  },
-  {
-    name: '多伦道店',
-    distance: '1.4km',
-    address: '天津市和平区多伦道124-126',
-    tags: ['sale'], // 仅体验销售
-    phone: '13800138001',
-    recommend: true,
-  },
-  {
-    name: '大王庄店',
-    distance: '3.4km',
-    address: '天津市河东区大王庄街道九经路冠华公寓1号楼',
-    tags: ['sale', 'maintain'], // 两者都有
-    phone: '13800138002',
-    recommend: false,
-  },
-  {
-    name: '榆关道店',
-    distance: '5.6km',
-    address: '天津市河北区榆关道447号小牛电动',
-    tags: ['sale', 'maintain'], // 两者都有
-    phone: '13800138003',
-    recommend: false,
-  },
-  {
-    name: '维修专享店',
-    distance: '2.8km',
-    address: '天津市河西区解放南路188号',
-    tags: ['maintain'], // 仅维修保养
-    phone: '13800138004',
-    recommend: false,
-  },
-])
-
-// 计算属性：根据选中的标签筛选门店
-const filteredStoreList = computed<StoreItem[]>(() => {
-  if (activeTab.value === 'sale') {
-    // 体验销售：筛选包含sale标签的门店
-    return storeList.value.filter(store => store.tags.includes('sale'))
+async function loadStoreData(reset = false) {
+  if (reset) {
+    pageNum.value = 1
+    storeList.value = []
+    loadmoreState.value = 'loading'
   }
-  else if (activeTab.value === 'maintain') {
-    // 维修保养：筛选包含maintain标签的门店
-    return storeList.value.filter(store => store.tags.includes('maintain'))
+
+  if (loadmoreState.value === 'finished' && !reset)
+    return
+
+  try {
+    loadmoreState.value = 'loading'
+    isLoadingData.value = true
+    const params: Record<string, any> = {
+      pageNum: pageNum.value,
+      pageSize: pageSize.value,
+      latitude: latitude.value,
+      longitude: longitude.value,
+    }
+    if (selectedCityValue.value) {
+      params.cityCode = selectedCityValue.value
+    }
+    if (activeTab.value === 'sale') {
+      params.category = '体验销售'
+    }
+    else if (activeTab.value === 'maintain') {
+      params.category = '维修保养'
+    }
+
+    const res = await httpGet<StoreResponse>('/common/store/list', params)
+
+    if (res.code === '200') {
+      const records = res.data?.list || []
+      total.value = res.data?.total || 0
+
+      if (reset) {
+        storeList.value = records
+      }
+      else {
+        storeList.value = [...storeList.value, ...records]
+      }
+
+      if (storeList.value.length >= total.value || records.length < pageSize.value) {
+        loadmoreState.value = 'finished'
+      }
+      else {
+        loadmoreState.value = 'loading'
+      }
+    }
+    else {
+      loadmoreState.value = 'error'
+    }
   }
-  return storeList.value
+  catch (err) {
+    console.error('获取门店列表失败', err)
+    loadmoreState.value = 'error'
+  }
+  finally {
+    isLoadingData.value = false
+  }
+}
+
+onMounted(() => {
+  getCurrentLocation()
+})
+
+onReachBottom(() => {
+  if (loadmoreState.value === 'finished')
+    return
+  pageNum.value += 1
+  loadStoreData()
 })
 
 // 切换标签方法
@@ -127,6 +252,7 @@ function switchTab(tabType: TabType) {
     scrollTop: 0,
     duration: 300,
   })
+  loadStoreData(true)
 }
 
 // 拨打电话
@@ -140,11 +266,15 @@ function callPhone(phone: string) {
 }
 
 // 导航到店
-function navigateToStore(address: string) {
+function navigateToStore(store: StoreItem) {
   uni.openLocation({
-    latitude: 39.9042,
-    longitude: 116.4074,
-    address,
+    latitude: store.latitude,
+    longitude: store.longitude,
+    address: store.fullAddress,
+    name: store.storeName,
+    fail: () => {
+      uni.showToast({ title: '打开地图失败', icon: 'none' })
+    },
   })
 }
 </script>
@@ -181,7 +311,10 @@ function navigateToStore(address: string) {
             <wd-picker
               v-model="selectedCityValue"
               :columns="cityColumns"
+              label-key="label"
+              value-key="value"
               use-default-slot
+              :column-change="onChangeCity"
               @confirm="handleCityConfirm"
             >
               <span class="change-city">
@@ -194,81 +327,81 @@ function navigateToStore(address: string) {
       </view>
 
       <!-- 标签切换栏 -->
-      <view class="tab-wrap">
-        <view class="tab-bar">
-          <!-- 体验销售标签 - 点击切换 -->
-          <view
-            class="tab-item"
-            :class="{ active: activeTab === 'sale' }"
-            @click="switchTab('sale')"
-          >
-            <image
-              class="tab-icon"
-              :src="SaleExperienceIcon"
-              mode="scaleToFill"
-            />
-            <text class="tab-text">
-              体验销售
-            </text>
-          </view>
-          <!-- 维修保养标签 - 点击切换 -->
-          <view
-            class="tab-item"
-            :class="{ active: activeTab === 'maintain' }"
-            @click="switchTab('maintain')"
-          >
-            <image
-              class="tab-icon"
-              :src="MaintenanceRepairIcon"
-              mode="scaleToFill"
-            />
-            <text class="tab-text">
-              维修保养
-            </text>
+      <view class="flex items-center justify-center">
+        <view class="tab-wrap">
+          <view class="tab-bar">
+            <!-- 体验销售标签 - 点击切换 -->
+            <view
+              class="tab-item"
+              :class="{ active: activeTab === 'sale' }"
+              @click="switchTab('sale')"
+            >
+              <image
+                class="tab-icon"
+                :src="SaleExperienceIcon"
+                mode="scaleToFill"
+              />
+              <text class="tab-text">
+                体验销售
+              </text>
+            </view>
+            <!-- 维修保养标签 - 点击切换 -->
+            <view
+              class="tab-item"
+              :class="{ active: activeTab === 'maintain' }"
+              @click="switchTab('maintain')"
+            >
+              <image
+                class="tab-icon"
+                :src="MaintenanceRepairIcon"
+                mode="scaleToFill"
+              />
+              <text class="tab-text">
+                维修保养
+              </text>
+            </view>
           </view>
         </view>
       </view>
 
-      <!-- 门店列表（根据选中标签筛选） -->
+      <!-- 门店列表 -->
       <view class="store-list">
-        <!-- 动态循环渲染门店，根据activeTab筛选 -->
-        <view v-for="(item, index) in filteredStoreList" :key="index" class="store-item">
+        <view v-for="item in storeList" :key="item.id" class="store-item">
           <view class="store-top">
-            <text class="store-name" :class="{ recommend: item.recommend }">
-              {{ item.recommend ? '[四星推荐]' : '' }}{{ item.name }}
+            <text class="store-name">
+              {{ item.storeName }}
             </text>
             <text class="distance">
-              {{ item.distance }}
+              {{ item.distanceDesc }}
             </text>
           </view>
           <text class="store-address">
-            {{ item.address }}
+            {{ item.fullAddress }}
           </text>
 
-          <view class="flex items-center justify-between">
-            <!-- 门店标签（动态渲染） -->
+          <view class="flex items-center justify-between pb-16rpx">
+            <!-- 门店标签 -->
             <view class="tag-group">
-              <view v-if="item.tags.includes('sale')" class="tag-wrap">
-                <view class="store-tag">
-                  体验销售
+              <view v-for="(service, sIdx) in item.services" :key="sIdx">
+                <view class="store-tag-normal">
+                  {{ service }}
                 </view>
-              </view>
-              <view v-if="item.tags.includes('maintain')" class="store-tag-normal">
-                维修保养
               </view>
             </view>
 
             <view class="store-actions">
-              <image class="action-btn call-btn" :src="PhoneIcon" mode="scaleToFill" @click="callPhone(item.phone)" />
-              <image class="action-btn nav-btn" :src="NearbyLocationIcon" mode="scaleToFill" @click="navigateToStore(item.address)" />
+              <image class="action-btn call-btn" :src="PhoneIcon" mode="scaleToFill" @click="callPhone(item.contactPhone)" />
+              <image class="action-btn nav-btn" :src="NearbyLocationIcon" mode="scaleToFill" @click="navigateToStore(item)" />
             </view>
           </view>
         </view>
 
-        <!-- 无匹配门店时显示空提示 -->
-        <view v-if="filteredStoreList.length === 0" class="empty-tip">
-          暂无该类型的门店
+        <!-- 空白 -->
+        <view v-if="storeList.length === 0 && loadmoreState === 'finished'" class="h-300rpx w-100% bg-white pb-200rpx">
+          <wd-status-tip image="https://wot-ui.cn/assets/search.png" tip="当前搜索无结果" />
         </view>
+        <!-- 加载更多 -->
+        <wd-loadmore v-else custom-class="loadmore" :state="loadmoreState" @reload="loadStoreData(true)" />
       </view>
     </view>
   </view>
@@ -278,6 +411,7 @@ function navigateToStore(address: string) {
 .page-container {
   padding: 20rpx;
   background-color: #DDE3EC;
+  min-height: 100vh;
   .content-wrap {
     padding: 0 20rpx;
     background-color: #fff;
@@ -300,7 +434,6 @@ function navigateToStore(address: string) {
   position: relative;
   width: 710rpx;
   height: 300rpx;
-  background: linear-gradient(to right, #e8f4fc, #d1e9fc);
   border-radius: 8rpx;
   overflow: hidden;
 }
@@ -378,6 +511,7 @@ function navigateToStore(address: string) {
 }
 .tab-bar {
   display: flex;
+
   // background-color: #fff;
 }
 .tab-item {
@@ -470,7 +604,7 @@ function navigateToStore(address: string) {
   font-size: 26rpx;
   border-radius: 20rpx;
   margin-right: 15rpx;
-  margin-bottom: 15rpx;
+  // margin-bottom: 15rpx;
   border: 1rpx solid #6E6E6E;
 }
 .tag-group {
@@ -499,18 +633,24 @@ function navigateToStore(address: string) {
 }
 .call-btn {
   background-color: #fff;
-  margin-right: 62rpx;
+  margin-right: 32rpx;
 }
 .nav-btn {
   background-color: #fff;
   margin-right: 18rpx;
 }
 
+/* 加载更多 */
+.loadmore {
+  padding: 30rpx 0;
+}
+
 /* 空提示样式 */
 .empty-tip {
   text-align: center;
-  padding: 50rpx 0;
+  padding: 150rpx 0;
   font-size: 28rpx;
   color: #999;
+  height: 400rpx;
 }
 </style>
