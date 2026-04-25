@@ -290,7 +290,7 @@ function goVip() {
       <view
         v-for="item in list"
         :key="item.name"
-        class="mb-20rpx flex items-center justify-between rounded-20rpx bg-white px-40rpx py-45rpx"
+        class="mb-20rpx box-border h-120rpx flex items-center justify-between rounded-20rpx bg-white px-40rpx py-45rpx"
         @click="handleListItemClick(item)"
       >
         <view class="flex items-center">
@@ -324,7 +324,7 @@ function goVip() {
           </text>
         </view>
         <image
-          class="h-17rpx w-14rpx"
+          class="h-30rpx w-18rpx"
           :src="RightIcon"
           mode="scaleToFill"
         />
