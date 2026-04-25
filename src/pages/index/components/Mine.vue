@@ -195,7 +195,7 @@ function goVip() {
         mode="scaleToFill"
       />
       <view class="absolute left-0 top-210rpx w-100% flex flex-col items-center justify-center">
-        <view class="relative w-100% flex items-center justify-end pr-100rpx">
+        <view class="relative box-border w-100% flex items-center justify-end pr-60rpx">
           <image
             class="mr-60rpx h-40rpx w-40rpx"
             :src="SettingIcon"
