@@ -218,45 +218,9 @@ function checkhasPending(permission: 'canViewLocation' | 'canViewRideTrack' | 'c
     }
   }
 
-  // if (hasPending.value) {
-  //   messageId.value = 1
-  //   showCancelBtn.value = true
-  //   message.value = '您有一张数据服务体验卡待领取'
-  //   showMessagePopup.value = true
-  //   return false
-  // }
-  // else {
-  //   if (!activeCard.value.effective) {
-  //     messageId.value = 2
-  //     showCancelBtn.value = false
-  //     message.value = '购买VIP服务卡，享受更多畅行体验'
-  //     showMessagePopup.value = true
-  //     return false
-  //   }
-  // }
-
   return true
 }
 
-// 领取数据服务体验卡
-function getCard() {
-  // 体验卡待领取
-  if (hasPending.value) {
-    messageId.value = 1
-    showCancelBtn.value = true
-    message.value = '您有一张数据服务体验卡待领取'
-    showMessagePopup.value = true
-  }
-  else {
-    // 体验卡已失效，去购买
-    if (!activeCard.value.effective) {
-      messageId.value = 2
-      showCancelBtn.value = false
-      message.value = '购买VIP服务卡，享受更多畅行体验'
-      showMessagePopup.value = true
-    }
-  }
-}
 // 提示弹窗确认
 function handleConfirm() {
   if (messageId.value === 3) {
@@ -265,56 +229,10 @@ function handleConfirm() {
     })
   }
   showMessagePopup.value = false
-  // if (messageId.value === 1) {
-  //   console.log('领取数据服务体验卡')
-  //   getTrialCard()
-  // }
-  // else if (messageId.value === 2) {
-  //   console.log('去购买数据服务体验卡')
-  //   showMessagePopup.value = false
-  // }
 }
-// 领取数据服务体验卡
-async function getTrialCard() {
-  const vehicleId = carStore.carInfo.id
-  const res = await httpPost(`/user/card/vehicles/${vehicleId}/cards/claim`) as any
-  if (res.code === '200') {
-    getAuth()
-    uni.showToast({
-      title: '领取成功',
-      icon: 'success',
-    })
-  }
-  else {
-    console.error('领取数据服务体验卡失败', res.message)
-    uni.showToast({
-      title: res.message || '领取失败',
-      icon: 'none',
-    })
-  }
-  showMessagePopup.value = false
-}
+
 function handleCancel() {
   showMessagePopup.value = false
-}
-function getBg() {
-  if (hasPending.value) {
-    return DataAive
-  }
-  if (!hasPending.value && !activeCard.value.effective) {
-    return DataUnAive
-  }
-  return DataAive
-}
-function getCardTitle() {
-  if (hasPending.value) {
-    return '数据服务体验卡'
-  }
-  if (!hasPending.value && !activeCard.value.effective) {
-    return '无有效数据卡'
-  }
-
-  return activeCard.value.effective ? '数据服务体验卡' : '体验卡已失效'
 }
 
 // 车主服务

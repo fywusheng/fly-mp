@@ -36,6 +36,10 @@ const props = defineProps({
     type: String,
     default: '确定',
   },
+  width: {
+    type: [String, Number],
+    default: '50%',
+  },
 })
 
 const emit = defineEmits(['update:show', 'cancel', 'confirm'])
@@ -43,6 +47,17 @@ const emit = defineEmits(['update:show', 'cancel', 'confirm'])
 const showPop = ref(props.show)
 const closeOnClickPop = ref(props.closeOnClickModal)
 let timer: ReturnType<typeof setTimeout> | null = null
+
+const popupStyle = computed(() => {
+  const style = ['border-radius:32rpx;']
+
+  if (props.width !== '') {
+    const width = typeof props.width === 'number' ? `${props.width}rpx` : props.width
+    style.push(`width:${width};`)
+  }
+
+  return style.join('')
+})
 
 function closePop() {
   showPop.value = false
@@ -84,7 +99,7 @@ watch(() => props.closeOnClickModal, (val) => {
 </script>
 
 <template>
-  <wd-popup v-model="showPop" :z-index="1000" :close-on-click-modal="closeOnClickPop" custom-style="border-radius:32rpx;" @close="handleClose">
+  <wd-popup v-model="showPop" :z-index="1000" :close-on-click-modal="closeOnClickPop" :custom-style="popupStyle" @close="handleClose">
     <view class="flex flex-col items-center justify-center px-49rpx pb-70rpx pt-50rpx">
       <view class="mb-60rpx text-36rpx color-[#333333]">
         {{ title }}

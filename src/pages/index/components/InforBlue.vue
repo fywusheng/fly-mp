@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import dayjs from 'dayjs'
 import { useCarStore, useUserStore } from '@/store'
-import { getColorImg, getLocation } from '@/utils'
-import { httpDelete, httpGet, httpPost } from '@/utils/http'
+import { getColorImg } from '@/utils'
+import { httpDelete, httpGet } from '@/utils/http'
 import { getImageUrl } from '@/utils/image'
+import HomeAdBanner from '../com-components/HomeAdBanner.vue'
 
 defineOptions({
   name: 'InforBlue',
@@ -19,13 +20,21 @@ const DateIcon = getImageUrl('/infor/date.png')
 const LeftArrow = getImageUrl('/infor/left-arrow.png')
 const LocationIcon = getImageUrl('/infor/location-icon.png')
 const RightArrow = getImageUrl('/infor/right-arrow.png')
-
-const DataAive = getImageUrl('/infor/ble-data-active.png')
-const DataUnAive = getImageUrl('/infor/ble-data.png')
-const DataNone = getImageUrl('/infor/4g-data-none.png')
-const Effect = getImageUrl('/infor/effect.png')
-const Gift = getImageUrl('/infor/gift.png')
 const Search = getImageUrl('/common/search.png')
+const SmartServiceIcon = getImageUrl('/infor/smartServices.png')
+const NearbyStoreIcon = getImageUrl('/infor/nearbyStores.png')
+const TheftReportIcon = getImageUrl('/infor/theftReport.png')
+
+interface IPermission {
+  isOwner: boolean
+  isMember: boolean
+  memberId: number
+  permissionLevel: number
+  canViewLocation: number
+  canViewRideTrack: number
+  canViewHistoryStay: number
+  canViewDriveData: number
+}
 
 // 获取胶囊位置信息
 const menuButtonInfo = uni.getMenuButtonBoundingClientRect()
@@ -35,7 +44,6 @@ const date = ref<number>(Date.now())
 // 近30天范围（含今天）：最早为29天前0点，最晚为今天23:59:59
 const minDate = ref<number>(dayjs().subtract(29, 'day').startOf('day').valueOf())
 const maxDate = ref<number>(dayjs().endOf('day').valueOf())
-const address = ref<string>('广东省广州市珠海区广东省 广州市珠海区')
 
 const cumulativeStats = ref<any>({
   ageLabel: '我今年0岁',
@@ -82,22 +90,38 @@ const showCancelBtn = ref(true) // 是否显示取消按钮
 const showConfirmBtn = ref(true) // 是否显示确认按钮
 const closeOnClickModal = ref(true) // 是否点击蒙层关闭弹窗
 
-const hasPending = ref(false) // 是否有待领取体验卡
-const activeCard = ref({
-  activatedAt: '', // 激活时间
-  cardName: '', // 卡名称
-  cardType: '', // 卡类型 DATA, FEATURE 等等
-  claimedAt: '', // 领取时间
-  effective: false, // 是否当前生效（已激活且未过期）
-  effectiveTime: '', // 生效时间
-  expireAt: '', // 过期时间
-  expireDate: '', // 过期日期
-  status: '', // 卡状态 PENDING / ACTIVE / EXPIRED
+// 车主服务
+const onwerServices = ref<any[]>([
+  {
+    name: '智能服务',
+    icon: SmartServiceIcon,
+  },
+  {
+    name: '附近门店',
+    icon: NearbyStoreIcon,
+  },
+  {
+    name: '失窃上报',
+    icon: TheftReportIcon,
+  },
+])
+
+const adList = ref<any[]>([])
+const permissions = ref<IPermission>({
+  isOwner: false, // 是否车主
+  isMember: false, // 是否成员
+  memberId: 0,
+  permissionLevel: 0,
+  canViewLocation: 0, // 是否可查看车辆位置
+  canViewRideTrack: 0, // 是否可查看骑行记录
+  canViewHistoryStay: 0, // 是否可查看历史停留
+  canViewDriveData: 0, // 是否可查看行驶数据
 })
 
 watch(() => props.tabName, (newVal) => {
   if (newVal === 'inforBlue' && userStore.isLoggedIn) {
-    getAuth()
+    getPermission()
+    getAdList()
   }
 })
 
@@ -108,70 +132,79 @@ onReachBottom(() => {
   }
 })
 
-async function getAuth() {
+// 获取用户查看权限
+async function getPermission() {
   const vehicleId = carStore.carInfo.id
-  const res = await httpGet(`/user/card/vehicles/${vehicleId}/cards/check`) as any
-  if (res.code === '200') {
-    activeCard.value = res.data.activeCard || null
-    hasPending.value = res.data.hasPending
-    // activeCard.value = null
-    // hasPending.value = true
 
-    if (!hasPending.value && activeCard.value && activeCard.value.effective) {
-      getRidingData()
-    }
-    else {
-      // 清空数据
-      cumulativeStats.value = {
-        ageLabel: '我今年0岁',
-        companionshipDays: 0,
-        totalRidingMinutes: 0,
-        totalTrips: 0,
-        vehicleImageUrl: '/images/vehicle-default.png',
-      }
-      currentLocation.value = {
-        detailedAddress: '',
-        latitude: 40.22077,
-        locationDescription: '',
-        longitude: 116.23128,
-      }
-      dailyStats.value = {
-        maxSpeed: 0,
-        totalRidingTime: 0,
-        tripSegments: 0,
-      }
-      ridingSummary.value = {
-        maxSpeed: 0,
-        riderName: '',
-        ridingTime: 0,
-      }
-      ridingRecords.value = []
-    }
+  const res = await httpGet<IPermission> (`/user/mini/vehicle-share/members/permission/${vehicleId}`)
+  if (res.code === '200') {
+    permissions.value = res.data
+    getRidingData()
   }
 }
 
-// 获取当前位置
-function getCurrentLocation() {
-  getLocation().then((res) => {
-    // 处理位置信息
-    httpGet('/riding/dashboard/current-location').then((locationRes: any) => {
-      if (locationRes.code === '200') {
-        address.value = locationRes.data.detailedAddress
-      }
-    }).catch((err) => {
-      console.error('获取位置信息失败', err)
-    })
-  }).catch((err) => {
-    console.error('获取位置失败', err)
-  })
+function checkhasPending(permission: 'canViewLocation' | 'canViewRideTrack' | 'canViewHistoryStay' | 'canViewDriveData') {
+  // 车主的话需要会员
+  if (permissions.value.isOwner) {
+    if (!permissions.value.isMember) {
+      messageId.value = 3
+      showCancelBtn.value = true
+      message.value = '开通会员可查看'
+      showMessagePopup.value = true
+      return false
+    }
+  }
+  else {
+    // 成员的话校验对应权限
+    if (!permissions.value[permission]) {
+      messageId.value = 3
+      showCancelBtn.value = true
+      message.value = '开通会员可查看'
+      showMessagePopup.value = true
+      return false
+    }
+  }
+
+  return true
 }
+// 获取广告列表
+async function getAdList() {
+  try {
+    const res = await httpGet(`/common/advertisement/list`, {
+      adPosition: 'DATA',
+    })
+    if (res.code === '200') {
+      adList.value = res.data as any[]
+    }
+  }
+  catch (err) {
+    console.error('获取广告列表失败', err)
+  }
+}
+
+// 车主服务
+function goService(name: string) {
+  if (name === '智能服务') {
+    uni.navigateTo({
+      url: '/pages-network/smart-service/index',
+    })
+  }
+  else if (name === '附近门店') {
+    uni.navigateTo({
+      url: '/pages-network/nearby-stores/index',
+    })
+  }
+  else if (name === '失窃上报') {
+    uni.navigateTo({
+      url: '/pages-network/theft-report-desc/index',
+    })
+  }
+}
+
 // 获取骑行数据
 async function getRidingData(isLoadMore = false) {
-  if (!userStore.isLoggedIn) {
-    uni.showToast({
-      title: '请先登录',
-      icon: 'none',
-    })
+  // 校验权限
+  if (!checkhasPending('canViewRideTrack')) {
     return
   }
 
@@ -282,7 +315,7 @@ async function getRidingData(isLoadMore = false) {
 // 处理日期选择确认
 function handleConfirm(selectedDate: any) {
   date.value = selectedDate.value
-  if (!checkhasPending()) {
+  if (!checkhasPending('canViewRideTrack')) {
     return
   }
   getRidingData()
@@ -300,7 +333,7 @@ function getPreviousDayTimestamp(): void {
   }
   date.value = prev
 
-  if (!checkhasPending()) {
+  if (!checkhasPending('canViewRideTrack')) {
     return
   }
   getRidingData()
@@ -314,7 +347,7 @@ function getNextDayTimestamp(): void {
   }
   date.value = next
 
-  if (!checkhasPending()) {
+  if (!checkhasPending('canViewRideTrack')) {
     return
   }
   getRidingData()
@@ -362,112 +395,18 @@ async function deleteRidingRecord(item): Promise<void> {
   }
 }
 
-function checkhasPending() {
-  if (!userStore.isLoggedIn) {
-    uni.showToast({
-      title: '请先登录',
-      icon: 'none',
-    })
-    return false
-  }
-
-  if (hasPending.value) {
-    messageId.value = 1
-    showCancelBtn.value = true
-    message.value = '您有一张数据服务体验卡待领取'
-    showMessagePopup.value = true
-    return false
-  }
-  else {
-    if (!activeCard.value.effective) {
-      messageId.value = 2
-      showCancelBtn.value = false
-      message.value = '购买VIP服务卡，享受更多畅行体验'
-      showMessagePopup.value = true
-      return false
-    }
-  }
-
-  return true
-}
-
-// 领取数据服务体验卡
-function getCard() {
-  if (!userStore.isLoggedIn) {
-    uni.showToast({
-      title: '请先登录',
-      icon: 'none',
-    })
-    return
-  }
-  // 体验卡待领取
-  if (hasPending.value) {
-    messageId.value = 1
-    showCancelBtn.value = true
-    message.value = '您有一张数据服务体验卡待领取'
-    showMessagePopup.value = true
-  }
-  else {
-    // 体验卡已失效，去购买
-    if (!activeCard.value.effective) {
-      messageId.value = 2
-      showCancelBtn.value = false
-      message.value = '购买VIP服务卡，享受更多畅行体验'
-      showMessagePopup.value = true
-    }
-  }
-}
 function handlePopConfirm() {
-  if (messageId.value === 1) {
+  if (messageId.value === 3) {
     console.log('领取数据服务体验卡')
-    getTrialCard()
-  }
-  else if (messageId.value === 2) {
-    console.log('去购买数据服务体验卡')
-    showMessagePopup.value = false
-  }
-}
-// 领取数据服务体验卡
-async function getTrialCard() {
-  const vehicleId = carStore.carInfo.id
-  const res = await httpPost(`/user/card/vehicles/${vehicleId}/cards/claim`) as any
-  if (res.code === '200') {
-    getAuth()
-    uni.showToast({
-      title: '领取成功',
-      icon: 'success',
-    })
-  }
-  else {
-    console.error('领取数据服务体验卡失败', res.message)
-    uni.showToast({
-      title: res.message || '领取失败',
-      icon: 'none',
+    uni.navigateTo({
+      url: '/pages-network/smart-service-open/index',
     })
   }
   showMessagePopup.value = false
 }
+
 function handleCancel() {
   showMessagePopup.value = false
-}
-function getBg() {
-  if (hasPending.value) {
-    return DataAive
-  }
-  if (!hasPending.value && !activeCard.value.effective) {
-    return DataUnAive
-  }
-  return DataAive
-}
-function getCardTitle() {
-  if (hasPending.value) {
-    return '数据服务体验卡'
-  }
-  if (!hasPending.value && !activeCard.value.effective) {
-    return '无有效数据卡'
-  }
-
-  return activeCard.value.effective ? '数据服务体验卡' : '体验卡已失效'
 }
 
 // 加载更多
@@ -535,7 +474,7 @@ function loadMoreRidingRecords() {
     </view>
 
     <view class="relative mt-57rpx">
-      <view class="mb-18rpx flex items-center">
+      <view v-if="currentLocation.detailedAddress" class="mb-18rpx flex items-center">
         <image
           class="ml-50rpx h-30rpx w-25rpx"
           :src="LocationIcon"
@@ -688,60 +627,33 @@ function loadMoreRidingRecords() {
       </view>
     </view>
 
-    <!-- 骑行卡 -->
-    <view class="fixed bottom-160rpx left-0 ml-20rpx mt-20rpx box-border w-710rpx rounded-8rpx bg-white px-20rpx pb-9rpx pt-19rpx">
+    <!-- 车主服务 -->
+    <view class="ml-20rpx mt-20rpx box-border w-710rpx rounded-8rpx bg-white px-20rpx pb-9rpx pt-19rpx">
       <view class="mb-11rpx text-30rpx text-[#333333] font-bold">
         车主服务
       </view>
-      <view class="w-100% flex items-center justify-between">
-        <view class="relative h-180rpx w-669rpx">
-          <image
-            class="absolute left-0 top-0 h-100% w-100%"
-            :src="getBg()"
-            mode="scaleToFill"
-          />
-          <image
-            class="absolute bottom-6rpx right-28rpx h-72rpx w-209rpx"
-            :src="Gift"
-            mode="scaleToFill"
-          />
-
-          <view class="relative z-10 box-border h-100% w-100% px-21rpx pt-29rpx">
-            <!-- 待领取 | 已失效 -->
-            <view v-if="hasPending || !activeCard.effective" class="unclaimed" @click="getCard">
-              {{ hasPending ? '去领取' : '去购买' }}
-            </view>
-            <!-- 生效中 -->
-            <image
-              v-if="activeCard && activeCard.effective"
-              class="effect"
-              :src="Effect"
-              mode="scaleToFill"
-            />
-            <view class="text-24rpx text-[#ffffff]">
-              {{ getCardTitle() }}
-            </view>
-            <view class="mb-20rpx mt-10rpx h-4rpx w-60rpx bg-[#ffffff]" />
-            <view class="mb-9rpx text-18rpx text-[#275C4E]">
-              可查询骑行轨迹/停车位置/行驶数据 全国可用
-            </view>
-            <view v-if=" activeCard && activeCard.effective" class="h-24rpx w-180rpx flex items-center justify-center rounded-20rpx bg-[#2CBC7B] text-14rpx text-[#ffffff]">
-              有效期至{{ activeCard.expireDate || '' }}
-            </view>
-            <!-- <view class="w-100% flex justify-center items-center">
-              <image
-                class="w-99rpx h-99rpx"
-                :src="DataNone"
-                mode="scaleToFill"
-              />
-            </view> -->
-          </view>
-        </view>
+      <view class="mb-30rpx mt-20rpx w-100% flex items-center justify-between">
+        <image
+          v-for="item in onwerServices" :key="item.name"
+          class="h-184rpx w-200rpx"
+          :src="item.icon"
+          mode="scaleToFill"
+          @click="goService(item.name)"
+        />
       </view>
     </view>
 
+    <!-- 广告位 -->
+    <HomeAdBanner
+      layout="vertical"
+      item-width="345rpx"
+      item-height="190rpx"
+      :columns="2"
+      :list="adList"
+    />
+
     <!-- 操作提示弹窗 -->
-    <fg-message v-model:show="showMessagePopup" :duration="duration" :confirm-text="confirmText" :show-cancel-btn="showCancelBtn" :show-confirm-btn="showConfirmBtn" :close-on-click-modal="closeOnClickModal" :message="message" :message-id="messageId" @cancel="handleCancel" @confirm="handlePopConfirm" />
+    <fg-message v-model:show="showMessagePopup" width="50%" :duration="duration" :confirm-text="confirmText" :show-cancel-btn="showCancelBtn" :show-confirm-btn="showConfirmBtn" :close-on-click-modal="closeOnClickModal" :message="message" :message-id="messageId" @cancel="handleCancel" @confirm="handlePopConfirm" />
   </view>
 </template>
 

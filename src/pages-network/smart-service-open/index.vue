@@ -1,6 +1,10 @@
 <script lang="ts" setup>
+import type { MemberPackage } from '@/api/member'
+import dayjs from 'dayjs'
+import { createMemberPurchase, getMemberOrderStatus, getMemberPackages } from '@/api/member'
 import { useUserStore } from '@/store'
 import { getImageUrl } from '@/utils/image'
+import { pollPaymentStatus, requestWechatPayment } from '@/utils/payment'
 
 defineOptions({
   name: 'SmartService',
@@ -22,85 +26,166 @@ const WeixinPayIcon = getImageUrl('/network/weixin-pay.png')
 const MemberIcon = getImageUrl('/network/member.png')
 const MemberNoIcon = getImageUrl('/network/member-none.png')
 
-// 有会员：true 未开通：false
-const hasMember = ref(false)
-
 // 当前选中的套餐
-const selectedPlan = ref('year')
+const selectedPlanId = ref<number>()
 
 // 套餐列表
-const plans = ref([
-  {
-    id: 'year',
-    title: '2年卡',
-    desc: '365天有效期',
-    price: '299',
-    originalPrice: '399',
-    discount: '7.5折',
-    recommend: true,
-  },
-  {
-    id: 'years',
-    title: '2年卡',
-    desc: '365天有效期',
-    price: '299',
-    originalPrice: '399',
-    discount: '7.5折',
-    recommend: false,
-  },
-  {
-    id: 'half',
-    title: '半年套餐',
-    desc: '180天有效期',
-    price: '199',
-    originalPrice: '239',
-    discount: '8.3折',
-    recommend: false,
-  },
-  {
-    id: 'month',
-    title: '月度套餐',
-    desc: '30天有效期',
-    price: '39',
-    originalPrice: '49',
-    discount: '8折',
-    recommend: false,
-  },
-])
+const plans = ref<MemberPackage[]>([])
+const loadingPackages = ref(false)
+const paying = ref(false)
 
-function handleSelectPlan(planId: string) {
-  selectedPlan.value = planId
+const selectedPlan = computed(() => plans.value.find(plan => plan.id === selectedPlanId.value))
+
+function formatPrice(price?: number | string) {
+  if (price === undefined || price === null || price === '') {
+    return '--'
+  }
+
+  const value = Number(price)
+  if (Number.isNaN(value)) {
+    return String(price)
+  }
+
+  return Number.isInteger(value) ? String(value) : value.toFixed(2)
+}
+
+function getPlanDesc(plan: MemberPackage) {
+  return plan.description || `${plan.durationDays}天有效期`
+}
+
+function getPlanDeviceType(plan: MemberPackage) {
+  return plan.applicableUser === 'BLUETOOTH' ? '蓝牙设备' : '4G设备'
+}
+
+async function fetchMemberPackages() {
+  try {
+    loadingPackages.value = true
+    const res = await getMemberPackages({ deviceType: '4G' })
+    if (res.code === '200') {
+      const enabledPackages = (res.data || [])
+        .filter(plan => plan.status !== 'DISABLED')
+        .sort((prev, next) => (prev.sortOrder || 0) - (next.sortOrder || 0))
+
+      plans.value = enabledPackages
+      selectedPlanId.value = enabledPackages[0]?.id
+    }
+  }
+  catch (error) {
+    console.error('获取服务卡套餐失败', error)
+  }
+  finally {
+    loadingPackages.value = false
+  }
+}
+
+function handleSelectPlan(planId: number) {
+  selectedPlanId.value = planId
 }
 
 // 开通/续费
-function handleSubmit() {
-  if (hasMember.value) {
-    uni.navigateTo({
-      url: '/pages-network/smart-service/renew',
+async function handleSubmit() {
+  if (paying.value) {
+    return
+  }
+
+  const plan = selectedPlan.value
+  if (!plan) {
+    uni.showToast({
+      title: '请选择服务卡套餐',
+      icon: 'none',
+    })
+    return
+  }
+
+  try {
+    paying.value = true
+    uni.showLoading({
+      title: '正在下单',
+      mask: true,
+    })
+
+    const vehicleId = userStore.userInfo.defaultVehicleId || undefined
+    const purchaseRes = await createMemberPurchase({
+      packageId: plan.id,
+      ...(vehicleId ? { vehicleId } : {}),
+    })
+
+    if (purchaseRes.code !== '200' || !purchaseRes.data) {
+      throw new Error(purchaseRes.message || '创建支付订单失败')
+    }
+
+    uni.hideLoading()
+    await requestWechatPayment(purchaseRes.data)
+
+    uni.showLoading({
+      title: '确认支付结果',
+      mask: true,
+    })
+
+    await pollPaymentStatus(
+      () => getMemberOrderStatus(purchaseRes.data.orderNo),
+      { interval: 2000, maxTimes: 15 },
+    )
+
+    await userStore.getUserInfo()
+    uni.showToast({
+      title: '支付成功',
+      icon: 'success',
     })
   }
-  else {
-    uni.navigateTo({
-      url: '/pages-network/smart-service/open',
-    })
+  catch (error: any) {
+    console.error('服务卡支付失败', error)
+    const message = error?.errMsg || error?.message || ''
+    if (message.includes('cancel')) {
+      uni.showToast({
+        title: '已取消支付',
+        icon: 'none',
+      })
+    }
+    else if (message === 'PAYMENT_STATUS_TIMEOUT') {
+      uni.showToast({
+        title: '支付结果确认中，请稍后查看',
+        icon: 'none',
+      })
+    }
+    else if (message === 'CLOSED') {
+      uni.showToast({
+        title: '订单已关闭',
+        icon: 'none',
+      })
+    }
+    else {
+      uni.showToast({
+        title: message || '支付失败，请稍后重试',
+        icon: 'none',
+      })
+    }
+  }
+  finally {
+    uni.hideLoading()
+    paying.value = false
   }
 }
 // 导航返回
 function handleClickLeft() {
   uni.navigateBack()
 }
+
+onLoad(() => {
+  fetchMemberPackages()
+})
 </script>
 
 <template>
   <view class="smart-service">
-    <wd-navbar title="智能服务" placeholder left-arrow :safe-area-inset-top="true" fixed custom-style="background-color: transparent !important;" @click-left="handleClickLeft" />
+    <wd-navbar title="智能服务" :safe-area-inset-top="true" left-arrow placeholder fixed custom-style="background-color: transparent !important;" @click-left="handleClickLeft" />
     <view class="bg" />
     <view class="content">
       <!-- 会员状态 -->
       <view class="relative h-260rpx w-600rpx flex">
         <image
           class="absolute left-0 top-0 h-full w-full"
-          :src="MemberIcon"
+          :src="userStore.isMemberVip ? MemberIcon : MemberNoIcon"
           mode="scaleToFill"
         />
         <image
@@ -110,14 +195,14 @@ function handleClickLeft() {
         />
         <view class="relative z-10 ml-20rpx mt-113rpx">
           <view class="mb-16rpx text-30rpx text-[#333333] font-bold">
-            小飞侠呦~
+            {{ userStore.userInfo.nickname }}
           </view>
           <view class="mb-10rpx text-22rpx text-[#666666]">
-            服务有效期2026.5.31
+            {{ userStore.isMemberVip ? `服务有效期${userStore.userInfo.serviceExpireTime}` : '未开通' }}
             <!-- 未开通 -->
           </view>
-          <view class="expired-label">
-            距离服务到期还有20天
+          <view v-if="userStore.isMemberVip" class="expired-label">
+            距离服务到期还有{{ dayjs(userStore.userInfo.serviceExpireTime).diff(dayjs(), 'day') }}天
           </view>
         </view>
       </view>
@@ -125,38 +210,47 @@ function handleClickLeft() {
       <view class="w-710rpx px-20rpx">
         <fg-card title="选择服务卡套餐">
           <!-- 套餐列表 -->
-          <view class="plans network">
+          <view class="network plans">
+            <view v-if="loadingPackages" class="empty-plan">
+              套餐加载中...
+            </view>
+            <view v-else-if="!plans.length" class="empty-plan">
+              暂无可购买套餐
+            </view>
             <view
               v-for="plan in plans"
               :key="plan.id"
               class="plan-item"
-              :class="{ active: selectedPlan === plan.id }"
+              :class="{ active: selectedPlanId === plan.id }"
               @click="handleSelectPlan(plan.id)"
             >
               <!-- 推荐标签 -->
-              <view v-if="plan.recommend" class="recommend-badge">
+              <view v-if="plan.recommended" class="recommend-badge">
                 推荐
               </view>
               <!-- 卡名称 -->
               <view class="plan-title">
-                {{ plan.title }}
+                {{ plan.name }}
               </view>
+              <!-- <view class="plan-desc">
+                {{ getPlanDesc(plan) }}
+              </view> -->
               <!-- 当前价格 -->
               <view class="price-row">
                 <text class="currency">
                   ¥
                 </text>
                 <text class="amount">
-                  {{ plan.price }}
+                  {{ formatPrice(plan.discountPrice) }}
                 </text>
               </view>
               <!-- 原价 -->
               <view class="original-price">
-                ¥{{ plan.originalPrice }}
+                ¥{{ formatPrice(plan.originalPrice) }}
               </view>
               <!-- 设备类型 -->
               <view class="discount-tag">
-                蓝牙设备
+                {{ getPlanDeviceType(plan) }}
               </view>
             </view>
           </view>
@@ -196,7 +290,7 @@ function handleClickLeft() {
 
       <!-- 按钮 -->
       <view class="submit-btn" @click="handleSubmit">
-        ￥{{ plans.find(p => p.id === selectedPlan)?.price || '24.11' }} 立即支付
+        ￥{{ formatPrice(selectedPlan?.discountPrice) }} {{ paying ? '支付中...' : '立即支付' }}
       </view>
       <!--  -->
     </view>
@@ -310,6 +404,14 @@ function handleClickLeft() {
         margin-bottom: 6rpx;
       }
 
+      .plan-desc {
+        height: 28rpx;
+        margin-bottom: 4rpx;
+        font-size: 20rpx;
+        line-height: 28rpx;
+        color: #6E6E6E;
+      }
+
       .price-row {
         display: flex;
         align-items: baseline;
@@ -352,6 +454,15 @@ function handleClickLeft() {
         align-items: center;
         justify-content: center;
       }
+    }
+    .empty-plan {
+      width: 100%;
+      height: 230rpx;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #999999;
+      font-size: 26rpx;
     }
     .submit-btn {
       width: 710rpx;
