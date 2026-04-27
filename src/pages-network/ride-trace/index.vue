@@ -74,6 +74,14 @@ async function getTrackInfo(isRefresh = false) {
     if (res.code === '200') {
       const data = res.data as { records?: any[], total?: number, current?: number, pages?: number }
       const records = data.records || []
+      // const records = [{
+      //   startTime: '2026-04-27 10:00:00',
+      //   endTime: '2026-04-27 10:00:00',
+      //   distance: 1000,
+      //   avgSpeed: 10,
+      //   durationSeconds: 1000,
+      //   carbonReduction: 100,
+      // }]
 
       if (isRefresh) {
         // 刷新时替换数据
@@ -194,10 +202,14 @@ function formatDuration(seconds: number) {
     <view v-if="ridingInfo.length > 0" class="list-container">
       <view v-for="(item, index) in ridingInfo" :key="item.rideId || index" class="card">
         <view class="card-item flex flex-col items-center justify-between" @click="goHistoryInfo(item)">
-          <view class="card-item-top box-border h-80rpx w-100% flex items-center justify-between px-29rpx">
-            <view class="text-24rpx text-[#333333]">
-              {{ item.startTime }}-{{ item.endTime ? item.endTime.split(' ')[1] : '' }}
+          <view class="card-item-top box-border w-100% flex items-center justify-between px-29rpx">
+            <view class="py-32rpx text-24rpx text-[#333333]">
+              <view>
+                {{ item.startTime }}-{{ item.endTime ? item.endTime.split(' ')[1] : '' }}
+              </view>
+              <view>骑行人：{{ item.riderName || '--' }}</view>
             </view>
+
             <view class="look-btn">
               查看轨迹
             </view>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useCarStore } from '@/store'
-import { httpGet, httpPost } from '@/utils/http'
+import { httpGet } from '@/utils/http'
 import { getImageUrl } from '@/utils/image'
 import HomeAdBanner from '../com-components/HomeAdBanner.vue'
 

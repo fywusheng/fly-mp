@@ -4,7 +4,6 @@ import { useCarStore, useUserStore } from '@/store'
 import { getColorImg } from '@/utils'
 import { httpDelete, httpGet } from '@/utils/http'
 import { getImageUrl } from '@/utils/image'
-import HomeAdBanner from '../com-components/HomeAdBanner.vue'
 
 defineOptions({
   name: 'InforBlue',
@@ -628,7 +627,7 @@ function loadMoreRidingRecords() {
     </view>
 
     <!-- 车主服务 -->
-    <view class="ml-20rpx mt-20rpx box-border w-710rpx rounded-8rpx bg-white px-20rpx pb-9rpx pt-19rpx">
+    <view class="absolute bottom-30rpx left-0 ml-20rpx mt-20rpx box-border w-710rpx rounded-8rpx bg-white px-20rpx pb-9rpx pt-19rpx">
       <view class="mb-11rpx text-30rpx text-[#333333] font-bold">
         车主服务
       </view>
@@ -644,13 +643,13 @@ function loadMoreRidingRecords() {
     </view>
 
     <!-- 广告位 -->
-    <HomeAdBanner
+    <!-- <HomeAdBanner
       layout="vertical"
       item-width="345rpx"
       item-height="190rpx"
       :columns="2"
       :list="adList"
-    />
+    /> -->
 
     <!-- 操作提示弹窗 -->
     <fg-message v-model:show="showMessagePopup" width="50%" :duration="duration" :confirm-text="confirmText" :show-cancel-btn="showCancelBtn" :show-confirm-btn="showConfirmBtn" :close-on-click-modal="closeOnClickModal" :message="message" :message-id="messageId" @cancel="handleCancel" @confirm="handlePopConfirm" />

@@ -104,8 +104,7 @@ watch(() => props.closeOnClickModal, (val) => {
       <view class="mb-60rpx text-36rpx color-[#333333]">
         {{ title }}
       </view>
-      <!-- <rich-text :nodes="message" /> -->
-      <view class="text-center text-28rpx color-[#666666]" v-html="message" />
+      <rich-text class="message-content" :nodes="message" />
       <slot />
     </view>
     <view v-if="showCancelBtn || showConfirmBtn" class="btn-cont">
@@ -120,6 +119,12 @@ watch(() => props.closeOnClickModal, (val) => {
 </template>
 
 <style lang="scss">
+.message-content {
+  text-align: center;
+  font-size: 28rpx;
+  color: #666666;
+}
+
 .btn-cont{
   border-top: 1rpx solid #666666;
   display: flex;
