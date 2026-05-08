@@ -127,6 +127,17 @@ async function handleSubmit() {
       { interval: 2000, maxTimes: 15 },
     )
 
+    // 订阅消息
+    wx.requestSubscribeMessage({
+      tmplIds: ['tYMOHpS5dpUFpQTEmCE4ZM-Z8HbAAVSFXcCyQPOdQcg'],
+      success: (res) => {
+        console.log('订阅消息成功:', res)
+      },
+      fail: (err) => {
+        console.error('订阅消息失败:', err)
+      },
+    })
+
     await userStore.getUserInfo()
     uni.showToast({
       title: '支付成功',
