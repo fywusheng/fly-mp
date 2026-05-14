@@ -1011,6 +1011,7 @@ async function connectBle() {
       蓝牙类型: deviceInfo.bluetoothVendor,
       蓝牙名称: deviceInfo.bluetoothDeviceName,
       蓝牙设备号: deviceInfo.bluetoothDeviceNo,
+      蓝牙MAC: deviceInfo.bluetoothMac || '',
     })
 
     // 使用composable连接蓝牙

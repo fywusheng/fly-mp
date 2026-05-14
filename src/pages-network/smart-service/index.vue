@@ -194,10 +194,10 @@ onLoad(() => {
               />
               <view class="text-24rpx">
                 <view class="mb-9rpx text-[#333333]">
-                  {{ item.displayName || item.benefitName }}
+                  {{ item.benefitName }}
                 </view>
                 <view class="text-[#6E6E6E]">
-                  {{ item.description }}
+                  {{ item.displayName }}
                 </view>
               </view>
             </view>
