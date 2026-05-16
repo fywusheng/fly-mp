@@ -376,8 +376,8 @@ function goService(name: string) {
     <!-- 广告位 -->
     <HomeAdBanner
       layout="vertical"
-      item-width="345rpx"
-      item-height="190rpx"
+      item-width="690rpx"
+      item-height="230rpx"
       :columns="2"
       :list="adList"
     />

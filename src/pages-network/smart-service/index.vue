@@ -2,7 +2,7 @@
 import type { MemberBenefit } from '@/api/member'
 import dayjs from 'dayjs'
 import { getMemberBenefits } from '@/api/member'
-import { useUserStore } from '@/store'
+import { useCarStore, useUserStore } from '@/store'
 import { getImageUrl } from '@/utils/image'
 
 defineOptions({
@@ -20,6 +20,7 @@ definePage({
 })
 
 const userStore = useUserStore()
+const carStore = useCarStore()
 const CarIcon = getImageUrl('/network/car.png')
 const MemberIcon = getImageUrl('/network/member.png')
 const MemberNoIcon = getImageUrl('/network/member-none.png')
@@ -82,7 +83,7 @@ function getBenefitIcon(item: MemberBenefit) {
 async function fetchMemberBenefits() {
   try {
     loadingBenefits.value = true
-    const res = await getMemberBenefits({ deviceType: '4G' })
+    const res = await getMemberBenefits({ deviceType: carStore.network ? '4G' : 'BLUETOOTH' })
     if (res.code === '200') {
       benefitList.value = (res.data || [])
         .filter(item => item.status !== 'DISABLED')

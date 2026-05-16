@@ -2,7 +2,7 @@
 import type { MemberPackage } from '@/api/member'
 import dayjs from 'dayjs'
 import { createMemberPurchase, getMemberOrderStatus, getMemberPackages } from '@/api/member'
-import { useUserStore } from '@/store'
+import { useCarStore, useUserStore } from '@/store'
 import { getImageUrl } from '@/utils/image'
 import { pollPaymentStatus, requestWechatPayment } from '@/utils/payment'
 
@@ -21,6 +21,7 @@ definePage({
 })
 
 const userStore = useUserStore()
+const carStore = useCarStore()
 const CarIcon = getImageUrl('/network/car.png')
 const WeixinPayIcon = getImageUrl('/network/weixin-pay.png')
 const MemberIcon = getImageUrl('/network/member.png')
@@ -60,7 +61,7 @@ function getPlanDeviceType(plan: MemberPackage) {
 async function fetchMemberPackages() {
   try {
     loadingPackages.value = true
-    const res = await getMemberPackages({ deviceType: '4G' })
+    const res = await getMemberPackages({ deviceType: carStore.network ? '4G' : 'BLUETOOTH' })
     if (res.code === '200') {
       const enabledPackages = (res.data || [])
         .filter(plan => plan.status !== 'DISABLED')

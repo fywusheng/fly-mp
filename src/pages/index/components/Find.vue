@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useCarStore } from '@/store'
+import { useCarStore, useUserStore } from '@/store'
 import { httpGet } from '@/utils/http'
 import { getImageUrl } from '@/utils/image'
 import HomeAdBanner from '../com-components/HomeAdBanner.vue'
@@ -30,12 +30,15 @@ const navHeight = ref(0)
 navHeight.value = menuButtonInfo?.top + menuButtonInfo.height
 
 const carStore = useCarStore()
+const userStore = useUserStore()
 const days = ref(1)
 
 watch(() => props.tabName, (newVal) => {
   if (newVal === 'find') {
-    // 获取骑行天数
-    getDayOffset(carStore.carInfo.deviceNo)
+    if (userStore.isLoggedIn) {
+      // 获取骑行天数
+      getDayOffset(carStore.carInfo.deviceNo)
+    }
     getAdList()
   }
 })

@@ -73,7 +73,7 @@ function onAdClick(item: AdItem) {
       <image
         class="ad-image"
         :src="item.imageUrl"
-        mode="aspectFill"
+        mode="scaleToFill"
       />
     </view>
   </view>

@@ -120,7 +120,7 @@ const permissions = ref<IPermission>({
 watch(() => props.tabName, (newVal) => {
   if (newVal === 'inforBlue' && userStore.isLoggedIn) {
     getPermission()
-    getAdList()
+    // getAdList()
   }
 })
 

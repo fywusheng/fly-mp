@@ -63,10 +63,12 @@ const list = ref([
 ])
 
 watch(() => props.tabName, (newVal) => {
-  if (newVal === 'mine' && userStore.isLoggedIn) {
+  if (newVal === 'mine') {
     getAdList()
-    getUnreadMessageCount()
-    getNoticeText()
+    if (userStore.isLoggedIn) {
+      getUnreadMessageCount()
+      getNoticeText()
+    }
   }
 })
 

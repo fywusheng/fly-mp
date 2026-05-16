@@ -55,6 +55,7 @@ const userInfoState: ICarInfoVo = {
    * 5 E车星一体机
    * 6 华惠一体机
    * 7 E车星4G+华惠蓝牙
+   * 8 华惠4g 无北斗
    *
    */
   deviceType: null,
