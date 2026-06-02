@@ -132,8 +132,8 @@ async function getLocationInfo(longitude: number, latitude: number) {
 
 function handleCityConfirm({ selectedItems }: { selectedItems: PickerItem[] }) {
   if (selectedItems && selectedItems.length > 0) {
-    selectedCity.value = selectedItems[0].label
-    selectedCityValue.value = selectedItems[0].value
+    selectedCity.value = `${selectedItems[0].label}/${selectedItems[1].label}`
+    selectedCityValue.value = selectedItems[1].value
 
     loadStoreData(true)
   }

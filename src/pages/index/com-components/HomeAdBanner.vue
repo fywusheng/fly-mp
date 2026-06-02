@@ -98,16 +98,16 @@ function onAdClick(item: AdItem) {
   display: grid;
   justify-content: center;
   gap: 20rpx;
-  // padding: 0 20rpx;
+  padding: 0 20rpx;
   margin-top: 20rpx;
-  // grid-template-columns: repeat(v-bind(columns), 1fr);
+  grid-template-columns: repeat(v-bind(columns), 1fr);
 }
 
 .ad-item {
   flex-shrink: 0;
   border-radius: 12rpx;
   overflow: hidden;
-  background-color: #f5f5f5;
+  // background-color: #f5f5f5;
 
   &:active {
     opacity: 0.9;
@@ -119,7 +119,7 @@ function onAdClick(item: AdItem) {
 .ad-item-vertical {
   border-radius: 12rpx;
   overflow: hidden;
-  background-color: #f5f5f5;
+  // background-color: #f5f5f5;
 
   &:active {
     opacity: 0.9;

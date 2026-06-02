@@ -74,12 +74,12 @@ const BluetoothTabbarItems: TabbarItem[] = [
     icon: getImageUrl('/tabbar/home.png'),
     activeIcon: getImageUrl('/tabbar/home-active.png'),
   },
-  {
-    name: 'find',
-    title: '发现',
-    icon: getImageUrl('/tabbar/find.png'),
-    activeIcon: getImageUrl('/tabbar/find-active.png'),
-  },
+  // {
+  //   name: 'find',
+  //   title: '发现',
+  //   icon: getImageUrl('/tabbar/find.png'),
+  //   activeIcon: getImageUrl('/tabbar/find-active.png'),
+  // },
   {
     name: 'inforBlue',
     title: '数据',

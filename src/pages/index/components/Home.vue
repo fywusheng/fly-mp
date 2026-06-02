@@ -1629,7 +1629,8 @@ function toggleLock() {
 
       <!-- 广告位 -->
       <HomeAdBanner
-        item-width="260rpx"
+        layout="horizontal"
+        item-width="470rpx"
         item-height="180rpx"
         :list="adList"
       />

@@ -72,6 +72,17 @@ watch(() => props.tabName, (newVal) => {
   }
 })
 
+onShow(() => {
+  // debugger
+  if (props.tabName === 'mine') {
+    getAdList()
+    if (userStore.isLoggedIn) {
+      getUnreadMessageCount()
+      getNoticeText()
+    }
+  }
+})
+
 // 获取公告
 async function getNoticeText() {
   try {
@@ -79,7 +90,7 @@ async function getNoticeText() {
       pageNum: 1,
       pageSize: 1,
     })
-    if (res.code === '200') {
+    if (res.code === '200' && res.data.records.length > 0) {
       notice.value = res.data.records[0]
     }
   }
@@ -335,7 +346,8 @@ function goVip() {
 
     <!-- 广告位 -->
     <HomeAdBanner
-      item-width="260rpx"
+      layout="horizontal"
+      item-width="470rpx"
       item-height="180rpx"
       :list="adList"
     />
