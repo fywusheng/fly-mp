@@ -35,6 +35,8 @@ interface PickerItem {
 }
 
 const selectedCityValue = ref<string>('')
+const selectedProvinceValue = ref<string>('')
+const selectedCityPickerValue = ref<string[]>([])
 const selectedCity = ref('')
 const cityColumns = ref<[PickerItem[], PickerItem[]]>([[], []])
 const longitude = ref<number>(0)
@@ -46,10 +48,10 @@ async function getProvinceList() {
     const res = await httpGet<{ provinceName: string, provinceCode: string }[]>('/common/store/provinces')
     console.log('获取省份列表成功:', res)
     if (res.code === '200') {
-      cityColumns.value[0] = res.data.map(item => ({
+      cityColumns.value = [res.data.map(item => ({
         label: item.provinceName,
         value: item.provinceCode,
-      }))
+      })), cityColumns.value[1]]
     }
   }
   catch (error) {
@@ -78,6 +80,11 @@ async function fetchCityList(provinceCode: string): Promise<PickerItem[]> {
 async function onChangeCity(pickerView: any, value: PickerItem[], columnIndex: number, resolve: () => void) {
   if (columnIndex === 0) {
     try {
+      if (!value[0]?.value) {
+        pickerView.setColumnData(1, [])
+        resolve()
+        return
+      }
       const cities = await fetchCityList(value[0].value)
       pickerView.setColumnData(1, cities)
     }
@@ -102,6 +109,8 @@ async function getCurrentLocation() {
     uni.showToast({ title: '定位失败，将显示全部门店', icon: 'none' })
     selectedCity.value = '全国'
     selectedCityValue.value = ''
+    selectedProvinceValue.value = ''
+    selectedCityPickerValue.value = []
     await getProvinceList()
     loadStoreData(true)
   }
@@ -113,10 +122,12 @@ async function getLocationInfo(longitude: number, latitude: number) {
     console.log('获取位置信息成功:', res)
     selectedCity.value = res.data.cityName
     selectedCityValue.value = res.data.cityCode
+    selectedProvinceValue.value = res.data.provinceCode
+    selectedCityPickerValue.value = [res.data.provinceCode, res.data.cityCode]
 
     await getProvinceList()
     const cities = await fetchCityList(res.data.provinceCode)
-    cityColumns.value[1] = cities
+    cityColumns.value = [cityColumns.value[0], cities]
 
     loadStoreData(true)
   }
@@ -125,15 +136,19 @@ async function getLocationInfo(longitude: number, latitude: number) {
     uni.showToast({ title: '定位失败，将显示全部门店', icon: 'none' })
     selectedCity.value = '全国'
     selectedCityValue.value = ''
+    selectedProvinceValue.value = ''
+    selectedCityPickerValue.value = []
     await getProvinceList()
     loadStoreData(true)
   }
 }
 
 function handleCityConfirm({ selectedItems }: { selectedItems: PickerItem[] }) {
-  if (selectedItems && selectedItems.length > 0) {
+  if (selectedItems && selectedItems.length > 1) {
     selectedCity.value = `${selectedItems[0].label}/${selectedItems[1].label}`
+    selectedProvinceValue.value = selectedItems[0].value
     selectedCityValue.value = selectedItems[1].value
+    selectedCityPickerValue.value = [selectedProvinceValue.value, selectedCityValue.value]
 
     loadStoreData(true)
   }
@@ -309,7 +324,7 @@ function navigateToStore(store: StoreItem) {
           </view>
           <view class="flex items-center justify-center">
             <wd-picker
-              v-model="selectedCityValue"
+              v-model="selectedCityPickerValue"
               :columns="cityColumns"
               label-key="label"
               value-key="value"

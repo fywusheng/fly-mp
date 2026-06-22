@@ -170,10 +170,10 @@ onLoad(() => {
             {{ userStore.userInfo.nickname }}
           </view>
           <view class="mb-10rpx text-22rpx text-[#666666]">
-            {{ userStore.isMemberVip ? `服务有效期${userStore.userInfo.serviceExpireTime}` : '未开通' }}
+            {{ userStore.isMemberVip ? `服务有效期${userStore.userInfo.serviceExpireTimeText}` : '未开通' }}
           </view>
           <view v-if="userStore.isMemberVip" class="expired-label">
-            距离服务到期还有{{ dayjs(userStore.userInfo.serviceExpireTime).diff(dayjs(), 'day') }}天
+            距离服务到期还有{{ userStore.userInfo.serviceRemainingDays }}天
           </view>
         </view>
       </view>
@@ -238,7 +238,7 @@ onLoad(() => {
       </view>
       <!-- 按钮 -->
       <view class="submit-btn" @click="handleSubmit">
-        {{ hasMember ? '续 费' : '开 通' }}
+        {{ userStore.isMemberVip ? '续 费' : '开 通' }}
       </view>
       <!--  -->
     </view>

@@ -253,8 +253,12 @@ watch(
   async (newVal, oldVal) => {
     console.log('🔓 锁车状态变化:', oldVal, '->', newVal)
 
+    const deviceType = carStore.carInfo.deviceType
+
+    // 组合设备，非会员只能走蓝牙
+    const permission = [3, 5, 6, 7].includes(deviceType) && !userStore.isMemberVip
     // ✅ 只有蓝牙设备才需要上报骑行轨迹（4G设备通过网络获取位置）
-    if (carStore.network) {
+    if (carStore.network && !permission) {
       return
     }
 
@@ -598,6 +602,12 @@ async function controlVehicle(commandType: CommandType) {
 
   const onlyBlueCommands = getOnlyBlueCommands(deviceType, isOnline)
 
+  // 会员远程开关锁拦截 ，组合设备，一体机，非会员直接走蓝牙
+  if ([3, 5, 6, 7].includes(deviceType) && !userStore.isMemberVip && ['lock', 'unlock'].includes(commandType)) {
+    controlByBluetooth(commandType)
+    return
+  }
+
   const canUse4G = hasNetwork && is4GDevice && !onlyBlueCommands.includes(commandType)
 
   if (canUse4G) {
@@ -654,18 +664,18 @@ async function controlByBluetooth(commandType: CommandType) {
 // 4g控车指令
 function controlBike(commandType: string) {
   // ✅ 判断是否需要开通会员才能使用远程开关车锁
-  if (!userStore.isMemberVip && ['lock', 'unlock'].includes(commandType)) {
-    title.value = '开通超级会员'
-    messageContent.value = '远程开关车锁'
-    confirmText.value = '去开通'
-    messageId.value = 3
-    duration.value = 0
-    showCancelBtn.value = false
-    showConfirmBtn.value = true
-    closeOnClickModal.value = true
-    showMessagePopup.value = true
-    return false
-  }
+  // if (!userStore.isMemberVip && ['lock', 'unlock'].includes(commandType)) {
+  //   title.value = '开通超级会员'
+  //   messageContent.value = '远程开关车锁'
+  //   confirmText.value = '去开通'
+  //   messageId.value = 3
+  //   duration.value = 0
+  //   showCancelBtn.value = false
+  //   showConfirmBtn.value = true
+  //   closeOnClickModal.value = true
+  //   showMessagePopup.value = true
+  //   return false
+  // }
 
   // ✅ 清除旧定时器
   if (getCarInfoTimer) {

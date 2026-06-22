@@ -26,6 +26,8 @@ const userInfoState: IUserInfoVo = {
   defaultVehicleId: 0,
   memberLevel: 'NORMAL', // NORMAL / SVIP
   serviceExpireTime: '',
+  serviceExpireTimeText: '',
+  serviceRemainingDays: 0,
   points: 0,
 }
 

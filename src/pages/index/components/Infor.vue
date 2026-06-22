@@ -16,6 +16,7 @@ const props = defineProps({
 interface IPermission {
   isOwner: boolean
   isMember: boolean
+  hasMemberService: boolean
   memberId: number
   permissionLevel: number
   canViewLocation: number
@@ -72,6 +73,7 @@ const activeCard = ref({
 const permissions = ref<IPermission>({
   isOwner: false, // 是否车主
   isMember: false, // 是否成员
+  hasMemberService: false, // 是否有服务
   memberId: 0,
   permissionLevel: 0,
   canViewLocation: 0, // 是否可查看车辆位置
@@ -101,7 +103,7 @@ const adList = ref<any[]>([])
 watch(() => props.tabName, (newVal) => {
   if (newVal === 'infor') {
     getRidingInfo(carStore.carInfo.id)
-    getAuth()
+    // getAuth()
     getAdList()
     getPermission()
   }
@@ -199,7 +201,7 @@ function goDrive() {
 function checkhasPending(permission: 'canViewLocation' | 'canViewRideTrack' | 'canViewHistoryStay' | 'canViewDriveData') {
   // 车主的话需要会员
   if (permissions.value.isOwner) {
-    if (!permissions.value.isMember) {
+    if (!permissions.value.hasMemberService) {
       messageId.value = 3
       showCancelBtn.value = true
       message.value = '开通会员可查看'
@@ -210,9 +212,9 @@ function checkhasPending(permission: 'canViewLocation' | 'canViewRideTrack' | 'c
   else {
     // 成员的话校验对应权限
     if (!permissions.value[permission]) {
-      messageId.value = 3
-      showCancelBtn.value = true
-      message.value = '开通会员可查看'
+      messageId.value = 4
+      showCancelBtn.value = false
+      message.value = '暂未授权，请联系车主'
       showMessagePopup.value = true
       return false
     }

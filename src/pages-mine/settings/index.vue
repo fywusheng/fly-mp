@@ -69,12 +69,12 @@ function loginToken() {
       <wd-button block size="large" @click="loginOut">
         退出登录
       </wd-button>
-      <!-- <view class="my-30rpx">
+      <view class="my-30rpx">
         <wd-input v-model="token" placeholder="请输入内容" />
       </view>
       <wd-button block size="large" @click="loginToken">
         token登录
-      </wd-button> -->
+      </wd-button>
     </view>
   </view>
 </template>

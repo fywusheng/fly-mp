@@ -27,6 +27,7 @@ const TheftReportIcon = getImageUrl('/infor/theftReport.png')
 interface IPermission {
   isOwner: boolean
   isMember: boolean
+  hasMemberService: boolean
   memberId: number
   permissionLevel: number
   canViewLocation: number
@@ -109,6 +110,7 @@ const adList = ref<any[]>([])
 const permissions = ref<IPermission>({
   isOwner: false, // 是否车主
   isMember: false, // 是否成员
+  hasMemberService: false,
   memberId: 0,
   permissionLevel: 0,
   canViewLocation: 0, // 是否可查看车辆位置
@@ -145,7 +147,7 @@ async function getPermission() {
 function checkhasPending(permission: 'canViewLocation' | 'canViewRideTrack' | 'canViewHistoryStay' | 'canViewDriveData') {
   // 车主的话需要会员
   if (permissions.value.isOwner) {
-    if (!permissions.value.isMember) {
+    if (!permissions.value.hasMemberService) {
       messageId.value = 3
       showCancelBtn.value = true
       message.value = '开通会员可查看'

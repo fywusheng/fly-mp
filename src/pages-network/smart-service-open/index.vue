@@ -107,6 +107,7 @@ async function handleSubmit() {
 
     const vehicleId = userStore.userInfo.defaultVehicleId || undefined
     const purchaseRes = await createMemberPurchase({
+      walletType: 'WECHAT', // 固定
       packageId: plan.id,
       ...(vehicleId ? { vehicleId } : {}),
     })
@@ -116,7 +117,7 @@ async function handleSubmit() {
     }
 
     uni.hideLoading()
-    await requestWechatPayment(purchaseRes.data)
+    await requestWechatPayment(purchaseRes.data.payInfo)
 
     uni.showLoading({
       title: '确认支付结果',
@@ -144,6 +145,10 @@ async function handleSubmit() {
       title: '支付成功',
       icon: 'success',
     })
+
+    setTimeout(() => {
+      uni.navigateBack({ delta: 2 })
+    }, 1000)
   }
   catch (error: any) {
     console.error('服务卡支付失败', error)
@@ -210,11 +215,11 @@ onLoad(() => {
             {{ userStore.userInfo.nickname }}
           </view>
           <view class="mb-10rpx text-22rpx text-[#666666]">
-            {{ userStore.isMemberVip ? `服务有效期${userStore.userInfo.serviceExpireTime}` : '未开通' }}
+            {{ userStore.isMemberVip ? `服务有效期${userStore.userInfo.serviceExpireTimeText}` : '未开通' }}
             <!-- 未开通 -->
           </view>
           <view v-if="userStore.isMemberVip" class="expired-label">
-            距离服务到期还有{{ dayjs(userStore.userInfo.serviceExpireTime).diff(dayjs(), 'day') }}天
+            距离服务到期还有{{ userStore.userInfo.serviceRemainingDays }}天
           </view>
         </view>
       </view>

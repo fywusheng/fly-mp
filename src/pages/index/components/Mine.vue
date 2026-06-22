@@ -61,11 +61,21 @@ const list = ref([
   },
 
 ])
+const points = ref(0)
+
+interface PointOverview {
+  points: number
+  userId?: number
+  nickname?: string
+  avatar?: string
+  memberLevel?: string
+}
 
 watch(() => props.tabName, (newVal) => {
   if (newVal === 'mine') {
     getAdList()
     if (userStore.isLoggedIn) {
+      fetchOverview()
       getUnreadMessageCount()
       getNoticeText()
     }
@@ -77,11 +87,25 @@ onShow(() => {
   if (props.tabName === 'mine') {
     getAdList()
     if (userStore.isLoggedIn) {
+      fetchOverview()
       getUnreadMessageCount()
       getNoticeText()
     }
   }
 })
+
+// 获取当前积分
+async function fetchOverview() {
+  try {
+    const res = await httpGet<PointOverview>('/user/mini/points/my')
+    if (res.code === '200' && res.data) {
+      points.value = res.data.points || 0
+    }
+  }
+  catch (e) {
+    console.error('获取积分概览失败', e)
+  }
+}
 
 // 获取公告
 async function getNoticeText() {
@@ -258,7 +282,7 @@ function goVip() {
     </view>
 
     <!-- 消息提示 -->
-    <view v-if="notice.content" class="notice-container mx-20rpx mx-20rpx mt-20rpx rounded-8rpx" @click="goMessage">
+    <view v-if="false" class="notice-container mx-20rpx mx-20rpx mt-20rpx rounded-8rpx" @click="goMessage">
       <wd-notice-bar :text="notice.content" prefix="warn-bold">
         <template #suffix>
           <wd-icon name="arrow-right" size="22px" color="#333333" />
@@ -267,7 +291,7 @@ function goVip() {
     </view>
 
     <!-- 会员开通提示 -->
-    <view v-if="!userStore.isMemberVip" class="relative mx-20rpx mt-20rpx h-120rpx w-710rpx flex items-center justify-between rounded-8rpx" @click="goVip">
+    <view v-if="false" class="relative mx-20rpx mt-20rpx h-120rpx w-710rpx flex items-center justify-between rounded-8rpx" @click="goVip">
       <image
         class="absolute left-0 top-0 h-100% w-100%"
         :src="RectIcon"

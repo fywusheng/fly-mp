@@ -5,6 +5,7 @@ export interface IUserInfoVo {
   avatar: string
   gender: number
   lastLoginTime: string
+  serviceExpireTimeText: string
   mobile: string
   nickname: string
   openId: null
@@ -16,6 +17,7 @@ export interface IUserInfoVo {
   memberLevel: string
   serviceExpireTime: string
   points: number
+  serviceRemainingDays: number
 }
 
 /**

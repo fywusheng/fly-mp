@@ -30,16 +30,21 @@ export interface MemberBenefit {
 export interface CreateMemberPurchaseParams {
   packageId: number
   vehicleId?: number
+  walletType: string
 }
 
 export interface WechatJsApiPayParams {
-  orderNo: string
   appId: string
   timeStamp: string
   nonceStr: string
   packageValue: string
   signType: string
   paySign: string
+}
+
+export interface CreateMemberPurchaseResult {
+  orderNo: string
+  payInfo: WechatJsApiPayParams
 }
 
 export interface MemberOrderStatus {
@@ -58,7 +63,7 @@ export function getMemberBenefits(query?: { deviceType?: string }) {
 }
 
 export function createMemberPurchase(data: CreateMemberPurchaseParams) {
-  return httpPost<WechatJsApiPayParams>('/user/mini/member/purchase', data)
+  return httpPost<CreateMemberPurchaseResult>('/user/mini/member/purchase', data)
 }
 
 export function getMemberOrderStatus(orderNo: string) {
