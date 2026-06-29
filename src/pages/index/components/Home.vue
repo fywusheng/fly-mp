@@ -1656,10 +1656,11 @@ function toggleLock() {
     :show-cancel-btn="true"
     :show-confirm-btn="true"
     :close-on-click-modal="closeOnClickModal"
+    width="500rpx"
     @cancel="showBatPopup = false"
     @confirm="handleBatConfirm"
   >
-    <view class="w-500rpx">
+    <view class="">
       <view class="bat flex items-center justify-between">
         <view
           v-for="tab in batterTab"

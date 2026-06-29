@@ -271,7 +271,7 @@ function goVip() {
               <view>
                 <text>里程积分</text>
                 <text class="text-[#FDEBC9]">
-                  {{ userStore.userInfo.points }}
+                  {{ points }}
                 </text>
               </view>
               <wd-icon class="mr-10rpx" name="arrow-right" size="18px" />

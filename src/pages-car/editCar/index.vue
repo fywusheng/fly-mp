@@ -209,6 +209,14 @@ function getVinCode(url: string) {
       </view>
     </view>
 
+    <view class="mt-20rpx px-20rpx text-24rpx text-[#6E6E6E] line-height-[1.1rem]">
+      <text>*请及时录入您的车架号，系统存档后，后续</text>
+      <text class="text-[#239AF6]">
+        车辆保养、故障维修、车辆核验
+      </text>
+      <text>均可快速核对信息，为您的用车保驾护航～</text>
+    </view>
+
     <view
       class="mt-62rpx h-80rpx w-710rpx flex items-center justify-center rounded-[40rpx] bg-[#239AF6] color-white"
       @click="onSubmitClick"

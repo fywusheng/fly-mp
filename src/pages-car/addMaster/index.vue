@@ -19,6 +19,9 @@ const validCode = ref('')
 const vin = ref('')
 const certificateUrl = ref('')
 const plateNumber = ref('')
+const smsCountdown = ref(0)
+
+let smsTimer: ReturnType<typeof setInterval> | null = null
 
 const userStore = useUserStore()
 
@@ -38,8 +41,29 @@ onMounted(() => {
   }
 })
 
+onUnmounted(() => {
+  if (smsTimer) {
+    clearInterval(smsTimer)
+    smsTimer = null
+  }
+})
+
+function startSmsCountdown() {
+  smsCountdown.value = 60
+  smsTimer = setInterval(() => {
+    smsCountdown.value -= 1
+    if (smsCountdown.value <= 0 && smsTimer) {
+      clearInterval(smsTimer)
+      smsTimer = null
+    }
+  }, 1000)
+}
+
 // 发送短信
 async function sendSmsClick() {
+  if (smsCountdown.value > 0) {
+    return
+  }
   if (!phone.value) {
     uni.showToast({
       title: '请填写手机号',
@@ -65,6 +89,7 @@ async function sendSmsClick() {
       icon: 'success',
       duration: 1000,
     })
+    startSmsCountdown()
   }
   else {
     uni.showToast({
@@ -96,6 +121,7 @@ async function onSubmitClick() {
       title: '绑定成功',
       icon: 'success',
     })
+    await userStore.getUserInfo()
     setTimeout(() => {
       // 跳转到菜单页面
       uni.reLaunch({
@@ -123,8 +149,8 @@ async function onSubmitClick() {
             <!-- suffix - 发送验证码 -->
             <template #suffix>
               <view class="flex items-center justify-center pl-10rpx">
-                <wd-button size="small" type="primary" @click="sendSmsClick">
-                  发送验证码
+                <wd-button size="small" type="primary" :disabled="smsCountdown > 0" @click="sendSmsClick">
+                  {{ smsCountdown > 0 ? `${smsCountdown}s` : '发送验证码' }}
                 </wd-button>
               </view>
             </template>
