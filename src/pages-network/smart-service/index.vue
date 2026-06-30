@@ -179,7 +179,7 @@ onLoad(() => {
       </view>
       <!-- 智能服务 -->
       <view class="w-710rpx px-20rpx">
-        <fg-card title="智能服务">
+        <fg-card title="收费专属服务">
           <view>
             <view v-if="loadingBenefits" class="benefit-empty">
               服务加载中...
@@ -187,7 +187,7 @@ onLoad(() => {
             <view v-else-if="!benefitList.length" class="benefit-empty">
               暂无智能服务
             </view>
-            <view v-for="item in benefitList" :key="item.id" class="mb-60rpx flex">
+            <view v-for="item in benefitList" :key="item.id" class="mb-40rpx flex">
               <image
                 class="mr-20rpx h-44rpx w-44rpx"
                 :src="getBenefitIcon(item)"
@@ -207,7 +207,7 @@ onLoad(() => {
       </view>
       <!-- 免费服务 -->
       <view class="mt-20rpx w-710rpx px-20rpx">
-        <fg-card title="免费服务">
+        <fg-card title="永久免费服务">
           <view class="grid-container">
             <view v-for="item in freeList" :key="item.title" class="flex flex-col items-center justify-center">
               <image
@@ -215,14 +215,16 @@ onLoad(() => {
                 :src="item.icon"
                 mode="scaleToFill"
               />
-              <view>{{ item.title }}</view>
+              <view class="text-24rpx">
+                {{ item.title }}
+              </view>
             </view>
           </view>
         </fg-card>
       </view>
       <!-- 智能服务费相关问题 -->
       <view
-        class="w-710rpx"
+        class="service-question-list w-710rpx"
       >
         <view class="mt-20rpx overflow-hidden rounded-[10px]">
           <wd-cell title="智能服务费是什么?" is-link @click="handleSmartServiceFee" />
@@ -256,6 +258,7 @@ onLoad(() => {
   flex-direction: column;
   align-items: center;
   background: #DDE3EC;
+  padding-bottom: 140rpx;
   .bg {
     position: absolute;
     top: 0;
@@ -300,6 +303,9 @@ onLoad(() => {
       font-size: 26rpx;
     }
     .submit-btn {
+      position: fixed;
+      left: 15rpx;
+      bottom: 40rpx;
       width: 710rpx;
       height: 80rpx;
       display: flex;
@@ -308,8 +314,6 @@ onLoad(() => {
       background-color: #239AF6;
       color: #FFFFFF;
       border-radius: 40rpx;
-      margin-top: 61rpx;
-      margin-bottom: 100rpx;
     }
   }
 
@@ -317,6 +321,11 @@ onLoad(() => {
 :deep() {
   .wd-navbar.is-border::after {
     height: 0;
+  }
+  .service-question-list .wd-cell__title {
+    flex: 1;
+    max-width: none;
+    white-space: nowrap;
   }
 }
 </style>

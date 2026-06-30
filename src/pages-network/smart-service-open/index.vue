@@ -232,7 +232,10 @@ onLoad(() => {
               套餐加载中...
             </view>
             <view v-else-if="!plans.length" class="empty-plan">
-              暂无可购买套餐
+              <view>暂无可购买套餐</view>
+              <view class="mt-6rpx text-28rpx text-[#333333]">
+                ~敬请期待~
+              </view>
             </view>
             <view
               v-for="plan in plans"
@@ -478,6 +481,7 @@ onLoad(() => {
       display: flex;
       align-items: center;
       justify-content: center;
+      flex-direction: column;
       color: #999999;
       font-size: 26rpx;
     }
