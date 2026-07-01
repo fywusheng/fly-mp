@@ -23,6 +23,7 @@ const props = withDefaults(defineProps<{
 
 const layout = computed(() => props.layout)
 const columns = computed(() => props.columns)
+const hasAds = computed(() => props.list.length > 0)
 const itemStyle = computed(() => ({
   width: props.itemWidth,
   height: props.itemHeight,
@@ -62,7 +63,7 @@ function onAdClick(item: AdItem) {
 </script>
 
 <template>
-  <view :class="layout === 'vertical' ? 'ad-banner-vertical' : 'ad-banner'">
+  <view v-if="hasAds" :class="layout === 'vertical' ? 'ad-banner-vertical' : 'ad-banner'">
     <view
       v-for="(item, index) in list"
       :key="index"

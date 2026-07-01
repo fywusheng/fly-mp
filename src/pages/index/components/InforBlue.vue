@@ -107,6 +107,10 @@ const onwerServices = ref<any[]>([
 ])
 
 const adList = ref<any[]>([])
+const fixedHeight = computed(() => {
+  const sys = uni.getSystemInfoSync()
+  return sys.platform === 'ios' ? '84px' : '50px'
+})
 const permissions = ref<IPermission>({
   isOwner: false, // 是否车主
   isMember: false, // 是否成员
@@ -186,6 +190,13 @@ async function getAdList() {
 // 车主服务
 function goService(name: string) {
   if (name === '智能服务') {
+    if (!userStore.isLoggedIn) {
+      uni.showToast({
+        title: '请先登录',
+        icon: 'none',
+      })
+      return false
+    }
     uni.navigateTo({
       url: '/pages-network/smart-service/index',
     })
@@ -629,7 +640,7 @@ function loadMoreRidingRecords() {
     </view>
 
     <!-- 车主服务 -->
-    <view class="absolute bottom-30rpx left-0 ml-20rpx mt-20rpx box-border w-710rpx rounded-8rpx bg-white px-20rpx pb-9rpx pt-19rpx">
+    <view :style="{ bottom: fixedHeight }" class="fixed left-0 ml-20rpx mt-20rpx box-border w-710rpx rounded-8rpx bg-white px-20rpx pb-9rpx pt-19rpx">
       <view class="mb-11rpx text-30rpx text-[#333333] font-bold">
         车主服务
       </view>
@@ -663,6 +674,7 @@ function loadMoreRidingRecords() {
   min-height: 100%;
   background: #F2F4F6;
   position: relative;
+  padding-bottom: 323rpx;
   .car-label {
     position: absolute;
     bottom: 0;

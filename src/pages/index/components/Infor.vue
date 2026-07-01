@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useCarStore } from '@/store'
+import { useCarStore, useUserStore } from '@/store'
 import { httpGet } from '@/utils/http'
 import { getImageUrl } from '@/utils/image'
 import HomeAdBanner from '../com-components/HomeAdBanner.vue'
@@ -42,6 +42,7 @@ const SmartServiceIcon = getImageUrl('/infor/smartServices.png')
 const NearbyStoreIcon = getImageUrl('/infor/nearbyStores.png')
 const TheftReportIcon = getImageUrl('/infor/theftReport.png')
 const carStore = useCarStore()
+const userStore = useUserStore()
 const dailyStats = ref<any>({
   totalRidingTime: '00:00:00',
   totalDistanceKm: '0.00',
@@ -240,6 +241,13 @@ function handleCancel() {
 // 车主服务
 function goService(name: string) {
   if (name === '智能服务') {
+    if (!userStore.isLoggedIn) {
+      uni.showToast({
+        title: '请先登录',
+        icon: 'none',
+      })
+      return false
+    }
     uni.navigateTo({
       url: '/pages-network/smart-service/index',
     })

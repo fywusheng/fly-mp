@@ -383,6 +383,7 @@ function goVip() {
   padding-bottom: 20rpx;
   background: #E4EBF2;
   position: relative;
+  min-height: 100%;
   .custom-btn {
     border: none;
      &:active {

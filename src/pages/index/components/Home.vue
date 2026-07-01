@@ -1525,75 +1525,6 @@ function toggleLock() {
         </template>
       </view>
 
-      <!-- 蓝牙功能相关 -->
-      <view
-        class="relative z-10 mb-19rpx ml-20rpx mt-[-75rpx] box-border w-710rpx rounded-[10rpx] bg-white px-80rpx py-33rpx"
-      >
-        <view
-          class="slider relative z-11 mb-40rpx h-136rpx w-550rpx rounded-[136rpx]"
-          :style="getSliderBgStyle()"
-          @touchstart="onTouchStart"
-          @touchmove="onTouchMove"
-          @touchend="onTouchEnd"
-        >
-          <image
-            class="slider-bg absolute left-0 top-0 z-12 h-136rpx w-136rpx"
-            :style="sliderStyle"
-            :src="getLockIcon()"
-            mode="scaleToFill"
-          />
-          <image
-            class="absolute top-36rpx h-64rpx w-101rpx"
-            :style="{
-              transform: !carState.isLocked ? 'rotate(0deg)' : 'rotate(180deg)',
-              left: !carState.isLocked ? '73rpx' : '216rpx',
-            }"
-            :src="ArrowIcon"
-            mode="scaleToFill"
-          />
-          <view
-            class="absolute top-52rpx text-31rpx"
-            :style="{
-              left: !carState.isLocked ? '213rpx' : '353rpx',
-              color: getSliderColorStyle(),
-            }"
-          >
-            {{ !carState.isLocked ? '滑动锁车' : '滑动开锁' }}
-          </view>
-        </view>
-        <fg-scroll-x
-          track-width="164rpx"
-          track-height="10rpx"
-          track-color="#EEEEEE"
-          bar-color="#10AE66"
-          bar-width="86rpx"
-          :indicator="list.length > 4"
-        >
-          <view class="grid">
-            <view v-for="item in list" :key="item.name" class="item" @click="onItemClick(item)">
-              <image
-                mode="scaleToFill"
-                class="item-img"
-                :style="{
-                  opacity: carStore.network
-                    ? '1'
-                    : bluetoothStatus === BluetoothStatus.CONNECTED
-                      ? '1'
-                      : '0.3',
-                }"
-                :src="item.active ? item.activeIcon : item.icon"
-              />
-
-              <text v-if="item.name === '车辆设防'" class="item-text">
-                {{ item.active ? '已设防' : '已解防' }}
-              </text>
-              <text v-else class="item-text">
-                {{ item.name }}
-              </text>
-            </view>
-          </view>
-        </fg-scroll-x>
-      </view>
       <!-- <wd-button
         class="absolute bottom-[-30rpx] left-50% z-10 w-620rpx -translate-x-50%"
         type="primary"
@@ -1602,49 +1533,118 @@ function toggleLock() {
       >
         切换锁状态
       </wd-button> -->
-      <!-- 车辆位置 -->
-      <view class="flex items-center justify-between px-20rpx">
-        <view class="relative box-border w-710rpx rounded-[10rpx] bg-white px-25rpx py-23rpx">
-          <view class="flex items-center justify-between">
-            <view class="w-100% flex items-center justify-between">
-              <view class="whitespace-nowrap text-30rpx">
-                车辆位置
-              </view>
-              <view v-if="userStore.isLoggedIn" class="text-28rpx">
-                {{ carState.isLocked ? '已泊车' : '骑行中' }}
-              </view>
-              <view class="flex items-center">
-                <image class="ml-30rpx h-22rpx w-22rpx" :src="ReloadIcon" mode="scaleToFill" />
-                <view
-                  class="ml-24rpx whitespace-nowrap text-28rpx color-[#666666]"
-                  @click="reloadLocation"
-                >
-                  刷新
-                </view>
+    </view>
+    <!-- 蓝牙功能相关 -->
+    <view
+      class="relative z-10 mb-19rpx ml-20rpx mt-[-75rpx] box-border w-710rpx rounded-[10rpx] bg-white px-80rpx py-33rpx"
+    >
+      <view
+        class="slider relative z-11 mb-40rpx h-136rpx w-550rpx rounded-[136rpx]"
+        :style="getSliderBgStyle()"
+        @touchstart="onTouchStart"
+        @touchmove="onTouchMove"
+        @touchend="onTouchEnd"
+      >
+        <image
+          class="slider-bg absolute left-0 top-0 z-12 h-136rpx w-136rpx"
+          :style="sliderStyle"
+          :src="getLockIcon()"
+          mode="scaleToFill"
+        />
+        <image
+          class="absolute top-36rpx h-64rpx w-101rpx"
+          :style="{
+            transform: !carState.isLocked ? 'rotate(0deg)' : 'rotate(180deg)',
+            left: !carState.isLocked ? '73rpx' : '216rpx',
+          }"
+          :src="ArrowIcon"
+          mode="scaleToFill"
+        />
+        <view
+          class="absolute top-52rpx text-31rpx"
+          :style="{
+            left: !carState.isLocked ? '213rpx' : '353rpx',
+            color: getSliderColorStyle(),
+          }"
+        >
+          {{ !carState.isLocked ? '滑动锁车' : '滑动开锁' }}
+        </view>
+      </view>
+      <fg-scroll-x
+        track-width="164rpx"
+        track-height="10rpx"
+        track-color="#EEEEEE"
+        bar-color="#10AE66"
+        bar-width="86rpx"
+        :indicator="list.length > 4"
+      >
+        <view class="grid">
+          <view v-for="item in list" :key="item.name" class="item" @click="onItemClick(item)">
+            <image
+              mode="scaleToFill"
+              class="item-img"
+              :style="{
+                opacity: carStore.network
+                  ? '1'
+                  : bluetoothStatus === BluetoothStatus.CONNECTED
+                    ? '1'
+                    : '0.3',
+              }"
+              :src="item.active ? item.activeIcon : item.icon"
+            />
+
+            <text v-if="item.name === '车辆设防'" class="item-text">
+              {{ item.active ? '已设防' : '已解防' }}
+            </text>
+            <text v-else class="item-text">
+              {{ item.name }}
+            </text>
+          </view>
+        </view>
+      </fg-scroll-x>
+    </view>
+    <!-- 车辆位置 -->
+    <view class="mb-16rpx flex items-center justify-between px-20rpx">
+      <view class="relative box-border w-710rpx rounded-[10rpx] bg-white px-25rpx py-23rpx">
+        <view class="flex items-center justify-between">
+          <view class="w-100% flex items-center justify-between">
+            <view class="whitespace-nowrap text-30rpx">
+              车辆位置
+            </view>
+            <view v-if="userStore.isLoggedIn" class="text-28rpx">
+              {{ carState.isLocked ? '已泊车' : '骑行中' }}
+            </view>
+            <view class="flex items-center">
+              <image class="ml-30rpx h-22rpx w-22rpx" :src="ReloadIcon" mode="scaleToFill" />
+              <view
+                class="ml-24rpx whitespace-nowrap text-28rpx color-[#666666]"
+                @click="reloadLocation"
+              >
+                刷新
               </view>
             </view>
           </view>
+        </view>
 
-          <!-- 轨迹地图 -->
-          <view>
-            <HomeMap
-              :is-member-vip="userStore.isMemberVip"
-              :network="carStore.network"
-              :info="currentRidingInfo"
-              @map-click="goDetail"
-            />
-          </view>
+        <!-- 轨迹地图 -->
+        <view>
+          <HomeMap
+            :is-member-vip="userStore.isMemberVip"
+            :network="carStore.network"
+            :info="currentRidingInfo"
+            @map-click="goDetail"
+          />
         </view>
       </view>
-
-      <!-- 广告位 -->
-      <HomeAdBanner
-        layout="horizontal"
-        item-width="470rpx"
-        item-height="180rpx"
-        :list="adList"
-      />
     </view>
+    <!-- 广告位 -->
+    <HomeAdBanner
+      layout="horizontal"
+      item-width="470rpx"
+      item-height="180rpx"
+      :list="adList"
+    />
+    <!-- <view class="h-20rpx w-100%" /> -->
   </view>
 
   <!-- 天气弹窗 -->
@@ -1697,10 +1697,11 @@ function toggleLock() {
 
 <style lang="scss" scoped>
 .Home {
-  height: 1834rpx;
-  padding-bottom: 40rpx;
+  height: 100%;
+  padding-bottom: 20rpx;
   width: 100vw;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   background: #e4ebf2;
   .top-card {
     width: 100%;
