@@ -25,7 +25,7 @@ interface IPermission {
   canViewDriveData: number
 }
 
-const BgIcon = getImageUrl('/infor/bg.png')
+const BgIcon = getImageUrl('/infor/bg-v1.png')
 const DataIcon = getImageUrl('/infor/data.png')
 const HistoryIcon = getImageUrl('/infor/history.png')
 const RightIcon = getImageUrl('/infor/right.png')
@@ -40,7 +40,7 @@ const Gift = getImageUrl('/infor/gift.png')
 const Effect = getImageUrl('/infor/effect.png')
 const SmartServiceIcon = getImageUrl('/infor/smartServices.png')
 const NearbyStoreIcon = getImageUrl('/infor/nearbyStores.png')
-const TheftReportIcon = getImageUrl('/infor/theftReport.png')
+const TheftReportIcon = getImageUrl('/infor/theftReport-v1.png')
 const carStore = useCarStore()
 const userStore = useUserStore()
 const dailyStats = ref<any>({
@@ -269,13 +269,13 @@ function goService(name: string) {
   <view class="infor">
     <!-- top背景 -->
     <image
-      class="absolute left-0 top-0 h-671rpx w-750rpx"
+      class="absolute left-0 top-0 h-670rpx w-750rpx"
       :src="BgIcon"
     />
     <!-- 骑行时间&&骑行里程 -->
-    <view class="relative flex justify-between px-20rpx pt-671rpx">
+    <view class="relative flex justify-between px-20rpx pt-521rpx">
       <view class="relative box-border h-160rpx w-345rpx rounded-8rpx bg-white px-30rpx py-49rpx">
-        <view class="mb-20rpx text-20rpx text-[#888888]">
+        <view class="mb-20rpx text-20rpx text-[#333333]">
           今日骑行时间
         </view>
         <view class="text-26rpx text-[#333333] font-bold">
@@ -287,7 +287,7 @@ function goService(name: string) {
         />
       </view>
       <view class="relative box-border h-160rpx w-345rpx rounded-8rpx bg-white px-30rpx py-49rpx">
-        <view class="mb-20rpx text-20rpx text-[#888888]">
+        <view class="mb-20rpx text-20rpx text-[#333333]">
           今日骑行里程
         </view>
         <view class="mb-20rpx text-26rpx text-[#333333] font-bold">

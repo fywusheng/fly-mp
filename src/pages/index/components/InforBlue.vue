@@ -22,7 +22,7 @@ const RightArrow = getImageUrl('/infor/right-arrow.png')
 const Search = getImageUrl('/common/search.png')
 const SmartServiceIcon = getImageUrl('/infor/smartServices.png')
 const NearbyStoreIcon = getImageUrl('/infor/nearbyStores.png')
-const TheftReportIcon = getImageUrl('/infor/theftReport.png')
+const TheftReportIcon = getImageUrl('/infor/theftReport-v1.png')
 
 interface IPermission {
   isOwner: boolean

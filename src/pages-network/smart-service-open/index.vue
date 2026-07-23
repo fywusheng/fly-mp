@@ -295,15 +295,25 @@ onLoad(() => {
             续费规则
           </view>
           <view class="text-24rpx text-[#666666]">
-            <view class="mb-10rpx line-height-30rpx">
-              1.智能服务过期后，将停止提供智能服务功能。
-            </view>
-            <view class="mb-10rpx line-height-30rpx">
-              2.智能服务过期时间较长后，将无法在小程序内续费。需联系售后客服更换4G云盒，可能会产生额外费用。
-            </view>
-            <view class="mb-10rpx line-height-30rpx">
-              3.续费成功后，将自动给车辆延期，不支持转让、服务中止及退款。
-            </view>
+            <template v-if="carStore.network">
+              <view class="mb-10rpx line-height-30rpx">
+                1.智能服务过期后，将停止提供智能服务功能。
+              </view>
+              <view class="mb-10rpx line-height-30rpx">
+                2.智能服务过期时间较长后，将无法在小程序内续费。需联系售后客服更换4G云盒，可能会产生额外费用。
+              </view>
+              <view class="mb-10rpx line-height-30rpx">
+                3.续费成功后，将自动给车辆延期，不支持转让、服务中止及退款。
+              </view>
+            </template>
+            <template v-else>
+              <view class="mb-10rpx line-height-30rpx">
+                1.智能服务过期后，将停止提供智能服务功能。
+              </view>
+              <view class="mb-10rpx line-height-30rpx">
+                2.续费成功后，将自动给车辆延期，不支持转让、服务中止及退款。
+              </view>
+            </template>
           </view>
         </fg-card>
       </view>
