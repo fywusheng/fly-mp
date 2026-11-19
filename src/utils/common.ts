@@ -56,6 +56,10 @@ export function getColorImg(colorCode: string, type = 'carList'): string {
       CHERRY_PINK: getImageUrl('/color/E75-pink.png'),
       // 星愿紫
       STAR_PURPLE: getImageUrl('/color/E75-purple.png'),
+      // 三轮车奶白
+      MILK_WHITE: getImageUrl('/color/T30-milk-white.png'),
+      // 三轮车水绿
+      WATER_GREEN: getImageUrl('/color/T30-water-green.png'),
     }
   }
   else if (type === 'carList') {
@@ -70,6 +74,10 @@ export function getColorImg(colorCode: string, type = 'carList'): string {
       CHERRY_PINK: getImageUrl('/color/E75-pink-card.png'),
       // 星愿紫
       STAR_PURPLE: getImageUrl('/color/E75-purple-card.png'),
+      // 三轮车奶白
+      MILK_WHITE: getImageUrl('/color/T30-milk-white-card.png'),
+      // 三轮车水绿
+      WATER_GREEN: getImageUrl('/color/T30-water-green-card.png'),
     }
   }
   else if (type === 'home') {
@@ -84,6 +92,10 @@ export function getColorImg(colorCode: string, type = 'carList'): string {
       CHERRY_PINK: getImageUrl('/color/E75-pink-home.png'),
       // 星愿紫
       STAR_PURPLE: getImageUrl('/color/E75-purple-home.png'),
+      // 三轮车奶白
+      MILK_WHITE: getImageUrl('/color/T30-milk-white-home.png'),
+      // 三轮车水绿
+      WATER_GREEN: getImageUrl('/color/T30-water-green-home.png'),
     }
   }
   else if (type === 'avatar') {
@@ -98,6 +110,10 @@ export function getColorImg(colorCode: string, type = 'carList'): string {
       CHERRY_PINK: getImageUrl('/color/E75-pink-avatar.png'),
       // 星愿紫
       STAR_PURPLE: getImageUrl('/color/E75-purple-avatar.png'),
+      // 三轮车奶白
+      MILK_WHITE: getImageUrl('/color/T30-milk-white-avatar.png'),
+      // 三轮车水绿
+      WATER_GREEN: getImageUrl('/color/T30-water-green-avatar.png'),
     }
   }
 
